@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"bbox/core"
 	"github.com/spf13/cobra"
 )
+
+// Flag variables
+var drawFlag bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -31,4 +35,5 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
+	RootCmd.Flags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 }
