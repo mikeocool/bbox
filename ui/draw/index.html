@@ -123,7 +123,19 @@
         doneButton.addEventListener('click', function() {
             if (drawnRectangle) {
                 // Extract the coordinates from the drawn rectangle
+                // Extract the coordinates from the drawn rectangle
                 const coordinates = drawnRectangle.geometry.coordinates[0];
+
+                // Find min/max values from the coordinates
+                const xValues = coordinates.map(coord => coord[0]);
+                const yValues = coordinates.map(coord => coord[1]);
+
+                const bboxData = {
+                    "min_x": Math.min(...xValues),
+                    "min_y": Math.min(...yValues),
+                    "max_x": Math.max(...xValues),
+                    "max_y": Math.max(...yValues)
+                };
 
                 // Post the coordinates to the /bbox endpoint
                 fetch('/bbox', {

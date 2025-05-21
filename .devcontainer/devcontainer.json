@@ -6,7 +6,7 @@
         },
         "ghcr.io/devcontainers/features/sshd:1": {}
     },
-    "postCreateCommand": "sudo sed -i 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
+    "postCreateCommand": "sudo sed -i 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && npm install -g @anthropic-ai/claude-code",
     "mounts": [
         "source=/home/ubuntu/.ssh/authorized_keys,target=/home/vscode/.ssh/authorized_keys,type=bind,readonly"
     ],
