@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,12 +22,12 @@ type DrawServer struct {
 }
 
 // StartDrawServer starts a web server for drawing bounding boxes.
-// It returns the received bounding box data as a byte slice.
-func StartDrawServer() ([]byte, error) {
+// It returns the received bounding box data as a Bbox struct.
+func StartDrawServer() (Bbox, error) {
 	// Find the first available port starting from 5000
 	port := findAvailablePort(5000)
 	if port == 0 {
-		return nil, fmt.Errorf("could not find an available port")
+		return Bbox{}, fmt.Errorf("could not find an available port")
 	}
 
 	server := &DrawServer{
@@ -39,7 +38,7 @@ func StartDrawServer() ([]byte, error) {
 }
 
 // Start starts the web server and returns the bounding box data when received
-func (s *DrawServer) Start() ([]byte, error) {
+func (s *DrawServer) Start() (Bbox, error) {
 	// Create a server with the UI handler
 	mux := http.NewServeMux()
 
@@ -49,7 +48,7 @@ func (s *DrawServer) Start() ([]byte, error) {
 	mux.Handle("/", fileServer)
 
 	// Create a channel to receive the bounding box data
-	bboxCh := make(chan []byte)
+	bboxCh := make(chan Bbox)
 
 	// Add the /bbox endpoint
 	mux.HandleFunc("/bbox", func(w http.ResponseWriter, r *http.Request) {
@@ -65,8 +64,15 @@ func (s *DrawServer) Start() ([]byte, error) {
 			return
 		}
 
-		// Send the body to the channel
-		bboxCh <- body
+		// Parse the JSON into a Bbox struct
+		var bbox Bbox
+		if err := json.Unmarshal(body, &bbox); err != nil {
+			http.Error(w, "Invalid JSON format: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Send the bbox struct directly to the channel
+		bboxCh <- bbox
 
 		// Return a success response
 		w.WriteHeader(http.StatusOK)
@@ -99,21 +105,12 @@ func (s *DrawServer) Start() ([]byte, error) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
 
-	var bboxData []byte
+	var bbox Bbox
 
 	// Wait for either the bbox data or a signal
 	select {
-	case body := <-bboxCh:
-		bboxData = body
-		// Format and display the received data
-		var prettyJSON bytes.Buffer
-		if err := json.Indent(&prettyJSON, body, "", "  "); err != nil {
-			fmt.Println("Received bounding box data:")
-			fmt.Println(string(body))
-		} else {
-			fmt.Println("Received bounding box data:")
-			fmt.Println(prettyJSON.String())
-		}
+	case bbox = <-bboxCh:
+		fmt.Println("Received bounding box data")
 	case <-sigCh:
 		fmt.Println("Interrupted by user")
 	}
@@ -124,11 +121,11 @@ func (s *DrawServer) Start() ([]byte, error) {
 	defer shutdownCancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		return nil, fmt.Errorf("server shutdown error: %v", err)
+		return Bbox{}, fmt.Errorf("server shutdown error: %v", err)
 	}
 	fmt.Println("Server stopped")
 
-	return bboxData, nil
+	return bbox, nil
 }
 
 // findAvailablePort returns the first available port starting from the given port

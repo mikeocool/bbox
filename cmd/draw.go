@@ -24,15 +24,15 @@ func init() {
 
 func runDraw(cmd *cobra.Command, args []string) {
 	// Start the drawing server from the core package
-	bboxData, err := core.StartDrawServer()
+	bbox, err := core.StartDrawServer()
 	if err != nil {
 		log.Fatalf("Error running draw server: %v", err)
 	}
 
 	// If we received data (not interrupted), we can use it here
-	if bboxData != nil {
-		// Note: The core package already prints the data, but we could do
-		// additional processing here if needed
-		fmt.Println("Bounding box data received successfully")
+	formatted, err := core.SpaceFormat(bbox)
+	if err != nil {
+		log.Fatalf("Error formatting bbox: %v", err)
 	}
+	fmt.Println(formatted)
 }

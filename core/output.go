@@ -27,3 +27,9 @@ func TemplatedFormat(templateStr string, bbox Bbox) (string, error) {
 func CommaFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.MinX}},{{.MinY}},{{.MaxX}},{{.MaxY}}", bbox)
 }
+
+// CommaFormat formats a Bbox as a comma-separated string of its coordinates.
+// The returned string will be in the format "MinX MinY MaxX MaxY".
+func SpaceFormat(bbox Bbox) (string, error) {
+	return TemplatedFormat("{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}", bbox)
+}
