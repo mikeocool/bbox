@@ -12,6 +12,7 @@ var RootCmd = &cobra.Command{
 	Use:   "bbox",
 	Short: "A CLI application for bounding box operations",
 	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
+	Run: runBase,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
