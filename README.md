@@ -1,5 +1,51 @@
+```
 go build
 ./bbox draw
+```
 
+```
+go test -v ./...
+```
 
-go test ./...
+CLI examples:
+```
+# Basics
+bbox --draw
+bbox --draw --output comma
+
+bbox --center 1.0 2.0 --width 10 --height 10
+
+bbox --min-x 1.0 --min-y 1.0 --max-x 2.0 --max-y 2.0
+bbox --min-x 1.0 --min-y 1.0 --width 2.0 --height 2.0
+bbox --min-y 1.0 --max-x 2.0 --width 2.0 --height 2.0
+
+bbox --place "Boston, MA" --width 10 --height 10
+bbox --my-location --width 10 --height 10
+
+bbox --raw "1.0 1.0 2.0 2.0" --output wkt
+bbox --raw "POLYGON((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0))" --output comma
+
+bbox --file whatevs.shp
+
+# specify a bbox on the cli -- but then open the browser and let you edit it
+bbox --center 1.0 2.0 --width 10 --height 10 --draw
+
+# Verbose (better name? -- summary?)
+bbox verbose --center 1.0 2.0 --width 10 --height 10
+
+# Slice
+bbox slice --center 1.0 2.0 --width 10 --height 10 --x-slices 5 --y-slices 10
+
+# Tile
+bbox tile --center 1.0 2.0 --width 10 --height 10
+# TODO way to limit the tiles
+```
+
+Output formats:
+-o comma
+-o space
+-o wkt
+-o geojson
+-o overpass-ql
+-o osm-url
+-o "template={{.MinX}} {{.MinY}}"

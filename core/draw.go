@@ -71,6 +71,12 @@ func (s *DrawServer) Start() (Bbox, error) {
 			return
 		}
 
+		// Validate that the bbox is valid before proceeding
+		if err := bbox.Validate(); err != nil {
+			http.Error(w, "Invalid bounding box: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		// Send the bbox struct directly to the channel
 		bboxCh <- bbox
 
