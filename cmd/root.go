@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"bbox/core"
 	"github.com/spf13/cobra"
 )
 

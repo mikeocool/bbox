@@ -13,5 +13,5 @@
     "mounts": [
         "source=/home/ubuntu/.ssh/authorized_keys,target=/home/vscode/.ssh/authorized_keys,type=bind,readonly"
     ],
-    "appPort": ["2223:2222"]
+    "appPort": ["2223:2222", "8501:8501"]
 }
