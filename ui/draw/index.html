@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Draw Bounding Box</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+        #done-button {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        #done-button:hover {
+            background-color: #45a049;
+        }
+        #done-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <button id="done-button" disabled>Done</button>
+
+    <script>
+        // Initialize the map with OpenStreetMap tiles
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    'osm': {
+                        type: 'raster',
+                        tiles: [
+                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                        ],
+                        tileSize: 256,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }
+                },
+                layers: [
+                    {
+                        id: 'osm-tiles',
+                        type: 'raster',
+                        source: 'osm',
+                        minzoom: 0,
+                        maxzoom: 19
+                    }
+                ]
+            },
+            center: [0, 0],
+            zoom: 2
+        });
+
+        // Add zoom controls
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+        // Add geolocate control
+        map.addControl(
+            new maplibregl.GeolocateControl({
+                positionOptions: {
+                    enableHighAccuracy: true
+                },
+                trackUserLocation: true,
+                showUserHeading: false
+            }),
+            'top-right'
+        );
+
+        let drawnRectangle = null;
+        const doneButton = document.getElementById('done-button');
+
+        // Initialize TerraDrawControl with rectangle mode only
+        const drawControl = new MaplibreTerradrawControl.MaplibreTerradrawControl({
+            modes: ['rectangle','delete'],
+            open: true,
+        });
+        map.addControl(drawControl, 'top-left');
+
+        const draw = drawControl.getTerraDrawInstance();
+
+            // Listen for all terra-draw events
+        draw.on('change', function(ids, type) {
+            console.log('Change event:', type, ids);
+
+            if (type === 'create' || type === 'update') {
+                // Get the feature data for the first ID
+                if (ids && ids.length > 0) {
+                    const snapshot = draw.getSnapshot();
+                    const feature = snapshot?.find((feature) => feature.id === ids[0]);
+                    drawnRectangle = feature;
+                    doneButton.disabled = false;
+                    console.log('Rectangle ' + type + ':', drawnRectangle);
+                }
+            } else if (type === 'delete') {
+                drawnRectangle = null;
+                doneButton.disabled = true;
+                console.log('Rectangle deleted');
+            }
+        });
+
+        // Handle the "Done" button click
+        doneButton.addEventListener('click', function() {
+            console.log('click');
+            console.log(drawnRectangle);
+            if (drawnRectangle) {
+                // Extract the coordinates from the drawn rectangle
+                const coordinates = drawnRectangle.geometry.coordinates[0];
+
+                // Post the coordinates to the /bbox endpoint
+                fetch('/bbox', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(coordinates)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Bounding box submitted successfully!');
+                    } else {
+                        alert('Error submitting bounding box');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error submitting bounding box: ' + error.message);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
