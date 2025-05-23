@@ -62,3 +62,16 @@ Output formats:
 -o overpass-ql
 -o osm-url
 -o "template={{.MinX}} {{.MinY}}"
+
+# TODO
+* output formats
+* raw input
+* place input
+* file input
+* draw with bbox populated from cli
+* units on width and height
+* raw input from stdin
+* center + area command
+* clean input error messaging
+* tile command
+* split command
