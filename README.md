@@ -65,10 +65,11 @@ Output formats:
 
 # TODO
 * output formats
+* embed HTML file as resource
+* draw with bbox populated from cli
 * raw input
 * place input
 * file input
-* draw with bbox populated from cli
 * units on width and height
 * raw input from stdin
 * center + area command
