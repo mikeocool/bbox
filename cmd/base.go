@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -13,11 +14,21 @@ func runBase(cmd *cobra.Command, args []string) {
 	// Create a bounding box from input parameters
 	bbox, err := inputParams.GetBbox()
 	if err != nil {
-		log.Fatalf("Error creating bounding box: %v", err)
+		var noUsableBuilderError core.NoUsableBuilderError
+		if errors.As(err, &noUsableBuilderError) {
+			// If no usable builder is found and we're not drawing, print usage and exit
+			if !drawFlag {
+				cmd.Usage()
+				return
+			}
+		} else {
+			log.Fatalf("Error creating bounding box: %v", err)
+		}
 	}
 
 	if drawFlag {
 		// Start the drawing server
+		// TODO pass in bbox is it's set
 		bbox, err = core.StartDrawServer()
 		if err != nil {
 			log.Fatalf("Error running draw server: %v", err)

@@ -38,7 +38,7 @@ func (params *InputParams) GetBbox() (Bbox, error) {
 			return buildBbox(builders[i], params)
 		}
 	}
-	return Bbox{}, fmt.Errorf("no usable builder") // TODO show usage
+	return Bbox{}, NoUsableBuilderError{}
 }
 
 func (p *InputParams) getSetFields() []string {
@@ -79,6 +79,12 @@ type InputValidationError struct {
 
 func (e InputValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
+
+type NoUsableBuilderError struct{}
+
+func (e NoUsableBuilderError) Error() string {
+	return "no usable builder for the provided parameters"
 }
 
 type BboxBuilder struct {
