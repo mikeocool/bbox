@@ -65,7 +65,6 @@ Output formats:
 -o "template={{.MinX}} {{.MinY}}"
 
 # TODO
-* embed HTML file as resource
 * draw with bbox populated from cli
 * raw input
 * raw input from stdin
@@ -74,6 +73,7 @@ Output formats:
 * cleanup draw UI
 * units on width and heightw
 * center + area command
+* handle projections
 * clean input error messaging
 * tile command
 * split command
