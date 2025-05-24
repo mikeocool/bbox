@@ -58,6 +58,7 @@ Output formats:
 -o comma
 -o space
 -o wkt
+-o hexwkb
 -o geojson
 -o overpass-ql
 -o osm-url
