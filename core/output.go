@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"text/template"
 )
@@ -35,16 +36,39 @@ func SpaceFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
 }
 
+// GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
+// The returned string will be a complete GeoJSON Polygon representing the bounding box.
+func GeojsonFormat(bbox Bbox) (string, error) {
+	coords := bbox.Polygon()
+	
+	geojson := struct {
+		Type        string          `json:"type"`
+		Coordinates [][][2]float64  `json:"coordinates"`
+	}{
+		Type:        "Polygon",
+		Coordinates: [][][2]float64{coords},
+	}
+	
+	data, err := json.Marshal(geojson)
+	if err != nil {
+		return "", err
+	}
+	
+	return string(data), nil
+}
+
 // Format type constants
 const (
-	FormatComma = "comma"
-	FormatSpace = "space"
+	FormatComma  = "comma"
+	FormatSpace  = "space"
+	FormatGeoJSON = "geojson"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
 var outputFormatters = map[string]func(Bbox) (string, error){
-	FormatComma: CommaFormat,
-	FormatSpace: SpaceFormat,
+	FormatComma:  CommaFormat,
+	FormatSpace:  SpaceFormat,
+	FormatGeoJSON: GeojsonFormat,
 }
 
 // GetFormatter returns the format function for the given format type.

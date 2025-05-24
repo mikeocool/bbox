@@ -123,6 +123,113 @@ func TestTemplatedFormat(t *testing.T) {
 	})
 }
 
+func TestFormat(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+
+	tests := []struct {
+		name        string
+		formatType  string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Comma format",
+			formatType:  FormatComma,
+			expected:    "1,2,3,4",
+			expectError: false,
+		},
+		{
+			name:        "Space format",
+			formatType:  FormatSpace,
+			expected:    "1 2 3 4",
+			expectError: false,
+		},
+		{
+			name:        "GeoJSON format",
+			formatType:  FormatGeoJSON,
+			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+			expectError: false,
+		},
+		{
+			name:        "Invalid format",
+			formatType:  "invalid",
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Format(bbox, tc.formatType)
+
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if !tc.expectError && result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestGetFormatter(t *testing.T) {
+	tests := []struct {
+		name       string
+		formatType string
+		expectNil  bool
+	}{
+		{
+			name:       "Comma formatter",
+			formatType: FormatComma,
+			expectNil:  false,
+		},
+		{
+			name:       "Space formatter",
+			formatType: FormatSpace,
+			expectNil:  false,
+		},
+		{
+			name:       "GeoJSON formatter",
+			formatType: FormatGeoJSON,
+			expectNil:  false,
+		},
+		{
+			name:       "Invalid formatter",
+			formatType: "invalid",
+			expectNil:  true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := GetFormatter(tc.formatType)
+
+			if tc.expectNil && formatter != nil {
+				t.Errorf("Expected nil formatter but got one")
+			}
+			if !tc.expectNil && formatter == nil {
+				t.Errorf("Expected formatter but got nil")
+			}
+
+			// Test that the formatter works if it's not nil
+			if !tc.expectNil && formatter != nil {
+				bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+				result, err := formatter(bbox)
+				if err != nil {
+					t.Errorf("Formatter returned error: %v", err)
+				}
+				if result == "" {
+					t.Errorf("Formatter returned empty result")
+				}
+			}
+		})
+	}
+}
+
 func TestCommaFormat(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -182,4 +289,96 @@ func TestCommaFormat(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGeojsonFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		bbox     Bbox
+		expected string
+	}{
+		{
+			name: "Basic rectangle",
+			bbox: Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected: `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+		},
+		{
+			name: "Zero value bbox",
+			bbox: Bbox{},
+			expected: `{"type":"Polygon","coordinates":[[[0,0],[0,0],[0,0],[0,0],[0,0]]]}`,
+		},
+		{
+			name: "Negative coordinates",
+			bbox: Bbox{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
+			expected: `{"type":"Polygon","coordinates":[[[-10,-20],[-5,-20],[-5,-15],[-10,-15],[-10,-20]]]}`,
+		},
+		{
+			name: "Mixed positive/negative coordinates",
+			bbox: Bbox{Left: -1.5, Bottom: -2.5, Right: 1.5, Top: 2.5},
+			expected: `{"type":"Polygon","coordinates":[[[-1.5,-2.5],[1.5,-2.5],[1.5,2.5],[-1.5,2.5],[-1.5,-2.5]]]}`,
+		},
+		{
+			name: "Decimal coordinates",
+			bbox: Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+			expected: `{"type":"Polygon","coordinates":[[[10.25,20.75],[30.125,20.75],[30.125,40.875],[10.25,40.875],[10.25,20.75]]]}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := GeojsonFormat(tc.bbox)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestGeojsonFormatStructure(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	result, err := GeojsonFormat(bbox)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	t.Run("Contains required GeoJSON fields", func(t *testing.T) {
+		if !strings.Contains(result, `"type":"Polygon"`) {
+			t.Error("Result should contain type field with Polygon value")
+		}
+		if !strings.Contains(result, `"coordinates"`) {
+			t.Error("Result should contain coordinates field")
+		}
+	})
+
+	t.Run("Coordinates are properly nested", func(t *testing.T) {
+		// Should have three levels of brackets: [[[...]]]
+		// One for the coordinates array, one for the polygon rings, one for the actual coordinates
+		if !strings.Contains(result, `[[[`) {
+			t.Error("Coordinates should be properly nested with three opening brackets")
+		}
+		if !strings.Contains(result, `]]]`) {
+			t.Error("Coordinates should be properly nested with three closing brackets")
+		}
+	})
+
+	t.Run("Polygon is closed", func(t *testing.T) {
+		// The first and last coordinate pairs should be the same
+		if !strings.Contains(result, `[1,2],[3,2],[3,4],[1,4],[1,2]`) {
+			t.Error("Polygon should be closed (first and last coordinates should be the same)")
+		}
+	})
+
+	t.Run("Has correct number of coordinate pairs", func(t *testing.T) {
+		// Count the number of coordinate pairs by counting "],["
+		coordSeparators := strings.Count(result, "],[")
+		// Should have 4 separators for 5 coordinate pairs (4 corners + 1 closure)
+		expected := 4
+		if coordSeparators != expected {
+			t.Errorf("Expected %d coordinate separators, got %d", expected, coordSeparators)
+		}
+	})
 }
