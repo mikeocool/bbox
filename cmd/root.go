@@ -33,17 +33,17 @@ func Execute() {
 
 func init() {
 	var left, bottom, right, top float64
-	RootCmd.Flags().Float64Var(&left, "left", 0, "Left coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&bottom, "bottom", 0, "Bottom coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&right, "right", 0, "Right coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&top, "top", 0, "Top coordinate of bounding box")
+	RootCmd.Flags().Float64VarP(&left, "left", "l", 0, "Left coordinate of bounding box")
+	RootCmd.Flags().Float64VarP(&bottom, "bottom", "b", 0, "Bottom coordinate of bounding box")
+	RootCmd.Flags().Float64VarP(&right, "right", "r", 0, "Right coordinate of bounding box")
+	RootCmd.Flags().Float64VarP(&top, "top", "t", 0, "Top coordinate of bounding box")
 	RootCmd.Flags().Float64SliceVar(&inputParams.Center, "center", []float64{}, "Center coordinates [x,y] of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Width, "width", "", "Width of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Raw, "raw", "", "Raw data for bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.Flags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
-	RootCmd.Flags().StringVar(&outputFormat, "output", "space", "Output format or destination")
+	RootCmd.Flags().StringVarP(&outputFormat, "output", "o", "space", "Output format or destination")
 
 	RootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		// Check if flags were specified and set the pointers accordingly
