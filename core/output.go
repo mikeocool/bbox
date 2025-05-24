@@ -1,8 +1,9 @@
 package core
 
 import (
- "bytes"
- "text/template"
+	"bytes"
+	"fmt"
+	"text/template"
 )
 
 // TemplatedFormat formats a Bbox using a given template string.
@@ -32,4 +33,30 @@ func CommaFormat(bbox Bbox) (string, error) {
 // The returned string will be in the format "MinX MinY MaxX MaxY".
 func SpaceFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}", bbox)
+}
+
+// Format type constants
+const (
+	FormatComma = "comma"
+	FormatSpace = "space"
+)
+
+// FormatFunctions maps format type constants to their corresponding format functions
+var outputFormatters = map[string]func(Bbox) (string, error){
+	FormatComma: CommaFormat,
+	FormatSpace: SpaceFormat,
+}
+
+// GetFormatter returns the format function for the given format type.
+func GetFormatter(formatType string) func(Bbox) (string, error) {
+	return outputFormatters[formatType]
+}
+
+// Format formats a Bbox using the specified format type.
+func Format(bbox Bbox, formatType string) (string, error) {
+	formatter := GetFormatter(formatType)
+	if formatter == nil {
+		return "", fmt.Errorf("unknown output format: %s", formatType)
+	}
+	return formatter(bbox)
 }

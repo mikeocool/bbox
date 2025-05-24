@@ -35,7 +35,7 @@ func runBase(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	formatted, err := core.SpaceFormat(bbox)
+	formatted, err := core.Format(bbox, outputFormat)
 	if err != nil {
 		log.Fatalf("Error formatting bounding box: %v", err)
 	}

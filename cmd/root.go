@@ -12,6 +12,7 @@ import (
 // Flag variables
 var inputParams core.InputParams
 var drawFlag bool
+var outputFormat string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -42,6 +43,7 @@ func init() {
 	RootCmd.Flags().StringVar(&inputParams.Raw, "raw", "", "Raw data for bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.Flags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
+	RootCmd.Flags().StringVar(&outputFormat, "output", "space", "Output format or destination")
 
 	RootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		// Check if flags were specified and set the pointers accordingly

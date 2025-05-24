@@ -70,6 +70,7 @@ Output formats:
 * raw input
 * place input
 * file input
+* cleanup draw UI
 * units on width and height
 * raw input from stdin
 * center + area command
