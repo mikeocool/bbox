@@ -36,6 +36,8 @@ func SpaceFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
 }
 
+
+
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
 func GeojsonFormat(bbox Bbox) (string, error) {
@@ -57,11 +59,30 @@ func GeojsonFormat(bbox Bbox) (string, error) {
 	return string(data), nil
 }
 
+// WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.
+// The returned string will be in the format "POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))".
+func WktFormat(bbox Bbox) (string, error) {
+	coords := bbox.Polygon()
+	
+	// Build WKT polygon string
+	wkt := "POLYGON(("
+	for i, coord := range coords {
+		if i > 0 {
+			wkt += ", "
+		}
+		wkt += fmt.Sprintf("%g %g", coord[0], coord[1])
+	}
+	wkt += "))"
+	
+	return wkt, nil
+}
+
 // Format type constants
 const (
 	FormatComma  = "comma"
 	FormatSpace  = "space"
 	FormatGeoJSON = "geojson"
+	FormatWKT    = "wkt"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
@@ -69,6 +90,7 @@ var outputFormatters = map[string]func(Bbox) (string, error){
 	FormatComma:  CommaFormat,
 	FormatSpace:  SpaceFormat,
 	FormatGeoJSON: GeojsonFormat,
+	FormatWKT:    WktFormat,
 }
 
 // GetFormatter returns the format function for the given format type.

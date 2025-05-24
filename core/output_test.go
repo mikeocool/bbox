@@ -123,6 +123,131 @@ func TestTemplatedFormat(t *testing.T) {
 	})
 }
 
+func TestWktFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Zero value bbox",
+			bbox:        Bbox{},
+			expected:    "POLYGON((0 0, 0 0, 0 0, 0 0, 0 0))",
+			expectError: false,
+		},
+		{
+			name:        "Integer coordinates",
+			bbox:        Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
+			expectError: false,
+		},
+		{
+			name:        "Decimal coordinates",
+			bbox:        Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			expected:    "POLYGON((10.5 20.25, 30.75 20.25, 30.75 40.125, 10.5 40.125, 10.5 20.25))",
+			expectError: false,
+		},
+		{
+			name:        "Negative coordinates",
+			bbox:        Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			expected:    "POLYGON((-10 -20, -5 -20, -5 -15, -10 -15, -10 -20))",
+			expectError: false,
+		},
+		{
+			name:        "Mixed sign coordinates",
+			bbox:        Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			expected:    "POLYGON((-10.5 20.25, -5.75 20.25, -5.75 15.125, -10.5 15.125, -10.5 20.25))",
+			expectError: false,
+		},
+		{
+			name:        "Large coordinates",
+			bbox:        Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
+			expected:    "POLYGON((1.000000123e+06 2.000000456e+06, 3.000000789e+06 2.000000456e+06, 3.000000789e+06 4.000000012e+06, 1.000000123e+06 4.000000012e+06, 1.000000123e+06 2.000000456e+06))",
+			expectError: false,
+		},
+		{
+			name:        "Very small coordinates",
+			bbox:        Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
+			expected:    "POLYGON((0.0001 0.0002, 0.0003 0.0002, 0.0003 0.0004, 0.0001 0.0004, 0.0001 0.0002))",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := WktFormat(tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestWktFormatStructure(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	result, err := WktFormat(bbox)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	t.Run("Starts with POLYGON", func(t *testing.T) {
+		if !strings.HasPrefix(result, "POLYGON") {
+			t.Error("WKT result should start with 'POLYGON'")
+		}
+	})
+
+	t.Run("Has proper parentheses structure", func(t *testing.T) {
+		if !strings.HasPrefix(result, "POLYGON((") {
+			t.Error("WKT result should start with 'POLYGON(('")
+		}
+		if !strings.HasSuffix(result, "))") {
+			t.Error("WKT result should end with '))'")
+		}
+	})
+
+	t.Run("Polygon is closed", func(t *testing.T) {
+		// The first and last coordinate pairs should be the same
+		if !strings.Contains(result, "1 2, 3 2, 3 4, 1 4, 1 2") {
+			t.Error("WKT polygon should be closed (first and last coordinates should be the same)")
+		}
+	})
+
+	t.Run("Has correct number of coordinate pairs", func(t *testing.T) {
+		// Count the number of coordinate pairs by counting ", "
+		coordSeparators := strings.Count(result, ", ")
+		// Should have 4 separators for 5 coordinate pairs (4 corners + 1 closure)
+		expected := 4
+		if coordSeparators != expected {
+			t.Errorf("Expected %d coordinate separators, got %d", expected, coordSeparators)
+		}
+	})
+
+	t.Run("Coordinates are space-separated", func(t *testing.T) {
+		// Check that coordinates within each pair are separated by spaces, not commas
+		coords := strings.TrimPrefix(strings.TrimSuffix(result, "))"), "POLYGON((")
+		pairs := strings.Split(coords, ", ")
+		for i, pair := range pairs {
+			parts := strings.Split(pair, " ")
+			if len(parts) != 2 {
+				t.Errorf("Coordinate pair %d should have exactly 2 space-separated values, got %d: %q", i, len(parts), pair)
+			}
+		}
+	})
+}
+
 func TestFormat(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
@@ -148,6 +273,12 @@ func TestFormat(t *testing.T) {
 			name:        "GeoJSON format",
 			formatType:  FormatGeoJSON,
 			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+			expectError: false,
+		},
+		{
+			name:        "WKT format",
+			formatType:  FormatWKT,
+			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
 			expectError: false,
 		},
 		{
@@ -195,6 +326,11 @@ func TestGetFormatter(t *testing.T) {
 		{
 			name:       "GeoJSON formatter",
 			formatType: FormatGeoJSON,
+			expectNil:  false,
+		},
+		{
+			name:       "WKT formatter",
+			formatType: FormatWKT,
 			expectNil:  false,
 		},
 		{
