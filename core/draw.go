@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,10 +12,12 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"time"
 )
+
+//go:embed ui/draw.html
+var drawHTML []byte
 
 // DrawServer holds the configuration and state for the bounding box drawing server
 type DrawServer struct {
@@ -42,10 +45,10 @@ func (s *DrawServer) Start() (Bbox, error) {
 	// Create a server with the UI handler
 	mux := http.NewServeMux()
 
-	// Serve static files from the ui/draw directory
-	uiDir := filepath.Join("ui", "draw")
-	fileServer := http.FileServer(http.Dir(uiDir))
-	mux.Handle("/", fileServer)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(drawHTML)
+	})
 
 	// Create a channel to receive the bounding box data
 	bboxCh := make(chan Bbox)
