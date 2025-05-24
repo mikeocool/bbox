@@ -14,44 +14,44 @@ func TestBboxValidate(t *testing.T) {
 	}{
 		{
 			name:        "Valid bbox",
-			bbox:        Bbox{MinX: 1.0, MinY: 2.0, MaxX: 3.0, MaxY: 4.0},
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expectError: false,
 		},
 		{
 			name:        "Zero-size bbox",
-			bbox:        Bbox{MinX: 1.0, MinY: 2.0, MaxX: 1.0, MaxY: 4.0},
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 1.0, Top: 4.0},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxX (%f) must be greater than MinX (%f)", 1.0, 1.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 1.0),
 		},
 		{
 			name:        "Negative-width bbox",
-			bbox:        Bbox{MinX: 3.0, MinY: 2.0, MaxX: 1.0, MaxY: 4.0},
+			bbox:        Bbox{Left: 3.0, Bottom: 2.0, Right: 1.0, Top: 4.0},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxX (%f) must be greater than MinX (%f)", 1.0, 3.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 3.0),
 		},
 		{
 			name:        "Zero-height bbox",
-			bbox:        Bbox{MinX: 1.0, MinY: 2.0, MaxX: 3.0, MaxY: 2.0},
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 2.0},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxY (%f) must be greater than MinY (%f)", 2.0, 2.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Top (%f) must be greater than Bottom (%f)", 2.0, 2.0),
 		},
 		{
 			name:        "Negative-height bbox",
-			bbox:        Bbox{MinX: 1.0, MinY: 4.0, MaxX: 3.0, MaxY: 2.0},
+			bbox:        Bbox{Left: 1.0, Bottom: 4.0, Right: 3.0, Top: 2.0},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxY (%f) must be greater than MinY (%f)", 2.0, 4.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Top (%f) must be greater than Bottom (%f)", 2.0, 4.0),
 		},
 		{
 			name:        "Invalid width and height",
-			bbox:        Bbox{MinX: 3.0, MinY: 4.0, MaxX: 1.0, MaxY: 2.0},
+			bbox:        Bbox{Left: 3.0, Bottom: 4.0, Right: 1.0, Top: 2.0},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxX (%f) must be greater than MinX (%f)", 1.0, 3.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 3.0),
 		},
 		{
 			name:        "Zero value bbox",
 			bbox:        Bbox{},
 			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: MaxX (%f) must be greater than MinX (%f)", 0.0, 0.0),
+			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 0.0, 0.0),
 		},
 	}
 
@@ -80,7 +80,7 @@ func TestBboxValidate(t *testing.T) {
 func TestBboxValidateEdgeCases(t *testing.T) {
 	// Test with very large values
 	t.Run("Very large values", func(t *testing.T) {
-		bbox := Bbox{MinX: -1e10, MinY: -1e10, MaxX: 1e10, MaxY: 1e10}
+		bbox := Bbox{Left: -1e10, Bottom: -1e10, Right: 1e10, Top: 1e10}
 		if err := bbox.Validate(); err != nil {
 			t.Errorf("Unexpected error with very large values: %v", err)
 		}
@@ -88,7 +88,7 @@ func TestBboxValidateEdgeCases(t *testing.T) {
 
 	// Test with very small differences
 	t.Run("Very small differences", func(t *testing.T) {
-		bbox := Bbox{MinX: 0.0, MinY: 0.0, MaxX: 0.0000001, MaxY: 0.0000001}
+		bbox := Bbox{Left: 0.0, Bottom: 0.0, Right: 0.0000001, Top: 0.0000001}
 		if err := bbox.Validate(); err != nil {
 			t.Errorf("Unexpected error with very small differences: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestBboxValidateEdgeCases(t *testing.T) {
 	// Test with floating point precision issues
 	t.Run("Floating point precision", func(t *testing.T) {
 		// These values should be different enough to avoid floating point comparison issues
-		bbox := Bbox{MinX: 1.0, MinY: 1.0, MaxX: 1.0 + 1e-10, MaxY: 1.0 + 1e-10}
+		bbox := Bbox{Left: 1.0, Bottom: 1.0, Right: 1.0 + 1e-10, Top: 1.0 + 1e-10}
 		if err := bbox.Validate(); err != nil {
 			t.Errorf("Unexpected error with floating point precision: %v", err)
 		}

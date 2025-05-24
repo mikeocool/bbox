@@ -32,11 +32,11 @@ func Execute() {
 }
 
 func init() {
-	var minX, minY, maxX, maxY float64
-	RootCmd.Flags().Float64Var(&minX, "min-x", 0, "Minimum X coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&minY, "min-y", 0, "Minimum Y coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&maxX, "max-x", 0, "Maximum X coordinate of bounding box")
-	RootCmd.Flags().Float64Var(&maxY, "max-y", 0, "Maximum Y coordinate of bounding box")
+	var left, bottom, right, top float64
+	RootCmd.Flags().Float64Var(&left, "left", 0, "Left coordinate of bounding box")
+	RootCmd.Flags().Float64Var(&bottom, "bottom", 0, "Bottom coordinate of bounding box")
+	RootCmd.Flags().Float64Var(&right, "right", 0, "Right coordinate of bounding box")
+	RootCmd.Flags().Float64Var(&top, "top", 0, "Top coordinate of bounding box")
 	RootCmd.Flags().Float64SliceVar(&inputParams.Center, "center", []float64{}, "Center coordinates [x,y] of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Width, "width", "", "Width of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
@@ -47,17 +47,17 @@ func init() {
 
 	RootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		// Check if flags were specified and set the pointers accordingly
-		if cmd.Flags().Changed("min-x") {
-			inputParams.MinX = &minX
+		if cmd.Flags().Changed("left") {
+			inputParams.Left = &left
 		}
-		if cmd.Flags().Changed("min-y") {
-			inputParams.MinY = &minY
+		if cmd.Flags().Changed("bottom") {
+			inputParams.Bottom = &bottom
 		}
-		if cmd.Flags().Changed("max-x") {
-			inputParams.MaxX = &maxX
+		if cmd.Flags().Changed("right") {
+			inputParams.Right = &right
 		}
-		if cmd.Flags().Changed("max-y") {
-			inputParams.MaxY = &maxY
+		if cmd.Flags().Changed("top") {
+			inputParams.Top = &top
 		}
 	}
 }

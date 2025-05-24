@@ -131,10 +131,10 @@
                 const yValues = coordinates.map(coord => coord[1]);
 
                 const bboxData = {
-                    "min_x": Math.min(...xValues),
-                    "min_y": Math.min(...yValues),
-                    "max_x": Math.max(...xValues),
-                    "max_y": Math.max(...yValues)
+                    "left": Math.min(...xValues),
+                    "bottom": Math.min(...yValues),
+                    "right": Math.max(...xValues),
+                    "top": Math.max(...yValues)
                 };
 
                 // Post the coordinates to the /bbox endpoint

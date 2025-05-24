@@ -7,10 +7,10 @@ import (
 )
 
 type InputParams struct {
-	MinX   *float64
-	MinY   *float64
-	MaxX   *float64
-	MaxY   *float64
+	Left   *float64
+	Bottom *float64
+	Right  *float64
+	Top    *float64
 	Center []float64 // a pair of floats representing the center coordinates
 	Width  string
 	Height string
@@ -22,7 +22,7 @@ func (params *InputParams) HasWidth() bool  { return params.Width != "" }
 func (params *InputParams) HasHeight() bool { return params.Height != "" }
 
 func (params *InputParams) HasAnyCoordinates() bool {
-	return params.MinX != nil || params.MinY != nil || params.MaxX != nil || params.MaxY != nil
+	return params.Left != nil || params.Bottom != nil || params.Right != nil || params.Top != nil
 }
 
 func (params *InputParams) GetBbox() (Bbox, error) {
@@ -158,10 +158,10 @@ var CenterBuilder = BboxBuilder{
 		}
 
 		return Bbox{
-			MinX: params.Center[0] - width/2,
-			MinY: params.Center[1] - height/2,
-			MaxX: params.Center[0] + width/2,
-			MaxY: params.Center[1] + height/2,
+			Left: params.Center[0] - width/2,
+			Bottom: params.Center[1] - height/2,
+			Right: params.Center[0] + width/2,
+			Top: params.Center[1] + height/2,
 		}, nil // TODO
 	},
 }
@@ -172,24 +172,24 @@ var BoundsBuilder = BboxBuilder{
 		return params.HasAnyCoordinates()
 	},
 	ValidateParams: func(params *InputParams) error {
-		if err := validateBoundsPair(params.MinX, params.MaxX, params.Width); err != nil {
+		if err := validateBoundsPair(params.Left, params.Right, params.Width); err != nil {
 			return err
 		}
-		if err := validateBoundsPair(params.MinY, params.MaxY, params.Height); err != nil {
+		if err := validateBoundsPair(params.Bottom, params.Top, params.Height); err != nil {
 			return err
 		}
 		return nil
 	},
-	UsedFields: []string{"MinX", "MinY", "MaxX", "MaxY", "Width", "Height"},
+	UsedFields: []string{"Left", "Bottom", "Right", "Top", "Width", "Height"},
 	Build: func(params *InputParams) (Bbox, error) {
-		minX, maxX := getBoundsPair(params.MinX, params.MaxX, params.Width)
-		minY, maxY := getBoundsPair(params.MinY, params.MaxY, params.Height)
+		left, right := getBoundsPair(params.Left, params.Right, params.Width)
+		bottom, top := getBoundsPair(params.Bottom, params.Top, params.Height)
 
 		return Bbox{
-			MinX: minX,
-			MaxX: maxX,
-			MinY: minY,
-			MaxY: maxY,
+			Left: left,
+			Right: right,
+			Bottom: bottom,
+			Top: top,
 		}, nil // TODO
 	},
 }

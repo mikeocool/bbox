@@ -6,20 +6,20 @@ import (
 
 
 type Bbox struct {
-	MinX float64 `json:"min_x"`
-	MinY float64 `json:"min_y"`
-	MaxX float64 `json:"max_x"`
-	MaxY float64 `json:"max_y"`
+	Left   float64 `json:"left"`
+	Bottom float64 `json:"bottom"`
+	Right  float64 `json:"right"`
+	Top    float64 `json:"top"`
 }
 
 // Validate checks if the Bbox has valid coordinates.
-// A valid bounding box requires MaxX > MinX and MaxY > MinY.
+// A valid bounding box requires Right > Left and Top > Bottom.
 func (b Bbox) Validate() error {
-	if b.MaxX <= b.MinX {
-		return fmt.Errorf("invalid bbox: MaxX (%f) must be greater than MinX (%f)", b.MaxX, b.MinX)
+	if b.Right <= b.Left {
+		return fmt.Errorf("invalid bbox: Right (%f) must be greater than Left (%f)", b.Right, b.Left)
 	}
-	if b.MaxY <= b.MinY {
-		return fmt.Errorf("invalid bbox: MaxY (%f) must be greater than MinY (%f)", b.MaxY, b.MinY)
+	if b.Top <= b.Bottom {
+		return fmt.Errorf("invalid bbox: Top (%f) must be greater than Bottom (%f)", b.Top, b.Bottom)
 	}
 
 	// TODO ensure the box is somewhere on the earth for the given projection

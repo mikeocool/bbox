@@ -66,10 +66,10 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Place:  "New York",
 				Width:  "100",
 				Height: "200",
-				MinX:   floatPtr(1.0),
+				Left:   floatPtr(1.0),
 			},
 			expectError: true,
-			errorMsg:    "Unexpected argument: MinX with place",
+			errorMsg:    "Unexpected argument: Left with place",
 		},
 
 		// CenterBuilder tests
@@ -82,10 +82,10 @@ func TestInputParams_GetBbox(t *testing.T) {
 			},
 			expectError: false,
 			expectBbox: &Bbox{
-				MinX: 8.0,  // 10.0 - 4/2
-				MinY: 17.0, // 20.0 - 6/2
-				MaxX: 12.0, // 10.0 + 4/2
-				MaxY: 23.0, // 20.0 + 6/2
+				Left: 8.0,  // 10.0 - 4/2
+				Bottom: 17.0, // 20.0 - 6/2
+				Right: 12.0, // 10.0 + 4/2
+				Top: 23.0, // 20.0 + 6/2
 			},
 		},
 		{
@@ -137,77 +137,77 @@ func TestInputParams_GetBbox(t *testing.T) {
 
 		// BoundsBuilder tests
 		{
-			name: "BoundsBuilder - MinX and MaxX",
+			name: "BoundsBuilder - Left and Right",
 			params: InputParams{
-				MinX: floatPtr(1.0),
-				MaxX: floatPtr(5.0),
-				MinY: floatPtr(2.0),
-				MaxY: floatPtr(8.0),
+				Left: floatPtr(1.0),
+				Right: floatPtr(5.0),
+				Bottom: floatPtr(2.0),
+				Top: floatPtr(8.0),
 			},
 			expectError: false,
 			expectBbox: &Bbox{
-				MinX: 1.0,
-				MaxX: 5.0,
-				MinY: 2.0,
-				MaxY: 8.0,
+				Left: 1.0,
+				Right: 5.0,
+				Bottom: 2.0,
+				Top: 8.0,
 			},
 		},
 		{
-			name: "BoundsBuilder - MinX and Width",
+			name: "BoundsBuilder - Left and Width",
 			params: InputParams{
-				MinX:   floatPtr(1.0),
+				Left:   floatPtr(1.0),
 				Width:  "4",
-				MinY:   floatPtr(2.0),
+				Bottom:   floatPtr(2.0),
 				Height: "6",
 			},
 			expectError: false,
 			expectBbox: &Bbox{
-				MinX: 1.0,
-				MaxX: 5.0, // 1.0 + 4
-				MinY: 2.0,
-				MaxY: 8.0, // 2.0 + 6
+				Left: 1.0,
+				Right: 5.0, // 1.0 + 4
+				Bottom: 2.0,
+				Top: 8.0, // 2.0 + 6
 			},
 		},
 		{
-			name: "BoundsBuilder - MaxX and Width",
+			name: "BoundsBuilder - Right and Width",
 			params: InputParams{
-				MaxX:   floatPtr(5.0),
+				Right:   floatPtr(5.0),
 				Width:  "4",
-				MaxY:   floatPtr(8.0),
+				Top:   floatPtr(8.0),
 				Height: "6",
 			},
 			expectError: false,
 			expectBbox: &Bbox{
-				MinX: 1.0, // 5.0 - 4
-				MaxX: 5.0,
-				MinY: 2.0, // 8.0 - 6
-				MaxY: 8.0,
+				Left: 1.0, // 5.0 - 4
+				Right: 5.0,
+				Bottom: 2.0, // 8.0 - 6
+				Top: 8.0,
 			},
 		},
 		{
-			name: "BoundsBuilder - only MinX (invalid)",
+			name: "BoundsBuilder - only Left (invalid)",
 			params: InputParams{
-				MinX: floatPtr(1.0),
+				Left: floatPtr(1.0),
 			},
 			expectError: true,
 			errorMsg:    "min specified without max or length",
 		},
 		{
-			name: "BoundsBuilder - only MaxX (invalid)",
+			name: "BoundsBuilder - only Right (invalid)",
 			params: InputParams{
-				MaxX: floatPtr(5.0),
+				Right: floatPtr(5.0),
 			},
 			expectError: true,
 			errorMsg:    "max specified without min or legnth",
 		},
 		{
-			name: "BoundsBuilder - MinX, MaxX and Width (invalid)",
+			name: "BoundsBuilder - Left, Right and Width (invalid)",
 			params: InputParams{
-				MinX:  floatPtr(1.0),
-				MaxX:  floatPtr(5.0),
+				Left:  floatPtr(1.0),
+				Right:  floatPtr(5.0),
 				Width: "4",
-				MinY:  floatPtr(2.0),
-				MaxY:  floatPtr(8.0),
+				Bottom:  floatPtr(2.0),
+				Top:  floatPtr(8.0),
 			},
 			expectError: true,
 			errorMsg:    "must specify only two of: min, max, and length",
@@ -248,17 +248,17 @@ func TestInputParams_GetBbox(t *testing.T) {
 
 			// If not expecting an error, verify the bbox
 			if tc.expectBbox != nil {
-				if bbox.MinX != tc.expectBbox.MinX {
-					t.Errorf("Expected MinX %f but got %f", tc.expectBbox.MinX, bbox.MinX)
+				if bbox.Left != tc.expectBbox.Left {
+					t.Errorf("Expected Left %f but got %f", tc.expectBbox.Left, bbox.Left)
 				}
-				if bbox.MinY != tc.expectBbox.MinY {
-					t.Errorf("Expected MinY %f but got %f", tc.expectBbox.MinY, bbox.MinY)
+				if bbox.Bottom != tc.expectBbox.Bottom {
+					t.Errorf("Expected Bottom %f but got %f", tc.expectBbox.Bottom, bbox.Bottom)
 				}
-				if bbox.MaxX != tc.expectBbox.MaxX {
-					t.Errorf("Expected MaxX %f but got %f", tc.expectBbox.MaxX, bbox.MaxX)
+				if bbox.Right != tc.expectBbox.Right {
+					t.Errorf("Expected Right %f but got %f", tc.expectBbox.Right, bbox.Right)
 				}
-				if bbox.MaxY != tc.expectBbox.MaxY {
-					t.Errorf("Expected MaxY %f but got %f", tc.expectBbox.MaxY, bbox.MaxY)
+				if bbox.Top != tc.expectBbox.Top {
+					t.Errorf("Expected Top %f but got %f", tc.expectBbox.Top, bbox.Top)
 				}
 			}
 		})
@@ -277,40 +277,40 @@ func TestInputParams_HasAnyCoordinates(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Has MinX",
+			name: "Has Left",
 			params: InputParams{
-				MinX: floatPtr(1.0),
+				Left: floatPtr(1.0),
 			},
 			expected: true,
 		},
 		{
-			name: "Has MinY",
+			name: "Has Bottom",
 			params: InputParams{
-				MinY: floatPtr(1.0),
+				Bottom: floatPtr(1.0),
 			},
 			expected: true,
 		},
 		{
-			name: "Has MaxX",
+			name: "Has Right",
 			params: InputParams{
-				MaxX: floatPtr(1.0),
+				Right: floatPtr(1.0),
 			},
 			expected: true,
 		},
 		{
-			name: "Has MaxY",
+			name: "Has Top",
 			params: InputParams{
-				MaxY: floatPtr(1.0),
+				Top: floatPtr(1.0),
 			},
 			expected: true,
 		},
 		{
 			name: "Has all coordinates",
 			params: InputParams{
-				MinX: floatPtr(1.0),
-				MinY: floatPtr(2.0),
-				MaxX: floatPtr(3.0),
-				MaxY: floatPtr(4.0),
+				Left: floatPtr(1.0),
+				Bottom: floatPtr(2.0),
+				Right: floatPtr(3.0),
+				Top: floatPtr(4.0),
 			},
 			expected: true,
 		},
@@ -414,37 +414,37 @@ func TestInputParams_getSetFields(t *testing.T) {
 		{
 			name: "All fields set",
 			params: InputParams{
-				MinX:   floatPtr(1.0),
-				MinY:   floatPtr(2.0),
-				MaxX:   floatPtr(3.0),
-				MaxY:   floatPtr(4.0),
+				Left:   floatPtr(1.0),
+				Bottom:   floatPtr(2.0),
+				Right:   floatPtr(3.0),
+				Top:   floatPtr(4.0),
 				Center: []float64{5.0, 6.0},
 				Width:  "100",
 				Height: "200",
 				Raw:    "raw data",
 				Place:  "New York",
 			},
-			expected: []string{"MinX", "MinY", "MaxX", "MaxY", "Center", "Width", "Height", "Raw", "Place"},
+			expected: []string{"Left", "Bottom", "Right", "Top", "Center", "Width", "Height", "Raw", "Place"},
 		},
 		{
 			name: "Mixed field types",
 			params: InputParams{
-				MinX:   floatPtr(0.0), // zero value pointer should still count as set
+				Left:   floatPtr(0.0), // zero value pointer should still count as set
 				Center: []float64{},   // empty slice should be considered empty
 				Width:  "",            // empty string should be considered empty
 				Raw:    "data",        // non-empty string
 			},
-			expected: []string{"MinX", "Raw"},
+			expected: []string{"Left", "Raw"},
 		},
 		{
 			name: "Nil vs zero values",
 			params: InputParams{
-				MinX:   nil,           // nil pointer
-				MinY:   floatPtr(0.0), // zero value but not nil
+				Left:   nil,           // nil pointer
+				Bottom:   floatPtr(0.0), // zero value but not nil
 				Center: nil,           // nil slice
 				Width:  "",            // empty string
 			},
-			expected: []string{"MinY"},
+			expected: []string{"Bottom"},
 		},
 	}
 
@@ -494,27 +494,27 @@ func TestInputParams_EdgeCases(t *testing.T) {
 			name: "Empty center slice",
 			params: InputParams{
 				Center: []float64{}, // empty slice, should not trigger CenterBuilder
-				MinX:   floatPtr(1.0),
-				MaxX:   floatPtr(5.0),
-				MinY:   floatPtr(2.0),
-				MaxY:   floatPtr(8.0),
+				Left:   floatPtr(1.0),
+				Right:   floatPtr(5.0),
+				Bottom:   floatPtr(2.0),
+				Top:   floatPtr(8.0),
 			},
 			expectError: false, // Should use BoundsBuilder instead
 		},
 		{
 			name: "Zero value coordinates",
 			params: InputParams{
-				MinX: floatPtr(0.0), // zero value but not nil
-				MaxX: floatPtr(1.0),
-				MinY: floatPtr(0.0),
-				MaxY: floatPtr(1.0),
+				Left: floatPtr(0.0), // zero value but not nil
+				Right: floatPtr(1.0),
+				Bottom: floatPtr(0.0),
+				Top: floatPtr(1.0),
 			},
 			expectError: false,
 		},
 		{
 			name: "Single coordinate with zero value",
 			params: InputParams{
-				MinX: floatPtr(0.0), // only one coordinate set
+				Left: floatPtr(0.0), // only one coordinate set
 			},
 			expectError: true,
 			errorMsg:    "min specified without max or length",
