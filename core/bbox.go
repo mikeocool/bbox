@@ -37,3 +37,18 @@ func (b Bbox) Polygon() [][2]float64 {
 		{b.Left, b.Bottom},  // bottom-left (close the polygon)
 	}
 }
+
+// Bounds returns the bounding box as a list of the bounds
+func (b Bbox) Bounds() []float64 {
+	return []float64{
+		b.Left,
+		b.Bottom, // bottom-left
+		b.Right,
+		b.Top, // top-right
+	}
+}
+
+// IsZero returns true if the bounding box has zero coordinates.
+func (b Bbox) IsZero() bool {
+	return b.Left == 0 && b.Bottom == 0 && b.Right == 0 && b.Top == 0
+}

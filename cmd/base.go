@@ -29,7 +29,7 @@ func runBase(cmd *cobra.Command, args []string) {
 	if drawFlag {
 		// Start the drawing server
 		// TODO pass in bbox is it's set
-		bbox, err = core.StartDrawServer()
+		bbox, err = core.StartDrawServer(bbox)
 		if err != nil {
 			log.Fatalf("Error running draw server: %v", err)
 		}

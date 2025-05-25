@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net"
@@ -24,9 +25,13 @@ type DrawServer struct {
 	Port int
 }
 
+type TemplateContext struct {
+	Bbox Bbox
+}
+
 // StartDrawServer starts a web server for drawing bounding boxes.
 // It returns the received bounding box data as a Bbox struct.
-func StartDrawServer() (Bbox, error) {
+func StartDrawServer(bbox Bbox) (Bbox, error) {
 	// Find the first available port starting from 5000
 	port := findAvailablePort(5000)
 	if port == 0 {
@@ -37,17 +42,30 @@ func StartDrawServer() (Bbox, error) {
 		Port: port,
 	}
 
-	return server.Start()
+	return server.Start(bbox)
 }
 
 // Start starts the web server and returns the bounding box data when received
-func (s *DrawServer) Start() (Bbox, error) {
+func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	// Create a server with the UI handler
 	mux := http.NewServeMux()
 
+	// Parse the HTML template
+	tmpl, err := template.New("draw").Parse(string(drawHTML))
+	if err != nil {
+		return Bbox{}, fmt.Errorf("failed to parse template: %v", err)
+	}
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write(drawHTML)
+		err := tmpl.Execute(w, TemplateContext{
+			Bbox: inputBbox,
+		})
+		if err != nil {
+			log.Printf("Failed to execute template: %v", err)
+			http.Error(w, "Failed to render template", http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Create a channel to receive the bounding box data

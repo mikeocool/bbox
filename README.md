@@ -65,7 +65,7 @@ Output formats:
 -o "template={{.MinX}} {{.MinY}}"
 
 # TODO
-* draw with bbox populated from cli
+* draw with bbox populated from cli - https://terradraw.water-gis.com/examples/add-geojson#2.5/6.25/18.28
 * raw input
 * raw input from stdin
 * place input

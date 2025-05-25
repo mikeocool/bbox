@@ -44,6 +44,13 @@
     <button id="done-button" disabled>Done</button>
 
     <script>
+        {{if not .Bbox.IsZero}}
+            const bboxBounds = {{.Bbox.Bounds}};
+            const bboxPolygonCoords = {{.Bbox.Polygon}};
+        {{else}}
+            const bboxBounds = null;
+            const bboxPolygonCoords = null;
+        {{end}}
         // Initialize the map with OpenStreetMap tiles
         const map = new maplibregl.Map({
             container: 'map',
@@ -119,6 +126,29 @@
             }
         });
 
+        map.once('load', () => {
+            const drawInstance = drawControl.getTerraDrawInstance();
+            if(bboxPolygonCoords) {
+                if(drawInstance) {
+                    drawInstance?.addFeatures([{
+                        id: '6b438f48-f6da-4649-9212-76f5a1506296',
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [bboxPolygonCoords]
+                        },
+                        properties: {
+							mode: 'rectangle'
+						}
+                    }]);
+                }
+
+                map.fitBounds(bboxBounds, {padding: 50, duration: 1000, // Animation duration in milliseconds
+                  essential: true});
+            }
+
+        });
+
         // Handle the "Done" button click
         doneButton.addEventListener('click', function() {
             if (drawnRectangle) {
@@ -158,6 +188,8 @@
                 });
             }
         });
+
+
     </script>
 </body>
 </html>
