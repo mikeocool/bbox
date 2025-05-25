@@ -68,7 +68,9 @@ func init() {
 
 func runRoot(cmd *cobra.Command, args []string) {
 	// Create a bounding box from input parameters
-	if len(args) > 0 {
+	if input.IsInputFromPipe() {
+		inputParams.Raw = os.Stdin
+	} else if len(args) > 0 {
 		inputParams.Raw = strings.NewReader(strings.Join(args, " "))
 	}
 

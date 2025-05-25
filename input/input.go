@@ -261,7 +261,7 @@ func isFieldEmpty(p *InputParams, fieldName string) bool {
 	}
 }
 
-func isInputFromPipe() bool {
+func IsInputFromPipe() bool {
 	fileInfo, _ := os.Stdin.Stat()
 	return fileInfo.Mode()&os.ModeCharDevice == 0
 }
