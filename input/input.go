@@ -3,6 +3,8 @@ package input
 import (
 	"bbox/core"
 	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"strconv"
 )
@@ -15,7 +17,7 @@ type InputParams struct {
 	Center []float64 // a pair of floats representing the center coordinates
 	Width  string
 	Height string
-	Raw    string
+	Raw    io.Reader
 	Place  string
 }
 
@@ -98,7 +100,7 @@ type BboxBuilder struct {
 
 var RawBuilder = BboxBuilder{
 	IsUsable: func(params *InputParams) bool {
-		return params.Raw != ""
+		return params.Raw != nil
 	},
 	ValidateParams: func(params *InputParams) error {
 		return nil
@@ -257,4 +259,9 @@ func isFieldEmpty(p *InputParams, fieldName string) bool {
 		// For other types, check if it's the zero value
 		return field.IsZero()
 	}
+}
+
+func isInputFromPipe() bool {
+	fileInfo, _ := os.Stdin.Stat()
+	return fileInfo.Mode()&os.ModeCharDevice == 0
 }

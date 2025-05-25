@@ -3,13 +3,20 @@ package input
 import (
 	"bbox/core"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 )
 
-func ParseRaw(input string) (core.Bbox, error) {
+func ParseRaw(input io.Reader) (core.Bbox, error) {
+	bytes, err := io.ReadAll(input)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to read input: %w", err)
+	}
+	raw := string(bytes)
+
 	// Check if input matches 4 floats separated by spaces and/or commas
-	parts := strings.FieldsFunc(input, func(c rune) bool {
+	parts := strings.FieldsFunc(raw, func(c rune) bool {
 		return c == ' ' || c == ',' || c == '\t'
 	})
 

@@ -68,7 +68,7 @@ func init() {
 
 func runRoot(cmd *cobra.Command, args []string) {
 	// Create a bounding box from input parameters
-	inputParams.Raw = strings.Join(args, " ")
+	inputParams.Raw = strings.NewReader(strings.Join(args, " "))
 	bbox, err := inputParams.GetBbox()
 	if err != nil {
 		var noUsableBuilderError input.NoUsableBuilderError
