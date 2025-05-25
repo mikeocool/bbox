@@ -3,8 +3,15 @@ go build
 ./bbox draw
 ```
 
+Unit Tests
 ```
 go test -v ./...
+```
+
+Integration Tests
+```
+./integration_tests/setup.sh
+bats integration_tests
 ```
 
 CLI examples:
