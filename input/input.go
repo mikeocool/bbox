@@ -1,10 +1,10 @@
-package core
+package input
 
 import (
+	"bbox/core"
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 type InputParams struct {
@@ -26,7 +26,7 @@ func (params *InputParams) HasAnyCoordinates() bool {
 	return params.Left != nil || params.Bottom != nil || params.Right != nil || params.Top != nil
 }
 
-func (params *InputParams) GetBbox() (Bbox, error) {
+func (params *InputParams) GetBbox() (core.Bbox, error) {
 	builders := []BboxBuilder{
 		RawBuilder,
 		PlaceBuilder,
@@ -39,7 +39,7 @@ func (params *InputParams) GetBbox() (Bbox, error) {
 			return buildBbox(builders[i], params)
 		}
 	}
-	return Bbox{}, NoUsableBuilderError{}
+	return core.Bbox{}, NoUsableBuilderError{}
 }
 
 func (p *InputParams) getSetFields() []string {
@@ -54,7 +54,7 @@ func (p *InputParams) getSetFields() []string {
 	return fields
 }
 
-func buildBbox(builder BboxBuilder, params *InputParams) (Bbox, error) {
+func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 	usedFieldsSet := make(map[string]bool)
 	for _, field := range builder.UsedFields {
 		usedFieldsSet[field] = true
@@ -63,12 +63,12 @@ func buildBbox(builder BboxBuilder, params *InputParams) (Bbox, error) {
 	setFields := params.getSetFields()
 	for _, field := range setFields {
 		if !usedFieldsSet[field] {
-			return Bbox{}, fmt.Errorf("Unexpected argument: %s with %s", field, builder.Name)
+			return core.Bbox{}, fmt.Errorf("Unexpected argument: %s with %s", field, builder.Name)
 		}
 	}
 
 	if err := builder.ValidateParams(params); err != nil {
-		return Bbox{}, err
+		return core.Bbox{}, err
 	}
 	return builder.Build(params)
 }
@@ -93,7 +93,7 @@ type BboxBuilder struct {
 	IsUsable       func(*InputParams) bool
 	ValidateParams func(*InputParams) error
 	UsedFields     []string
-	Build          func(*InputParams) (Bbox, error)
+	Build          func(*InputParams) (core.Bbox, error)
 }
 
 var RawBuilder = BboxBuilder{
@@ -104,44 +104,9 @@ var RawBuilder = BboxBuilder{
 		return nil
 	},
 	UsedFields: []string{"Raw"},
-	Build: func(params *InputParams) (Bbox, error) {
+	Build: func(params *InputParams) (core.Bbox, error) {
 		return ParseRaw(params.Raw)
 	},
-}
-
-func ParseRaw(input string) (Bbox, error) {
-	// Check if input matches 4 floats separated by spaces and/or commas
-	parts := strings.FieldsFunc(input, func(c rune) bool {
-		return c == ' ' || c == ',' || c == '\t'
-	})
-
-	// Filter out empty strings
-	var validParts []string
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			validParts = append(validParts, part)
-		}
-	}
-
-	if len(validParts) == 4 {
-		var floats [4]float64
-		for i, part := range validParts {
-			val, err := strconv.ParseFloat(part, 64)
-			if err != nil {
-				return Bbox{}, fmt.Errorf("invalid float at position %d: %s", i+1, part)
-			}
-			floats[i] = val
-		}
-
-		return Bbox{
-			Left:   floats[0],
-			Bottom: floats[1],
-			Right:  floats[2],
-			Top:    floats[3],
-		}, nil
-	}
-	return Bbox{}, nil // TODO
 }
 
 var PlaceBuilder = BboxBuilder{
@@ -159,8 +124,8 @@ var PlaceBuilder = BboxBuilder{
 		return nil
 	},
 	UsedFields: []string{"Place", "Width", "Height"},
-	Build: func(params *InputParams) (Bbox, error) {
-		return Bbox{}, nil // TODO
+	Build: func(params *InputParams) (core.Bbox, error) {
+		return core.Bbox{}, nil // TODO
 	},
 }
 
@@ -182,18 +147,18 @@ var CenterBuilder = BboxBuilder{
 		return nil
 	},
 	UsedFields: []string{"Center", "Width", "Height"},
-	Build: func(params *InputParams) (Bbox, error) {
+	Build: func(params *InputParams) (core.Bbox, error) {
 		width, err := strconv.ParseFloat(params.Width, 64)
 		if err != nil {
-			return Bbox{}, err
+			return core.Bbox{}, err
 		}
 
 		height, err := strconv.ParseFloat(params.Height, 64)
 		if err != nil {
-			return Bbox{}, err
+			return core.Bbox{}, err
 		}
 
-		return Bbox{
+		return core.Bbox{
 			Left:   params.Center[0] - width/2,
 			Bottom: params.Center[1] - height/2,
 			Right:  params.Center[0] + width/2,
@@ -217,11 +182,11 @@ var BoundsBuilder = BboxBuilder{
 		return nil
 	},
 	UsedFields: []string{"Left", "Bottom", "Right", "Top", "Width", "Height"},
-	Build: func(params *InputParams) (Bbox, error) {
+	Build: func(params *InputParams) (core.Bbox, error) {
 		left, right := getBoundsPair(params.Left, params.Right, params.Width)
 		bottom, top := getBoundsPair(params.Bottom, params.Top, params.Height)
 
-		return Bbox{
+		return core.Bbox{
 			Left:   left,
 			Right:  right,
 			Bottom: bottom,

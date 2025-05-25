@@ -65,7 +65,9 @@ Output formats:
 -o "template={{.MinX}} {{.MinY}}"
 
 # TODO
-* raw input - more options, dont require quotes
+* fix god mod name
+* raw input - more options
+    * geojson -- accept list, feature collection, feature, polygon or just coords
 * raw input from stdin
 * place input
 * file input

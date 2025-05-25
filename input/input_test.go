@@ -1,6 +1,7 @@
-package core
+package input
 
 import (
+	"bbox/core"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 		params      InputParams
 		expectError bool
 		errorMsg    string
-		expectBbox  *Bbox
+		expectBbox  *core.Bbox
 	}{
 		// RawBuilder tests
 		{
@@ -19,7 +20,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Raw: "some raw data",
 			},
 			expectError: false,
-			expectBbox:  &Bbox{}, // RawBuilder returns empty Bbox
+			expectBbox:  &core.Bbox{}, // RawBuilder returns empty Bbox
 		},
 		{
 			name: "RawBuilder - with unexpected field",
@@ -40,7 +41,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Height: "200",
 			},
 			expectError: false,
-			expectBbox:  &Bbox{}, // PlaceBuilder returns empty Bbox
+			expectBbox:  &core.Bbox{}, // PlaceBuilder returns empty Bbox
 		},
 		{
 			name: "PlaceBuilder - missing width",
@@ -81,11 +82,11 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Height: "6",
 			},
 			expectError: false,
-			expectBbox: &Bbox{
-				Left: 8.0,  // 10.0 - 4/2
+			expectBbox: &core.Bbox{
+				Left:   8.0,  // 10.0 - 4/2
 				Bottom: 17.0, // 20.0 - 6/2
-				Right: 12.0, // 10.0 + 4/2
-				Top: 23.0, // 20.0 + 6/2
+				Right:  12.0, // 10.0 + 4/2
+				Top:    23.0, // 20.0 + 6/2
 			},
 		},
 		{
@@ -139,17 +140,17 @@ func TestInputParams_GetBbox(t *testing.T) {
 		{
 			name: "BoundsBuilder - Left and Right",
 			params: InputParams{
-				Left: floatPtr(1.0),
-				Right: floatPtr(5.0),
+				Left:   floatPtr(1.0),
+				Right:  floatPtr(5.0),
 				Bottom: floatPtr(2.0),
-				Top: floatPtr(8.0),
+				Top:    floatPtr(8.0),
 			},
 			expectError: false,
-			expectBbox: &Bbox{
-				Left: 1.0,
-				Right: 5.0,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Right:  5.0,
 				Bottom: 2.0,
-				Top: 8.0,
+				Top:    8.0,
 			},
 		},
 		{
@@ -157,31 +158,31 @@ func TestInputParams_GetBbox(t *testing.T) {
 			params: InputParams{
 				Left:   floatPtr(1.0),
 				Width:  "4",
-				Bottom:   floatPtr(2.0),
+				Bottom: floatPtr(2.0),
 				Height: "6",
 			},
 			expectError: false,
-			expectBbox: &Bbox{
-				Left: 1.0,
-				Right: 5.0, // 1.0 + 4
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Right:  5.0, // 1.0 + 4
 				Bottom: 2.0,
-				Top: 8.0, // 2.0 + 6
+				Top:    8.0, // 2.0 + 6
 			},
 		},
 		{
 			name: "BoundsBuilder - Right and Width",
 			params: InputParams{
-				Right:   floatPtr(5.0),
+				Right:  floatPtr(5.0),
 				Width:  "4",
-				Top:   floatPtr(8.0),
+				Top:    floatPtr(8.0),
 				Height: "6",
 			},
 			expectError: false,
-			expectBbox: &Bbox{
-				Left: 1.0, // 5.0 - 4
-				Right: 5.0,
+			expectBbox: &core.Bbox{
+				Left:   1.0, // 5.0 - 4
+				Right:  5.0,
 				Bottom: 2.0, // 8.0 - 6
-				Top: 8.0,
+				Top:    8.0,
 			},
 		},
 		{
@@ -203,11 +204,11 @@ func TestInputParams_GetBbox(t *testing.T) {
 		{
 			name: "BoundsBuilder - Left, Right and Width (invalid)",
 			params: InputParams{
-				Left:  floatPtr(1.0),
+				Left:   floatPtr(1.0),
 				Right:  floatPtr(5.0),
-				Width: "4",
-				Bottom:  floatPtr(2.0),
-				Top:  floatPtr(8.0),
+				Width:  "4",
+				Bottom: floatPtr(2.0),
+				Top:    floatPtr(8.0),
 			},
 			expectError: true,
 			errorMsg:    "must specify only two of: min, max, and length",
@@ -220,8 +221,6 @@ func TestInputParams_GetBbox(t *testing.T) {
 			expectError: true,
 			errorMsg:    "no usable builder for the provided parameters",
 		},
-
-
 	}
 
 	for _, tc := range tests {
@@ -307,10 +306,10 @@ func TestInputParams_HasAnyCoordinates(t *testing.T) {
 		{
 			name: "Has all coordinates",
 			params: InputParams{
-				Left: floatPtr(1.0),
+				Left:   floatPtr(1.0),
 				Bottom: floatPtr(2.0),
-				Right: floatPtr(3.0),
-				Top: floatPtr(4.0),
+				Right:  floatPtr(3.0),
+				Top:    floatPtr(4.0),
 			},
 			expected: true,
 		},
@@ -415,9 +414,9 @@ func TestInputParams_getSetFields(t *testing.T) {
 			name: "All fields set",
 			params: InputParams{
 				Left:   floatPtr(1.0),
-				Bottom:   floatPtr(2.0),
-				Right:   floatPtr(3.0),
-				Top:   floatPtr(4.0),
+				Bottom: floatPtr(2.0),
+				Right:  floatPtr(3.0),
+				Top:    floatPtr(4.0),
 				Center: []float64{5.0, 6.0},
 				Width:  "100",
 				Height: "200",
@@ -440,7 +439,7 @@ func TestInputParams_getSetFields(t *testing.T) {
 			name: "Nil vs zero values",
 			params: InputParams{
 				Left:   nil,           // nil pointer
-				Bottom:   floatPtr(0.0), // zero value but not nil
+				Bottom: floatPtr(0.0), // zero value but not nil
 				Center: nil,           // nil slice
 				Width:  "",            // empty string
 			},
@@ -495,19 +494,19 @@ func TestInputParams_EdgeCases(t *testing.T) {
 			params: InputParams{
 				Center: []float64{}, // empty slice, should not trigger CenterBuilder
 				Left:   floatPtr(1.0),
-				Right:   floatPtr(5.0),
-				Bottom:   floatPtr(2.0),
-				Top:   floatPtr(8.0),
+				Right:  floatPtr(5.0),
+				Bottom: floatPtr(2.0),
+				Top:    floatPtr(8.0),
 			},
 			expectError: false, // Should use BoundsBuilder instead
 		},
 		{
 			name: "Zero value coordinates",
 			params: InputParams{
-				Left: floatPtr(0.0), // zero value but not nil
-				Right: floatPtr(1.0),
+				Left:   floatPtr(0.0), // zero value but not nil
+				Right:  floatPtr(1.0),
 				Bottom: floatPtr(0.0),
-				Top: floatPtr(1.0),
+				Top:    floatPtr(1.0),
 			},
 			expectError: false,
 		},
@@ -544,216 +543,6 @@ func TestInputParams_EdgeCases(t *testing.T) {
 			if tc.expectError && tc.errorMsg != "" && err != nil {
 				if err.Error() != tc.errorMsg {
 					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
-				}
-			}
-		})
-	}
-}
-
-func TestParseRaw(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expectError bool
-		errorMsg    string
-		expectBbox  *Bbox
-	}{
-		// Valid inputs
-		{
-			name:  "Valid input - space separated",
-			input: "1.0 2.0 3.0 4.0",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   1.0,
-				Bottom: 2.0,
-				Right:  3.0,
-				Top:    4.0,
-			},
-		},
-		{
-			name:  "Valid input - comma separated",
-			input: "1.5,2.5,3.5,4.5",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   1.5,
-				Bottom: 2.5,
-				Right:  3.5,
-				Top:    4.5,
-			},
-		},
-		{
-			name:  "Valid input - tab separated",
-			input: "10\t20\t30\t40",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   10.0,
-				Bottom: 20.0,
-				Right:  30.0,
-				Top:    40.0,
-			},
-		},
-		{
-			name:  "Valid input - mixed separators",
-			input: "1.0, 2.0\t3.0 4.0",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   1.0,
-				Bottom: 2.0,
-				Right:  3.0,
-				Top:    4.0,
-			},
-		},
-		{
-			name:  "Valid input - extra whitespace",
-			input: "  1.0  ,  2.0  ,  3.0  ,  4.0  ",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   1.0,
-				Bottom: 2.0,
-				Right:  3.0,
-				Top:    4.0,
-			},
-		},
-		{
-			name:  "Valid input - negative numbers",
-			input: "-1.0 -2.0 3.0 4.0",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   -1.0,
-				Bottom: -2.0,
-				Right:  3.0,
-				Top:    4.0,
-			},
-		},
-		{
-			name:  "Valid input - zero values",
-			input: "0 0 0 0",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   0.0,
-				Bottom: 0.0,
-				Right:  0.0,
-				Top:    0.0,
-			},
-		},
-		{
-			name:  "Valid input - scientific notation",
-			input: "1e2 2.5e1 3.0E0 4e-1",
-			expectError: false,
-			expectBbox: &Bbox{
-				Left:   100.0,
-				Bottom: 25.0,
-				Right:  3.0,
-				Top:    0.4,
-			},
-		},
-
-		// Invalid inputs - parsing errors
-		{
-			name:        "Invalid float at position 1",
-			input:       "abc 2.0 3.0 4.0",
-			expectError: true,
-			errorMsg:    "invalid float at position 1: abc",
-		},
-		{
-			name:        "Invalid float at position 2",
-			input:       "1.0 xyz 3.0 4.0",
-			expectError: true,
-			errorMsg:    "invalid float at position 2: xyz",
-		},
-		{
-			name:        "Invalid float at position 3",
-			input:       "1.0 2.0 def 4.0",
-			expectError: true,
-			errorMsg:    "invalid float at position 3: def",
-		},
-		{
-			name:        "Invalid float at position 4",
-			input:       "1.0 2.0 3.0 ghi",
-			expectError: true,
-			errorMsg:    "invalid float at position 4: ghi",
-		},
-
-		// Inputs that return empty Bbox (not exactly 4 parts)
-		{
-			name:  "Too few numbers - 3 values",
-			input: "1.0 2.0 3.0",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Too many numbers - 5 values",
-			input: "1.0 2.0 3.0 4.0 5.0",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Single number",
-			input: "1.0",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Empty input",
-			input: "",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Only whitespace",
-			input: "   \t  \n  ",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Only separators",
-			input: ", , ,",
-			expectError: false,
-			expectBbox: &Bbox{}, // Empty Bbox
-		},
-		{
-			name:  "Mixed valid and empty parts",
-			input: "1.0, , 3.0, 4.0",
-			expectError: false,
-			expectBbox: &Bbox{}, // Only 3 valid parts
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			bbox, err := ParseRaw(tc.input)
-
-			// Check error status
-			if tc.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-				return
-			}
-			if !tc.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
-			}
-
-			// If expecting an error, verify the error message
-			if tc.expectError && err != nil {
-				if tc.errorMsg != "" && err.Error() != tc.errorMsg {
-					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
-				}
-				return
-			}
-
-			// If not expecting an error, verify the bbox
-			if tc.expectBbox != nil {
-				if bbox.Left != tc.expectBbox.Left {
-					t.Errorf("Expected Left %f but got %f", tc.expectBbox.Left, bbox.Left)
-				}
-				if bbox.Bottom != tc.expectBbox.Bottom {
-					t.Errorf("Expected Bottom %f but got %f", tc.expectBbox.Bottom, bbox.Bottom)
-				}
-				if bbox.Right != tc.expectBbox.Right {
-					t.Errorf("Expected Right %f but got %f", tc.expectBbox.Right, bbox.Right)
-				}
-				if bbox.Top != tc.expectBbox.Top {
-					t.Errorf("Expected Top %f but got %f", tc.expectBbox.Top, bbox.Top)
 				}
 			}
 		})

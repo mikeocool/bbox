@@ -1,16 +1,20 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 
 	"bbox/core"
+	"bbox/input"
 
 	"github.com/spf13/cobra"
 )
 
 // Flag variables
-var inputParams core.InputParams
+var inputParams input.InputParams
 var drawFlag bool
 var outputFormat string
 
@@ -20,7 +24,7 @@ var RootCmd = &cobra.Command{
 	Short: "A CLI application for bounding box operations",
 	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
 	Args:  cobra.ArbitraryArgs,
-	Run:   runBase,
+	Run:   runRoot,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,4 +64,39 @@ func init() {
 			inputParams.Top = &top
 		}
 	}
+}
+
+func runRoot(cmd *cobra.Command, args []string) {
+	// Create a bounding box from input parameters
+	inputParams.Raw = strings.Join(args, " ")
+	bbox, err := inputParams.GetBbox()
+	if err != nil {
+		var noUsableBuilderError input.NoUsableBuilderError
+		if errors.As(err, &noUsableBuilderError) {
+			// If no usable builder is found and we're not drawing, print usage and exit
+			if !drawFlag {
+				cmd.Usage()
+				return
+			}
+		} else {
+			log.Fatalf("Error creating bounding box: %v", err)
+		}
+	}
+
+	if drawFlag {
+		// Start the drawing server
+		// TODO pass in bbox is it's set
+		bbox, err = core.StartDrawServer(bbox)
+		if err != nil {
+			log.Fatalf("Error running draw server: %v", err)
+		}
+	}
+
+	formatted, err := core.Format(bbox, outputFormat)
+	if err != nil {
+		log.Fatalf("Error formatting bounding box: %v", err)
+	}
+
+	// Output the formatted bounding box
+	fmt.Println(formatted)
 }
