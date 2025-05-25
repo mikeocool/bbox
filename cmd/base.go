@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"bbox/core"
 
@@ -12,6 +13,7 @@ import (
 
 func runBase(cmd *cobra.Command, args []string) {
 	// Create a bounding box from input parameters
+	inputParams.Raw = strings.Join(args, " ")
 	bbox, err := inputParams.GetBbox()
 	if err != nil {
 		var noUsableBuilderError core.NoUsableBuilderError

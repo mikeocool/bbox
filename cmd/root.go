@@ -19,6 +19,7 @@ var RootCmd = &cobra.Command{
 	Use:   "bbox",
 	Short: "A CLI application for bounding box operations",
 	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
+	Args:  cobra.ArbitraryArgs,
 	Run:   runBase,
 }
 
@@ -40,7 +41,6 @@ func init() {
 	RootCmd.Flags().Float64SliceVar(&inputParams.Center, "center", []float64{}, "Center coordinates [x,y] of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Width, "width", "", "Width of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
-	RootCmd.Flags().StringVar(&inputParams.Raw, "raw", "", "Raw data for bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.Flags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 	RootCmd.Flags().StringVarP(&outputFormat, "output", "o", "space", "Output format or destination")

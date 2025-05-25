@@ -65,7 +65,7 @@ Output formats:
 -o "template={{.MinX}} {{.MinY}}"
 
 # TODO
-* raw input
+* raw input - more options, dont require quotes
 * raw input from stdin
 * place input
 * file input
