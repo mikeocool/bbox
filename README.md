@@ -73,16 +73,14 @@ Output formats:
 
 # TODO
 * fix god mod name
-* raw input - more options
-    * geojson -- accept list, feature collection, feature, polygon or just coords
-* raw input from stdin
-* place input
 * file input
+    * shp files
+* center + area command
+* place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
-* units on width and heightw
-* center + area command
-* handle projections
-* clean input error messaging
 * tile command
 * split command
+* units on width and heightw
+* handle projections
+* clean input error messaging
