@@ -70,11 +70,14 @@ Output formats:
 -o overpass-ql
 -o osm-url
 -o "template={{.MinX}} {{.MinY}}"
+-o kml
 
 # TODO
-* file input
-    * shp files
+* shp file input
+    * https://github.com/twpayne/go-shapefile
 * center + area command
+* addtional outputs
+    * go-template
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
@@ -85,3 +88,5 @@ Output formats:
     * https://github.com/twpayne/go-proj
     * income port(?) active 4 months ago https://github.com/go-spatial/proj
 * clean input error messaging
+* add http api
+* --grow/shrink/padding args?
