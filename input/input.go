@@ -1,11 +1,12 @@
 package input
 
 import (
-	"bbox/core"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 type InputParams struct {

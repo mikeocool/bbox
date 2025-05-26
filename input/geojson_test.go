@@ -1,8 +1,9 @@
 package input
 
 import (
-	"bbox/core"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func TestParseGeojson(t *testing.T) {

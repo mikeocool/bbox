@@ -1,11 +1,12 @@
 package input
 
 import (
-	"bbox/core"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func ParseRaw(input []byte) (core.Bbox, error) {

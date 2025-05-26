@@ -1,8 +1,9 @@
 package input
 
 import (
-	"bbox/core"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func TestInputParams_GetBbox(t *testing.T) {
@@ -19,8 +20,8 @@ func TestInputParams_GetBbox(t *testing.T) {
 			params: InputParams{
 				Raw: []byte("some raw data"),
 			},
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // RawBuilder returns empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name: "RawBuilder - with unexpected field",
@@ -523,7 +524,8 @@ func TestInputParams_EdgeCases(t *testing.T) {
 			params: InputParams{
 				Raw: []byte(" "), // whitespace should be considered non-empty
 			},
-			expectError: false, // PlaceBuilder should be used
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 	}
 

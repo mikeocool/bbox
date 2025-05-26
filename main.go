@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bbox/cmd"
+	"github.com/mikeocool/bbox/cmd"
 )
 
 func main() {

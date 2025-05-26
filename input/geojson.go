@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	"bbox/core"
+	"github.com/mikeocool/bbox/core"
 )
 
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")

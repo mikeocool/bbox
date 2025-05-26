@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"bbox/core"
-	"bbox/input"
+	"github.com/mikeocool/bbox/core"
+	"github.com/mikeocool/bbox/input"
 
 	"github.com/spf13/cobra"
 )

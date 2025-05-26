@@ -1,4 +1,4 @@
-module bbox
+module github.com/mikeocool/bbox
 
 go 1.22.12
 

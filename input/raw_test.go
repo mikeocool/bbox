@@ -1,8 +1,9 @@
 package input
 
 import (
-	"bbox/core"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func TestParseRaw(t *testing.T) {
@@ -150,44 +151,44 @@ func TestParseRaw(t *testing.T) {
 		{
 			name:        "Too few numbers - 3 values",
 			input:       "1.0 2.0 3.0",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Too many numbers - 5 values",
 			input:       "1.0 2.0 3.0 4.0 5.0",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Single number",
 			input:       "1.0",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Empty input",
 			input:       "",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Only whitespace",
 			input:       "   \t  \n  ",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Only separators",
 			input:       ", , ,",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Empty Bbox
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 		{
 			name:        "Mixed valid and empty parts",
 			input:       "1.0, , 3.0, 4.0",
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // Only 3 valid parts
+			expectError: true,
+			errorMsg:    "invalid input",
 		},
 	}
 
