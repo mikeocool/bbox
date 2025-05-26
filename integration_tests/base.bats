@@ -37,3 +37,9 @@ setup() {
     assert_output --partial "invalid input"
     assert_failure
 }
+
+@test "load file" {
+    run ./bbox --file $DIR/data/campsites.geojson
+    assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}

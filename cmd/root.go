@@ -47,6 +47,7 @@ func init() {
 	RootCmd.Flags().StringVar(&inputParams.Width, "width", "", "Width of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
 	RootCmd.Flags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
+	RootCmd.Flags().StringVar(&inputParams.File, "file", "", "Path to file to load")
 	RootCmd.Flags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 	RootCmd.Flags().StringVarP(&outputFormat, "output", "o", "space", "Output format or destination")
 

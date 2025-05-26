@@ -18,6 +18,7 @@ type InputParams struct {
 	Width  string
 	Height string
 	Raw    []byte
+	File   string
 	Place  string
 }
 
@@ -32,6 +33,7 @@ func (params *InputParams) GetBbox() (core.Bbox, error) {
 	builders := []BboxBuilder{
 		RawBuilder,
 		PlaceBuilder,
+		FileBuilder,
 		CenterBuilder,
 		BoundsBuilder,
 	}
@@ -108,6 +110,19 @@ var RawBuilder = BboxBuilder{
 	UsedFields: []string{"Raw"},
 	Build: func(params *InputParams) (core.Bbox, error) {
 		return ParseRaw(params.Raw)
+	},
+}
+
+var FileBuilder = BboxBuilder{
+	IsUsable: func(params *InputParams) bool {
+		return params.File != ""
+	},
+	ValidateParams: func(params *InputParams) error {
+		return nil
+	},
+	UsedFields: []string{"File"},
+	Build: func(params *InputParams) (core.Bbox, error) {
+		return LoadFile(params.File)
 	},
 }
 

@@ -72,7 +72,6 @@ Output formats:
 -o "template={{.MinX}} {{.MinY}}"
 
 # TODO
-* fix god mod name
 * file input
     * shp files
 * center + area command
@@ -83,4 +82,6 @@ Output formats:
 * split command
 * units on width and heightw
 * handle projections
+    * https://github.com/twpayne/go-proj
+    * income port(?) active 4 months ago https://github.com/go-spatial/proj
 * clean input error messaging
