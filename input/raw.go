@@ -51,5 +51,6 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 			Top:    floats[3],
 		}, nil
 	}
-	return core.Bbox{}, nil // TODO
+
+	return core.Bbox{}, fmt.Errorf("invalid input")
 }

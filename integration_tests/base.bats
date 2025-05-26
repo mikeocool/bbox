@@ -25,3 +25,15 @@ setup() {
     assert_output "-91.020128093 48.499043895 -90.586309459 48.691033039"
     assert_success
 }
+
+@test "stdin geojson file" {
+    run /bin/bash -c "cat $DIR/data/campsites.geojson | ./bbox"
+    assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}
+
+@test "invalid stdin" {
+    run /bin/bash -c "echo '' | ./bbox"
+    assert_output --partial "invalid input"
+    assert_failure
+}
