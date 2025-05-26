@@ -2,21 +2,26 @@ package input
 
 import (
 	"bbox/core"
+	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 )
 
-func ParseRaw(input io.Reader) (core.Bbox, error) {
-	bytes, err := io.ReadAll(input)
+func ParseRaw(input []byte) (core.Bbox, error) {
+	bbox, err := ParseGeojson(input)
 	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to read input: %w", err)
+		if !errors.Is(err, ErrCouldNotParseGeoJSON) {
+			fmt.Println("Failed to parse GeoJSON")
+			return core.Bbox{}, err
+		}
+		// Continue to try other parsing methods
+	} else {
+		return bbox, nil
 	}
-	raw := string(bytes)
 
 	// Check if input matches 4 floats separated by spaces and/or commas
-	parts := strings.FieldsFunc(raw, func(c rune) bool {
+	parts := strings.FieldsFunc(string(input), func(c rune) bool {
 		return c == ' ' || c == ',' || c == '\t'
 	})
 

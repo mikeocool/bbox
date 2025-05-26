@@ -2,7 +2,6 @@ package input
 
 import (
 	"bbox/core"
-	"strings"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 		{
 			name: "RawBuilder - valid",
 			params: InputParams{
-				Raw: strings.NewReader("some raw data"),
+				Raw: []byte("some raw data"),
 			},
 			expectError: false,
 			expectBbox:  &core.Bbox{}, // RawBuilder returns empty Bbox
@@ -26,7 +25,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 		{
 			name: "RawBuilder - with unexpected field",
 			params: InputParams{
-				Raw:   strings.NewReader("some raw data"),
+				Raw:   []byte("some raw data"),
 				Place: "unexpected",
 			},
 			expectError: true,
@@ -421,7 +420,7 @@ func TestInputParams_getSetFields(t *testing.T) {
 				Center: []float64{5.0, 6.0},
 				Width:  "100",
 				Height: "200",
-				Raw:    strings.NewReader("raw data"),
+				Raw:    []byte("raw data"),
 				Place:  "New York",
 			},
 			expected: []string{"Left", "Bottom", "Right", "Top", "Center", "Width", "Height", "Raw", "Place"},
@@ -429,10 +428,10 @@ func TestInputParams_getSetFields(t *testing.T) {
 		{
 			name: "Mixed field types",
 			params: InputParams{
-				Left:   floatPtr(0.0),             // zero value pointer should still count as set
-				Center: []float64{},               // empty slice should be considered empty
-				Width:  "",                        // empty string should be considered empty
-				Raw:    strings.NewReader("data"), // non-empty string
+				Left:   floatPtr(0.0),  // zero value pointer should still count as set
+				Center: []float64{},    // empty slice should be considered empty
+				Width:  "",             // empty string should be considered empty
+				Raw:    []byte("data"), // non-empty string
 			},
 			expected: []string{"Left", "Raw"},
 		},
@@ -522,7 +521,7 @@ func TestInputParams_EdgeCases(t *testing.T) {
 		{
 			name: "String fields with whitespace",
 			params: InputParams{
-				Raw: strings.NewReader(" "), // whitespace should be considered non-empty
+				Raw: []byte(" "), // whitespace should be considered non-empty
 			},
 			expectError: false, // PlaceBuilder should be used
 		},

@@ -2,11 +2,14 @@ package input
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
 	"bbox/core"
 )
+
+var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
 
 // ParseGeojson parses various GeoJSON formats and returns the bounding box of all features.
 // Supported formats:
@@ -16,18 +19,18 @@ import (
 // - Single Polygon
 // - 3D coordinate array (polygon with rings): [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
-func ParseGeojson(data []byte) (core.Bbox, error) {
+func ParseGeojson(input []byte) (core.Bbox, error) {
 	var bbox core.Bbox
 
 	// Try parsing as FeatureCollection
 	var featureCollection FeatureCollection
-	if err := json.Unmarshal(data, &featureCollection); err == nil && featureCollection.Type == "FeatureCollection" {
+	if err := json.Unmarshal(input, &featureCollection); err == nil && featureCollection.Type == "FeatureCollection" {
 		return calculateBboxFromFeatures(featureCollection.Features)
 	}
 
 	// Try parsing as array of Features
 	var features []Feature
-	if err := json.Unmarshal(data, &features); err == nil && len(features) > 0 {
+	if err := json.Unmarshal(input, &features); err == nil && len(features) > 0 {
 		// Verify it's actually an array of features
 		if isValidFeatureArray(features) {
 			return calculateBboxFromFeatures(features)
@@ -36,30 +39,30 @@ func ParseGeojson(data []byte) (core.Bbox, error) {
 
 	// Try parsing as single Feature
 	var feature Feature
-	if err := json.Unmarshal(data, &feature); err == nil && feature.Type == "Feature" {
+	if err := json.Unmarshal(input, &feature); err == nil && feature.Type == "Feature" {
 		return calculateBboxFromFeatures([]Feature{feature})
 	}
 
 	// Try parsing as Polygon
 	var polygon Polygon
-	if err := json.Unmarshal(data, &polygon); err == nil && polygon.Type == "Polygon" {
+	if err := json.Unmarshal(input, &polygon); err == nil && polygon.Type == "Polygon" {
 		return calculateBboxFromCoordinates(polygon.Coordinates)
 	}
 
 	// Try parsing as raw coordinates (3D array for polygon)
 	var coordinates [][][]float64
-	if err := json.Unmarshal(data, &coordinates); err == nil && len(coordinates) > 0 {
+	if err := json.Unmarshal(input, &coordinates); err == nil && len(coordinates) > 0 {
 		return calculateBboxFromCoordinates(coordinates)
 	}
 
 	// Try parsing as 2D array (single ring)
 	var coordinates2D [][]float64
-	if err := json.Unmarshal(data, &coordinates2D); err == nil && len(coordinates2D) > 0 {
+	if err := json.Unmarshal(input, &coordinates2D); err == nil && len(coordinates2D) > 0 {
 		// Wrap in an additional array to make it a 3D array
 		return calculateBboxFromCoordinates([][][]float64{coordinates2D})
 	}
 
-	return bbox, fmt.Errorf("unable to parse input as valid GeoJSON format")
+	return bbox, ErrCouldNotParseGeoJSON
 }
 
 // GeoJSON type definitions

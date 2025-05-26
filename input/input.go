@@ -3,7 +3,6 @@ package input
 import (
 	"bbox/core"
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 	"strconv"
@@ -17,7 +16,7 @@ type InputParams struct {
 	Center []float64 // a pair of floats representing the center coordinates
 	Width  string
 	Height string
-	Raw    io.Reader
+	Raw    []byte
 	Place  string
 }
 

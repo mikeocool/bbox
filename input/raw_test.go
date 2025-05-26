@@ -2,7 +2,6 @@ package input
 
 import (
 	"bbox/core"
-	"strings"
 	"testing"
 )
 
@@ -177,8 +176,7 @@ func TestParseRaw(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			reader := strings.NewReader(tc.input)
-			bbox, err := ParseRaw(reader)
+			bbox, err := ParseRaw([]byte(tc.input))
 
 			// Check error status
 			if tc.expectError && err == nil {

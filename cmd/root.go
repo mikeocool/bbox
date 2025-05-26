@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -69,9 +70,13 @@ func init() {
 func runRoot(cmd *cobra.Command, args []string) {
 	// Create a bounding box from input parameters
 	if input.IsInputFromPipe() {
-		inputParams.Raw = os.Stdin
+		stdinBytes, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("Error reading from stdin: %v", err)
+		}
+		inputParams.Raw = stdinBytes
 	} else if len(args) > 0 {
-		inputParams.Raw = strings.NewReader(strings.Join(args, " "))
+		inputParams.Raw = []byte(strings.Join(args, " "))
 	}
 
 	bbox, err := inputParams.GetBbox()
