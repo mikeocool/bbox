@@ -102,8 +102,25 @@ func TestParseRaw(t *testing.T) {
 				Top:    0.4,
 			},
 		},
+		{
+			name:        "Valid GeoJSON - Point feature",
+			input:       `{"type":"Feature","geometry":{"type":"Point","coordinates":[1.0,2.0]}}`,
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+		},
 
 		// Invalid inputs - parsing errors
+		{
+			name:        "Valid JSON but invalid GeoJSON - empty FeatureCollection",
+			input:       `{"type":"FeatureCollection","features":[]}`,
+			expectError: true,
+			errorMsg:    "no features found",
+		},
 		{
 			name:        "Invalid float at position 1",
 			input:       "abc 2.0 3.0 4.0",
