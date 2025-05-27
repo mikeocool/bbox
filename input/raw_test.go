@@ -49,6 +49,17 @@ func TestParseRaw(t *testing.T) {
 			},
 		},
 		{
+			name:        "Valid input - ending in new line",
+			input:       "10 20 30 40\n",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   10.0,
+				Bottom: 20.0,
+				Right:  30.0,
+				Top:    40.0,
+			},
+		},
+		{
 			name:        "Valid input - mixed separators",
 			input:       "1.0, 2.0\t3.0 4.0",
 			expectError: false,
@@ -104,6 +115,29 @@ func TestParseRaw(t *testing.T) {
 			},
 		},
 		{
+			name:        "Valid input - list of points",
+			input:       "1.0 1.0\n2.0 4.0\n2.0 6.0\n3.0 8.0\n",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    8.0,
+			},
+		},
+		{
+			name:        "Valid input - list of points comma separated",
+			input:       "1.0,1.0\n2.0,4.0\n2.0,6.0\n3.0,8.0",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    8.0,
+			},
+		},
+
+		{
 			name:        "Valid GeoJSON - Point feature",
 			input:       `{"type":"Feature","geometry":{"type":"Point","coordinates":[1.0,2.0]}}`,
 			expectError: false,
@@ -123,31 +157,11 @@ func TestParseRaw(t *testing.T) {
 			errorMsg:    "no features found",
 		},
 		{
-			name:        "Invalid float at position 1",
-			input:       "abc 2.0 3.0 4.0",
-			expectError: true,
-			errorMsg:    "invalid float at position 1: abc",
-		},
-		{
 			name:        "Invalid float at position 2",
 			input:       "1.0 xyz 3.0 4.0",
 			expectError: true,
-			errorMsg:    "invalid float at position 2: xyz",
+			errorMsg:    "could not parse value: xyz",
 		},
-		{
-			name:        "Invalid float at position 3",
-			input:       "1.0 2.0 def 4.0",
-			expectError: true,
-			errorMsg:    "invalid float at position 3: def",
-		},
-		{
-			name:        "Invalid float at position 4",
-			input:       "1.0 2.0 3.0 ghi",
-			expectError: true,
-			errorMsg:    "invalid float at position 4: ghi",
-		},
-
-		// Inputs that return empty Bbox (not exactly 4 parts)
 		{
 			name:        "Too few numbers - 3 values",
 			input:       "1.0 2.0 3.0",
@@ -189,6 +203,29 @@ func TestParseRaw(t *testing.T) {
 			input:       "1.0, , 3.0, 4.0",
 			expectError: true,
 			errorMsg:    "invalid input",
+		},
+		{
+			name: "Lines with 2 and 4 values",
+			input: `
+				1.0 2.0
+				3.0 4.0 5.0 6.0
+			`,
+			expectError: true,
+			errorMsg:    "invalid input",
+		},
+		{
+			name: "Lines with 2 and 4 values",
+			input: `
+				1.0 2.0
+				3.0 4.0 5.0 6.0
+			`,
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  5.0,
+				Top:    6.0,
+			},
 		},
 	}
 

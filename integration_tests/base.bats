@@ -26,6 +26,12 @@ setup() {
     assert_success
 }
 
+@test "stdin newlines input" {
+    run /bin/bash -c "echo -e '1.0 1.0\n2.0 4.0\n3.0 1.0\n' | ./bbox"
+    assert_output "1 1 3 4"
+    assert_success
+}
+
 @test "stdin geojson file" {
     run /bin/bash -c "cat $DIR/data/campsites.geojson | ./bbox"
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"

@@ -1,6 +1,8 @@
 package input
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,6 +12,7 @@ import (
 )
 
 func ParseRaw(input []byte) (core.Bbox, error) {
+	// attempt to parse as a GeoJSON document
 	bbox, err := ParseGeojson(input)
 	if err != nil {
 		if !errors.Is(err, ErrCouldNotParseGeoJSON) {
@@ -21,37 +24,75 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 		return bbox, nil
 	}
 
-	// Check if input matches 4 floats separated by spaces and/or commas
-	parts := strings.FieldsFunc(string(input), func(c rune) bool {
+	var rbbox *core.Bbox
+
+	scanner := bufio.NewScanner(bytes.NewReader(input))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		// TODO try ParseGeojson, incase it's geojsonl
+
+		lineVals, err := parseLine(line)
+		if err != nil {
+			return core.Bbox{}, err
+		}
+
+		// TODO ensure # of vals remains consistent
+		var lineBbox core.Bbox
+		if len(lineVals) == 4 {
+			lineBbox = core.Bbox{
+				Left:   lineVals[0],
+				Bottom: lineVals[1],
+				Right:  lineVals[2],
+				Top:    lineVals[3],
+			}
+		} else if len(lineVals) == 2 {
+			lineBbox = core.Bbox{
+				Left:   lineVals[0],
+				Bottom: lineVals[1],
+				Right:  lineVals[0],
+				Top:    lineVals[1],
+			}
+		} else {
+			return core.Bbox{}, fmt.Errorf("invalid input")
+		}
+
+		if rbbox == nil {
+			rbbox = &lineBbox
+		} else {
+			updated_bbox := rbbox.Union(lineBbox)
+			rbbox = &updated_bbox
+		}
+
+	}
+
+	if rbbox == nil {
+		return core.Bbox{}, fmt.Errorf("invalid input")
+	}
+
+	return *rbbox, nil
+}
+
+func parseLine(line string) ([]float64, error) {
+	parts := strings.FieldsFunc(line, func(c rune) bool {
 		return c == ' ' || c == ',' || c == '\t'
 	})
 
 	// Filter out empty strings
-	var validParts []string
+	var floats []float64
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part != "" {
-			validParts = append(validParts, part)
-		}
-	}
-
-	if len(validParts) == 4 {
-		var floats [4]float64
-		for i, part := range validParts {
 			val, err := strconv.ParseFloat(part, 64)
 			if err != nil {
-				return core.Bbox{}, fmt.Errorf("invalid float at position %d: %s", i+1, part)
+				return nil, fmt.Errorf("could not parse value: %s", part)
 			}
-			floats[i] = val
+			floats = append(floats, val)
 		}
-
-		return core.Bbox{
-			Left:   floats[0],
-			Bottom: floats[1],
-			Right:  floats[2],
-			Top:    floats[3],
-		}, nil
 	}
 
-	return core.Bbox{}, fmt.Errorf("invalid input")
+	return floats[:], nil
 }

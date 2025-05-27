@@ -73,7 +73,7 @@ Output formats:
 -o kml
 
 # TODO
-* accept list of points (comma or space separated)
+* accept list of points on new lines (comma or space separated)
 * geojsonl
 * shp file input
     * github.com/everystreet/go-shapefile
@@ -87,10 +87,8 @@ Output formats:
     * overpass gl
     * link to OSM
     * link to google maps?
-    * custom templates
-* center + area command
-* addtional outputs
     * go-template
+* center + area command
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable

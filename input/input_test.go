@@ -18,12 +18,12 @@ func TestInputParams_GetBbox(t *testing.T) {
 	}{
 		// RawBuilder tests
 		{
-			name: "RawBuilder - valid",
+			name: "RawBuilder - invalid",
 			params: InputParams{
 				Raw: []byte("some raw data"),
 			},
 			expectError: true,
-			errorMsg:    "invalid input",
+			errorMsg:    "could not parse value: some",
 		},
 		{
 			name: "RawBuilder - with unexpected field",
