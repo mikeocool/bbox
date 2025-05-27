@@ -73,8 +73,21 @@ Output formats:
 -o kml
 
 # TODO
+* accept list of points (comma or space separated)
+* geojsonl
 * shp file input
+    * github.com/everystreet/go-shapefile
     * https://github.com/twpayne/go-shapefile
+* osm file input
+    * https://github.com/paulmach/osm
+* kml input
+* output formats
+    * lines
+    * hex wkb
+    * overpass gl
+    * link to OSM
+    * link to google maps?
+    * custom templates
 * center + area command
 * addtional outputs
     * go-template
@@ -87,6 +100,9 @@ Output formats:
 * handle projections
     * https://github.com/twpayne/go-proj
     * income port(?) active 4 months ago https://github.com/go-spatial/proj
+    * Map tiler api
+    * call out to proj
+    * implement basic projections
 * clean input error messaging
 * add http api
 * --grow/shrink/padding args?

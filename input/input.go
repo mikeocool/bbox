@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/mikeocool/bbox/core"
 )
@@ -18,7 +19,7 @@ type InputParams struct {
 	Width  string
 	Height string
 	Raw    []byte
-	File   string
+	File   []string
 	Place  string
 }
 
@@ -115,14 +116,50 @@ var RawBuilder = BboxBuilder{
 
 var FileBuilder = BboxBuilder{
 	IsUsable: func(params *InputParams) bool {
-		return params.File != ""
+		return len(params.File) > 0
 	},
 	ValidateParams: func(params *InputParams) error {
+		// Filter out blank and whitespace values
+		var validFiles []string
+		for _, file := range params.File {
+			trimmed := strings.TrimSpace(file)
+			if trimmed != "" {
+				validFiles = append(validFiles, trimmed)
+			}
+		}
+
+		if len(validFiles) == 0 {
+			return InputValidationError{Field: "File", Message: "no valid file paths provided"}
+		}
+
 		return nil
 	},
 	UsedFields: []string{"File"},
 	Build: func(params *InputParams) (core.Bbox, error) {
-		return LoadFile(params.File)
+		var bbox *core.Bbox
+
+		for _, file := range params.File {
+			if file == "" {
+				continue
+			}
+			fbox, err := LoadFile(file)
+			if err == ErrNoFeaturesFound {
+				continue
+			} else if err != nil {
+				return core.Bbox{}, err
+			}
+
+			if bbox == nil {
+				bbox = &fbox
+			} else {
+				updated_bbox := bbox.Union(fbox)
+				bbox = &updated_bbox
+			}
+		}
+		if bbox == nil {
+			return core.Bbox{}, ErrNoFeaturesFound
+		}
+		return *bbox, nil
 	},
 }
 

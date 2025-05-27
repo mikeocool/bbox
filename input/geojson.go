@@ -10,6 +10,7 @@ import (
 )
 
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
+var ErrNoFeaturesFound = errors.New("no features found")
 
 // ParseGeojson parses various GeoJSON formats and returns the bounding box of all features.
 // Supported formats:
@@ -99,7 +100,7 @@ func isValidFeatureArray(features []Feature) bool {
 // calculateBboxFromFeatures calculates bounding box from an array of features
 func calculateBboxFromFeatures(features []Feature) (core.Bbox, error) {
 	if len(features) == 0 {
-		return core.Bbox{}, fmt.Errorf("no features found")
+		return core.Bbox{}, ErrNoFeaturesFound
 	}
 
 	minLon := math.Inf(1)

@@ -1,6 +1,8 @@
 package input
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
@@ -135,6 +137,24 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Height: "invalid",
 			},
 			expectError: true,
+		},
+
+		// File Builder tests
+		{
+			name: "FileBuilder - blank value in slice",
+			params: InputParams{
+				File: []string{""},
+			},
+			expectError: true,
+			errorMsg:    "File: no valid file paths provided",
+		},
+		{
+			name: "FileBuilder - whitespace value in slice",
+			params: InputParams{
+				File: []string{"   "},
+			},
+			expectError: true,
+			errorMsg:    "File: no valid file paths provided",
 		},
 
 		// BoundsBuilder tests
@@ -549,6 +569,173 @@ func TestInputParams_EdgeCases(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFileBuilder(t *testing.T) {
+	tests := []struct {
+		name        string
+		files       []string
+		expectError bool
+		errorMsg    string
+		expectBbox  *core.Bbox
+	}{
+		{
+			name:        "Single valid file",
+			files:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+		},
+		{
+			name:        "Multiple valid files - union",
+			files:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+		},
+		{
+			name:        "Empty file",
+			files:       []string{getTestDataPath(t, "../integration_tests/data/empty.geojson")},
+			expectError: true, // Assuming empty file causes an error
+			errorMsg:    "no features found",
+		},
+		{
+			name:        "Non-existent file",
+			files:       []string{getTestDataPath(t, "non_existent_file.geojson")},
+			expectError: true,
+		},
+		{
+			name:        "Mixed valid and empty files",
+			files:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/empty.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+		},
+		{
+			name:        "Empty string in file list",
+			files:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), "", getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
+			expectError: false, // Empty strings should be skipped
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+		},
+		{
+			name:        "Empty file list",
+			files:       []string{},
+			expectError: true,
+			errorMsg:    "no usable builder for the provided parameters",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			params := InputParams{
+				File: tc.files,
+			}
+
+			bbox, err := params.GetBbox()
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+				return
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			// If expecting an error, verify the error message
+			if tc.expectError && err != nil {
+				if tc.errorMsg != "" && err.Error() != tc.errorMsg {
+					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
+				}
+				return
+			}
+
+			// If not expecting an error, verify the bbox structure is valid
+			if !tc.expectError {
+				// Basic sanity checks - left should be <= right, bottom should be <= top
+				if bbox.Left > bbox.Right {
+					t.Errorf("Invalid bbox: Left (%f) > Right (%f)", bbox.Left, bbox.Right)
+				}
+				if bbox.Bottom > bbox.Top {
+					t.Errorf("Invalid bbox: Bottom (%f) > Top (%f)", bbox.Bottom, bbox.Top)
+				}
+
+				// If we have expected bbox values, compare them
+				if tc.expectBbox != nil {
+					if bbox.Left != tc.expectBbox.Left {
+						t.Errorf("Expected Left %f but got %f", tc.expectBbox.Left, bbox.Left)
+					}
+					if bbox.Bottom != tc.expectBbox.Bottom {
+						t.Errorf("Expected Bottom %f but got %f", tc.expectBbox.Bottom, bbox.Bottom)
+					}
+					if bbox.Right != tc.expectBbox.Right {
+						t.Errorf("Expected Right %f but got %f", tc.expectBbox.Right, bbox.Right)
+					}
+					if bbox.Top != tc.expectBbox.Top {
+						t.Errorf("Expected Top %f but got %f", tc.expectBbox.Top, bbox.Top)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestFileBuilder_IsUsable(t *testing.T) {
+	tests := []struct {
+		name     string
+		params   InputParams
+		expected bool
+	}{
+		{
+			name:     "No files",
+			params:   InputParams{},
+			expected: false,
+		},
+		{
+			name: "Empty file slice",
+			params: InputParams{
+				File: []string{},
+			},
+			expected: false,
+		},
+		{
+			name: "Single file",
+			params: InputParams{
+				File: []string{"test.geojson"},
+			},
+			expected: true,
+		},
+		{
+			name: "Multiple files",
+			params: InputParams{
+				File: []string{"test1.geojson", "test2.geojson"},
+			},
+			expected: true,
+		},
+		{
+			name: "File slice with empty string",
+			params: InputParams{
+				File: []string{""},
+			},
+			expected: true, // Non-empty slice, even if contains empty string
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := FileBuilder.IsUsable(&tc.params)
+			if result != tc.expected {
+				t.Errorf("Expected %v but got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func getTestDataPath(t *testing.T, filename string) string {
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("unable to determine test file path")
+	}
+	testDir := filepath.Dir(testFile)
+	return filepath.Join(testDir, filename)
 }
 
 // Helper function to create float64 pointers

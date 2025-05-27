@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 )
 
 type Bbox struct {
@@ -51,4 +52,13 @@ func (b Bbox) Bounds() []float64 {
 // IsZero returns true if the bounding box has zero coordinates.
 func (b Bbox) IsZero() bool {
 	return b.Left == 0 && b.Bottom == 0 && b.Right == 0 && b.Top == 0
+}
+
+func (b Bbox) Union(other Bbox) Bbox {
+	return Bbox{
+		Left:   math.Min(b.Left, other.Left),
+		Bottom: math.Min(b.Bottom, other.Bottom),
+		Right:  math.Max(b.Right, other.Right),
+		Top:    math.Max(b.Top, other.Top),
+	}
 }
