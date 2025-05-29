@@ -26,6 +26,7 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 
 	var rbbox *core.Bbox
 
+	expectedLineVals := 0 // unset value
 	scanner := bufio.NewScanner(bytes.NewReader(input))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -42,6 +43,11 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 
 		// TODO ensure # of vals remains consistent
 		var lineBbox core.Bbox
+		if expectedLineVals != 0 && len(lineVals) != expectedLineVals {
+			return core.Bbox{}, fmt.Errorf("invalid input")
+		}
+
+		expectedLineVals = len(lineVals)
 		if len(lineVals) == 4 {
 			lineBbox = core.Bbox{
 				Left:   lineVals[0],

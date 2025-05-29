@@ -213,20 +213,6 @@ func TestParseRaw(t *testing.T) {
 			expectError: true,
 			errorMsg:    "invalid input",
 		},
-		{
-			name: "Lines with 2 and 4 values",
-			input: `
-				1.0 2.0
-				3.0 4.0 5.0 6.0
-			`,
-			expectError: false,
-			expectBbox: &core.Bbox{
-				Left:   1.0,
-				Bottom: 2.0,
-				Right:  5.0,
-				Top:    6.0,
-			},
-		},
 	}
 
 	for _, tc := range tests {
