@@ -73,7 +73,6 @@ Output formats:
 -o kml
 
 # TODO
-* accept list of points on new lines (comma or space separated)
 * geojsonl
 * shp file input
     * github.com/everystreet/go-shapefile
