@@ -68,12 +68,14 @@ func init() {
 	}
 }
 
-func runRoot(cmd *cobra.Command, args []string) {
+var ErrInputCouldNotCreateBbox = errors.New("could not create bounding box")
+
+func getBboxFromInput(args []string) (core.Bbox, error) {
 	// Create a bounding box from input parameters
 	if input.IsInputFromPipe() {
 		stdinBytes, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			log.Fatalf("Error reading from stdin: %v", err)
+			return core.Bbox{}, fmt.Errorf("Error reading from stdin: %v", err)
 		}
 		inputParams.Raw = stdinBytes
 	} else if len(args) > 0 {
@@ -86,11 +88,10 @@ func runRoot(cmd *cobra.Command, args []string) {
 		if errors.As(err, &noUsableBuilderError) {
 			// If no usable builder is found and we're not drawing, print usage and exit
 			if !drawFlag {
-				cmd.Usage()
-				return
+				return core.Bbox{}, ErrInputCouldNotCreateBbox
 			}
 		} else {
-			log.Fatalf("Error creating bounding box: %v", err)
+			return core.Bbox{}, fmt.Errorf("Error creating bounding box: %w", err)
 		}
 	}
 
@@ -99,7 +100,22 @@ func runRoot(cmd *cobra.Command, args []string) {
 		// TODO pass in bbox is it's set
 		bbox, err = core.StartDrawServer(bbox)
 		if err != nil {
-			log.Fatalf("Error running draw server: %v", err)
+			return core.Bbox{}, fmt.Errorf("Error running draw server: %w", err)
+		}
+	}
+
+	return bbox, nil
+}
+
+func runRoot(cmd *cobra.Command, args []string) {
+	bbox, err := getBboxFromInput(args)
+	if err != nil {
+		if errors.Is(err, ErrInputCouldNotCreateBbox) {
+			cmd.Usage()
+			return
+			// TODO non-zero exit status
+		} else {
+			log.Fatalf("%v", err)
 		}
 	}
 

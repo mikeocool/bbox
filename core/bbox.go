@@ -49,6 +49,14 @@ func (b Bbox) Bounds() []float64 {
 	}
 }
 
+// Center returns the center point of the bounding box.
+func (b Bbox) Center() [2]float64 {
+	return [2]float64{
+		(b.Left + b.Right) / 2,
+		(b.Bottom + b.Top) / 2,
+	}
+}
+
 // IsZero returns true if the bounding box has zero coordinates.
 func (b Bbox) IsZero() bool {
 	return b.Left == 0 && b.Bottom == 0 && b.Right == 0 && b.Top == 0
