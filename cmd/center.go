@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
+	"github.com/mikeocool/bbox/core"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +29,13 @@ func runCenter(cmd *cobra.Command, args []string) {
 	}
 
 	center := bbox.Center()
-	log.Printf("%f %f", center[0], center[1]) // TODO output as point
+	formatted, err := core.FormatPoint(center, outputFormat)
+	if err != nil {
+		log.Fatalf("Error formatting point: %v", err)
+	}
+
+	// Output the formatted bounding box
+	fmt.Println(formatted)
 }
 
 func init() {

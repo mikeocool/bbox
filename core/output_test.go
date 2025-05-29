@@ -110,7 +110,7 @@ func TestTemplatedFormat(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Add a test for empty template
 	t.Run("Empty template", func(t *testing.T) {
 		result, err := TemplatedFormat("", Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0})
@@ -291,7 +291,7 @@ func TestFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := Format(bbox, tc.formatType)
+			result, err := FormatBbox(bbox, tc.formatType)
 
 			if tc.expectError && err == nil {
 				t.Errorf("Expected error but got none")
@@ -307,7 +307,7 @@ func TestFormat(t *testing.T) {
 	}
 }
 
-func TestGetFormatter(t *testing.T) {
+func TestGetBboxFormatter(t *testing.T) {
 	tests := []struct {
 		name       string
 		formatType string
@@ -342,7 +342,7 @@ func TestGetFormatter(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			formatter := GetFormatter(tc.formatType)
+			formatter := GetBboxFormatter(tc.formatType)
 
 			if tc.expectNil && formatter != nil {
 				t.Errorf("Expected nil formatter but got one")
@@ -434,28 +434,28 @@ func TestGeojsonFormat(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "Basic rectangle",
-			bbox: Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			name:     "Basic rectangle",
+			bbox:     Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected: `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
 		},
 		{
-			name: "Zero value bbox",
-			bbox: Bbox{},
+			name:     "Zero value bbox",
+			bbox:     Bbox{},
 			expected: `{"type":"Polygon","coordinates":[[[0,0],[0,0],[0,0],[0,0],[0,0]]]}`,
 		},
 		{
-			name: "Negative coordinates",
-			bbox: Bbox{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
+			name:     "Negative coordinates",
+			bbox:     Bbox{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
 			expected: `{"type":"Polygon","coordinates":[[[-10,-20],[-5,-20],[-5,-15],[-10,-15],[-10,-20]]]}`,
 		},
 		{
-			name: "Mixed positive/negative coordinates",
-			bbox: Bbox{Left: -1.5, Bottom: -2.5, Right: 1.5, Top: 2.5},
+			name:     "Mixed positive/negative coordinates",
+			bbox:     Bbox{Left: -1.5, Bottom: -2.5, Right: 1.5, Top: 2.5},
 			expected: `{"type":"Polygon","coordinates":[[[-1.5,-2.5],[1.5,-2.5],[1.5,2.5],[-1.5,2.5],[-1.5,-2.5]]]}`,
 		},
 		{
-			name: "Decimal coordinates",
-			bbox: Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+			name:     "Decimal coordinates",
+			bbox:     Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
 			expected: `{"type":"Polygon","coordinates":[[[10.25,20.75],[30.125,20.75],[30.125,40.875],[10.25,40.875],[10.25,20.75]]]}`,
 		},
 	}
@@ -517,4 +517,402 @@ func TestGeojsonFormatStructure(t *testing.T) {
 			t.Errorf("Expected %d coordinate separators, got %d", expected, coordSeparators)
 		}
 	})
+}
+
+func TestCommaFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "0,0",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "1,2",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "10.5,20.25",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "-10,-20",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "-10.5,20.25",
+		},
+		{
+			name:     "Large coordinates",
+			point:    [2]float64{1000000.123, 2000000.456},
+			expected: "1.000000123e+06,2.000000456e+06",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := CommaFormatPoint(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestSpaceFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "0 0",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "1 2",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "10.5 20.25",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "-10 -20",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "-10.5 20.25",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := SpaceFormatPoint(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestTabFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "0\t0",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "1\t2",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "10.5\t20.25",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "-10\t-20",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "-10.5\t20.25",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := TabFormatPoint(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestWktFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "POINT (0 0)",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "POINT (1 2)",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "POINT (10.5 20.25)",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "POINT (-10 -20)",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "POINT (-10.5 20.25)",
+		},
+		{
+			name:     "Large coordinates",
+			point:    [2]float64{1000000.123, 2000000.456},
+			expected: "POINT (1.000000123e+06 2.000000456e+06)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := WktFormatPoint(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+
+func TestGeojsonFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: `{"type":"Point","coordinates":[0,0]}`,
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: `{"type":"Point","coordinates":[1,2]}`,
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: `{"type":"Point","coordinates":[10.5,20.25]}`,
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: `{"type":"Point","coordinates":[-10,-20]}`,
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: `{"type":"Point","coordinates":[-10.5,20.25]}`,
+		},
+		{
+			name:     "Large coordinates",
+			point:    [2]float64{1000000.123, 2000000.456},
+			expected: `{"type":"Point","coordinates":[1000000.123,2000000.456]}`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := GeojsonFormatPoint(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestGeojsonFormatPointStructure(t *testing.T) {
+	point := [2]float64{1.0, 2.0}
+	result, err := GeojsonFormatPoint(point)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	t.Run("Contains required GeoJSON fields", func(t *testing.T) {
+		if !strings.Contains(result, `"type":"Point"`) {
+			t.Error("Result should contain type field with Point value")
+		}
+		if !strings.Contains(result, `"coordinates"`) {
+			t.Error("Result should contain coordinates field")
+		}
+	})
+
+	t.Run("Coordinates are properly formatted", func(t *testing.T) {
+		if !strings.Contains(result, `"coordinates":[1,2]`) {
+			t.Error("Coordinates should be formatted as an array [x,y]")
+		}
+	})
+}
+
+func TestGetPointFormatter(t *testing.T) {
+	tests := []struct {
+		name       string
+		formatType string
+		expectNil  bool
+	}{
+		{
+			name:       "Comma formatter",
+			formatType: FormatComma,
+			expectNil:  false,
+		},
+		{
+			name:       "Space formatter",
+			formatType: FormatSpace,
+			expectNil:  false,
+		},
+		{
+			name:       "Tab formatter",
+			formatType: FormatTab,
+			expectNil:  false,
+		},
+		{
+			name:       "GeoJSON formatter",
+			formatType: FormatGeoJSON,
+			expectNil:  false,
+		},
+		{
+			name:       "WKT formatter",
+			formatType: FormatWKT,
+			expectNil:  false,
+		},
+		{
+			name:       "Invalid formatter",
+			formatType: "invalid",
+			expectNil:  true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := GetPointFormatter(tc.formatType)
+
+			if tc.expectNil && formatter != nil {
+				t.Errorf("Expected nil formatter but got one")
+			}
+			if !tc.expectNil && formatter == nil {
+				t.Errorf("Expected formatter but got nil")
+			}
+
+			// Test that the formatter works if it's not nil
+			if !tc.expectNil && formatter != nil {
+				point := [2]float64{1.0, 2.0}
+				result, err := formatter(point)
+				if err != nil {
+					t.Errorf("Formatter returned error: %v", err)
+				}
+				if result == "" {
+					t.Errorf("Formatter returned empty result")
+				}
+			}
+		})
+	}
+}
+
+func TestFormatPoint(t *testing.T) {
+	point := [2]float64{1.0, 2.0}
+
+	tests := []struct {
+		name        string
+		formatType  string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Comma format",
+			formatType:  FormatComma,
+			expected:    "1,2",
+			expectError: false,
+		},
+		{
+			name:        "Space format",
+			formatType:  FormatSpace,
+			expected:    "1 2",
+			expectError: false,
+		},
+		{
+			name:        "Tab format",
+			formatType:  FormatTab,
+			expected:    "1\t2",
+			expectError: false,
+		},
+		{
+			name:        "GeoJSON format",
+			formatType:  FormatGeoJSON,
+			expected:    `{"type":"Point","coordinates":[1,2]}`,
+			expectError: false,
+		},
+		{
+			name:        "WKT format",
+			formatType:  FormatWKT,
+			expected:    "POINT (1 2)",
+			expectError: false,
+		},
+		{
+			name:        "Invalid format",
+			formatType:  "invalid",
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := FormatPoint(point, tc.formatType)
+
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if !tc.expectError && result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
 }

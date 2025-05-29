@@ -119,7 +119,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	formatted, err := core.Format(bbox, outputFormat)
+	formatted, err := core.FormatBbox(bbox, outputFormat)
 	if err != nil {
 		log.Fatalf("Error formatting bounding box: %v", err)
 	}

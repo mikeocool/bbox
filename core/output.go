@@ -36,26 +36,30 @@ func SpaceFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
 }
 
-
+// CommaFormat formats a Bbox as a comma-separated string of its coordinates.
+// The returned string will be in the format "MinX\tMinY\tMaxX\tMaxY".
+func TabFormat(bbox Bbox) (string, error) {
+	return TemplatedFormat("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
+}
 
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
 func GeojsonFormat(bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
-	
+
 	geojson := struct {
-		Type        string          `json:"type"`
-		Coordinates [][][2]float64  `json:"coordinates"`
+		Type        string         `json:"type"`
+		Coordinates [][][2]float64 `json:"coordinates"`
 	}{
 		Type:        "Polygon",
 		Coordinates: [][][2]float64{coords},
 	}
-	
+
 	data, err := json.Marshal(geojson)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return string(data), nil
 }
 
@@ -63,7 +67,7 @@ func GeojsonFormat(bbox Bbox) (string, error) {
 // The returned string will be in the format "POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))".
 func WktFormat(bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
-	
+
 	// Build WKT polygon string
 	wkt := "POLYGON(("
 	for i, coord := range coords {
@@ -73,36 +77,94 @@ func WktFormat(bbox Bbox) (string, error) {
 		wkt += fmt.Sprintf("%g %g", coord[0], coord[1])
 	}
 	wkt += "))"
-	
+
 	return wkt, nil
 }
 
 // Format type constants
 const (
-	FormatComma  = "comma"
-	FormatSpace  = "space"
+	FormatComma   = "comma"
+	FormatSpace   = "space"
+	FormatTab     = "tab"
 	FormatGeoJSON = "geojson"
-	FormatWKT    = "wkt"
+	FormatWKT     = "wkt"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
-var outputFormatters = map[string]func(Bbox) (string, error){
-	FormatComma:  CommaFormat,
-	FormatSpace:  SpaceFormat,
+var bboxOutputFormatters = map[string]func(Bbox) (string, error){
+	FormatComma:   CommaFormat,
+	FormatSpace:   SpaceFormat,
+	FormatTab:     TabFormat,
 	FormatGeoJSON: GeojsonFormat,
-	FormatWKT:    WktFormat,
+	FormatWKT:     WktFormat,
 }
 
 // GetFormatter returns the format function for the given format type.
-func GetFormatter(formatType string) func(Bbox) (string, error) {
-	return outputFormatters[formatType]
+func GetBboxFormatter(formatType string) func(Bbox) (string, error) {
+	return bboxOutputFormatters[formatType]
 }
 
 // Format formats a Bbox using the specified format type.
-func Format(bbox Bbox, formatType string) (string, error) {
-	formatter := GetFormatter(formatType)
+func FormatBbox(bbox Bbox, formatType string) (string, error) {
+	formatter := GetBboxFormatter(formatType)
 	if formatter == nil {
 		return "", fmt.Errorf("unknown output format: %s", formatType)
 	}
 	return formatter(bbox)
+}
+
+// Point Format functions
+func CommaFormatPoint(point [2]float64) (string, error) {
+	return fmt.Sprintf("%g,%g", point[0], point[1]), nil
+}
+
+func SpaceFormatPoint(point [2]float64) (string, error) {
+	return fmt.Sprintf("%g %g", point[0], point[1]), nil
+}
+
+func TabFormatPoint(point [2]float64) (string, error) {
+	return fmt.Sprintf("%g\t%g", point[0], point[1]), nil
+}
+
+func WktFormatPoint(point [2]float64) (string, error) {
+	return fmt.Sprintf("POINT (%g %g)", point[0], point[1]), nil
+}
+
+func GeojsonFormatPoint(coords [2]float64) (string, error) {
+	geojson := struct {
+		Type        string     `json:"type"`
+		Coordinates [2]float64 `json:"coordinates"`
+	}{
+		Type:        "Point",
+		Coordinates: coords,
+	}
+
+	data, err := json.Marshal(geojson)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+var pointOutputFormatters = map[string]func([2]float64) (string, error){
+	FormatComma:   CommaFormatPoint,
+	FormatSpace:   SpaceFormatPoint,
+	FormatTab:     TabFormatPoint,
+	FormatWKT:     WktFormatPoint,
+	FormatGeoJSON: GeojsonFormatPoint,
+}
+
+// GetFormatter returns the format function for the given format type.
+func GetPointFormatter(formatType string) func([2]float64) (string, error) {
+	return pointOutputFormatters[formatType]
+}
+
+// Format formats a Point using the specified format type.
+func FormatPoint(point [2]float64, formatType string) (string, error) {
+	formatter := GetPointFormatter(formatType)
+	if formatter == nil {
+		return "", fmt.Errorf("unknown output format: %s", formatType)
+	}
+	return formatter(point)
 }

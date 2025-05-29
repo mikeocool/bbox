@@ -88,6 +88,7 @@ Output formats:
     * link to google maps?
     * go-template
 * center + area command
+    * output support for center
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable

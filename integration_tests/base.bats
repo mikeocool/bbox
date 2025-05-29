@@ -49,3 +49,9 @@ setup() {
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
     assert_success
 }
+
+@test "simple center" {
+    run ./bbox center 10 17 20 20 -o comma
+    assert_output "15,18.5"
+    assert_success
+}
