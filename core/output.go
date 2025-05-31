@@ -42,6 +42,10 @@ func TabFormat(bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
 }
 
+func OsmUrlFormat(bbox Bbox) (string, error) {
+	return TemplatedFormat("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
+}
+
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
 func GeojsonFormat(bbox Bbox) (string, error) {
@@ -88,6 +92,7 @@ const (
 	FormatTab     = "tab"
 	FormatGeoJSON = "geojson"
 	FormatWKT     = "wkt"
+	FormatOsmUrl  = "osm-url"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
@@ -97,6 +102,7 @@ var bboxOutputFormatters = map[string]func(Bbox) (string, error){
 	FormatTab:     TabFormat,
 	FormatGeoJSON: GeojsonFormat,
 	FormatWKT:     WktFormat,
+	FormatOsmUrl:  OsmUrlFormat,
 }
 
 // GetFormatter returns the format function for the given format type.

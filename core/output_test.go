@@ -196,6 +196,55 @@ func TestWktFormat(t *testing.T) {
 	}
 }
 
+func TestOsmUrlFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Zero value bbox",
+			bbox:        Bbox{},
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=0&minlat=0&maxlon=0&maxlat=0",
+			expectError: false,
+		},
+		{
+			name:        "Real world example (London)",
+			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
+			expectError: false,
+		},
+		{
+			name:        "Large coordinates",
+			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-180&minlat=-90&maxlon=180&maxlat=90",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := OsmUrlFormat(tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
 func TestWktFormatStructure(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 	result, err := WktFormat(bbox)
@@ -712,7 +761,6 @@ func TestWktFormatPoint(t *testing.T) {
 		})
 	}
 }
-
 
 func TestGeojsonFormatPoint(t *testing.T) {
 	tests := []struct {

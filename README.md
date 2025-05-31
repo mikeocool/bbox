@@ -73,25 +73,21 @@ Output formats:
 -o kml
 
 # TODO
+* split command
 * geojsonl
-* shp file input
-    * github.com/everystreet/go-shapefile
-    * https://github.com/twpayne/go-shapefile
 * osm file input
     * https://github.com/paulmach/osm
 * kml input
 * output formats
     * lines
     * hex wkb
-    * overpass gl
-    * link to OSM
+    * overpass ql
     * link to google maps?
     * go-template
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
 * tile command
-* split command
 * units on width and heightw
 * option to specify decimal precision/format
 * handle projections
