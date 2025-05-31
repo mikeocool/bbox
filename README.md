@@ -87,14 +87,13 @@ Output formats:
     * link to OSM
     * link to google maps?
     * go-template
-* center + area command
-    * output support for center
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
 * tile command
 * split command
 * units on width and heightw
+* option to specify decimal precision/format
 * handle projections
     * https://github.com/twpayne/go-proj
     * income port(?) active 4 months ago https://github.com/go-spatial/proj
@@ -104,3 +103,4 @@ Output formats:
 * clean input error messaging
 * add http api
 * --grow/shrink/padding args?
+* area command?

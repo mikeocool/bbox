@@ -5,12 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 
 	"github.com/mikeocool/bbox/core"
 )
 
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
 var ErrNoFeaturesFound = errors.New("no features found")
+
+func LoadGeojson(filename string) (core.Bbox, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return core.Bbox{}, err
+	}
+	return ParseGeojson(data)
+}
 
 // ParseGeojson parses various GeoJSON formats and returns the bounding box of all features.
 // Supported formats:
