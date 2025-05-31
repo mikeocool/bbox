@@ -89,7 +89,7 @@ func UrlFormat(urlType string, bbox Bbox) (string, error) {
 	}
 
 	switch strings.ToLower(urlType) {
-	case "openstreetmap.com", "osm", "openstreetmap.org":
+	case "openstreetmap.org", "openstreetmap.com", "osm":
 		return TemplatedFormat("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
 	case "geojson.io":
 		return GeojsonIoUrl(bbox)
