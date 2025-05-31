@@ -196,6 +196,67 @@ func TestWktFormat(t *testing.T) {
 	}
 }
 
+func TestGeojsonIoUrlFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Zero value bbox",
+			bbox:        Bbox{},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "Basic rectangle",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B1%2C2%5D%2C%5B3%2C2%5D%2C%5B3%2C4%5D%2C%5B1%2C4%5D%2C%5B1%2C2%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "Real world example (New York City)",
+			bbox:        Bbox{Left: -74.25909, Bottom: 40.477399, Right: -73.700181, Top: 40.916178},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-74.25909%2C40.477399%5D%2C%5B-73.700181%2C40.477399%5D%2C%5B-73.700181%2C40.916178%5D%2C%5B-74.25909%2C40.916178%5D%2C%5B-74.25909%2C40.477399%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "Global extent (world bounds)",
+			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-180%2C-90%5D%2C%5B180%2C-90%5D%2C%5B180%2C90%5D%2C%5B-180%2C90%5D%2C%5B-180%2C-90%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "High precision decimal coordinates",
+			bbox:        Bbox{Left: 10.123456789, Bottom: 20.987654321, Right: 30.111111111, Top: 40.999999999},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B10.123456789%2C20.987654321%5D%2C%5B30.111111111%2C20.987654321%5D%2C%5B30.111111111%2C40.999999999%5D%2C%5B10.123456789%2C40.999999999%5D%2C%5B10.123456789%2C20.987654321%5D%5D%5D%7D",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := GeojsonIoUrlFormat(tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
 func TestOsmUrlFormat(t *testing.T) {
 	tests := []struct {
 		name        string

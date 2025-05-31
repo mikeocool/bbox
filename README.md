@@ -84,6 +84,7 @@ Output formats:
     * overpass ql
     * link to google maps?
     * go-template
+    * option to open browser for url formats
 * place input
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
