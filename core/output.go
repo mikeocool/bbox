@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"text/template"
 )
 
@@ -27,38 +28,25 @@ func TemplatedFormat(templateStr string, bbox Bbox) (string, error) {
 
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX,MinY,MaxX,MaxY".
-func CommaFormat(bbox Bbox) (string, error) {
+func CommaFormat(_ string, bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
 }
 
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX MinY MaxX MaxY".
-func SpaceFormat(bbox Bbox) (string, error) {
+func SpaceFormat(_ string, bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
 }
 
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX\tMinY\tMaxX\tMaxY".
-func TabFormat(bbox Bbox) (string, error) {
+func TabFormat(_ string, bbox Bbox) (string, error) {
 	return TemplatedFormat("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
-}
-
-func OsmUrlFormat(bbox Bbox) (string, error) {
-	return TemplatedFormat("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
-}
-
-func GeojsonIoUrlFormat(bbox Bbox) (string, error) {
-	geojson, err := GeojsonFormat(bbox)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("https://geojson.io/#data=data:application/json,%s", url.QueryEscape(geojson)), nil
 }
 
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
-func GeojsonFormat(bbox Bbox) (string, error) {
+func GeojsonFormat(_ string, bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
 
 	geojson := struct {
@@ -79,7 +67,7 @@ func GeojsonFormat(bbox Bbox) (string, error) {
 
 // WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.
 // The returned string will be in the format "POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))".
-func WktFormat(bbox Bbox) (string, error) {
+func WktFormat(_ string, bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
 
 	// Build WKT polygon string
@@ -95,40 +83,70 @@ func WktFormat(bbox Bbox) (string, error) {
 	return wkt, nil
 }
 
+func UrlFormat(urlType string, bbox Bbox) (string, error) {
+	if urlType == "" {
+		return "", fmt.Errorf("no url type specified")
+	}
+
+	switch strings.ToLower(urlType) {
+	case "openstreetmap.com", "osm", "openstreetmap.org":
+		return TemplatedFormat("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
+	case "geojson.io":
+		return GeojsonIoUrl(bbox)
+	default:
+		return "", fmt.Errorf("Unknown url type: %s", urlType)
+	}
+}
+
+func GeojsonIoUrl(bbox Bbox) (string, error) {
+	geojson, err := GeojsonFormat("", bbox)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("https://geojson.io/#data=data:application/json,%s", url.QueryEscape(geojson)), nil
+}
+
 // Format type constants
 const (
-	FormatComma        = "comma"
-	FormatSpace        = "space"
-	FormatTab          = "tab"
-	FormatGeoJSON      = "geojson"
-	FormatWKT          = "wkt"
-	FormatUrlOsm       = "url=osm"
-	FormatUrlGeojsonIo = "url=geojson.io"
+	FormatComma   = "comma"
+	FormatSpace   = "space"
+	FormatTab     = "tab"
+	FormatGeoJSON = "geojson"
+	FormatWKT     = "wkt"
+	FormatUrl     = "url"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
-var bboxOutputFormatters = map[string]func(Bbox) (string, error){
-	FormatComma:        CommaFormat,
-	FormatSpace:        SpaceFormat,
-	FormatTab:          TabFormat,
-	FormatGeoJSON:      GeojsonFormat,
-	FormatWKT:          WktFormat,
-	FormatUrlOsm:       OsmUrlFormat,
-	FormatUrlGeojsonIo: GeojsonIoUrlFormat,
+var bboxOutputFormatters = map[string]func(string, Bbox) (string, error){
+	FormatComma:   CommaFormat,
+	FormatSpace:   SpaceFormat,
+	FormatTab:     TabFormat,
+	FormatGeoJSON: GeojsonFormat,
+	FormatWKT:     WktFormat,
+	FormatUrl:     UrlFormat,
 }
 
 // GetFormatter returns the format function for the given format type.
-func GetBboxFormatter(formatType string) func(Bbox) (string, error) {
+func GetBboxFormatter(formatType string) func(string, Bbox) (string, error) {
 	return bboxOutputFormatters[formatType]
 }
 
 // Format formats a Bbox using the specified format type.
-func FormatBbox(bbox Bbox, formatType string) (string, error) {
+func FormatBbox(bbox Bbox, format string) (string, error) {
+	formatType := format
+	formatDetails := ""
+	parts := strings.SplitN(format, "=", 2)
+	if len(parts) > 1 {
+		formatType = parts[0]
+		formatDetails = parts[1]
+	}
+
 	formatter := GetBboxFormatter(formatType)
 	if formatter == nil {
 		return "", fmt.Errorf("unknown output format: %s", formatType)
 	}
-	return formatter(bbox)
+	return formatter(formatDetails, bbox)
 }
 
 // Point Format functions

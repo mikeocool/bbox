@@ -176,7 +176,7 @@ func TestWktFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := WktFormat(tc.bbox)
+			result, err := WktFormat("", tc.bbox)
 
 			// Check error status
 			if tc.expectError && err == nil {
@@ -196,97 +196,111 @@ func TestWktFormat(t *testing.T) {
 	}
 }
 
-func TestGeojsonIoUrlFormat(t *testing.T) {
+func TestUrlFormat(t *testing.T) {
 	tests := []struct {
 		name        string
+		urlType     string
 		bbox        Bbox
 		expected    string
 		expectError bool
 	}{
 		{
-			name:        "Zero value bbox",
-			bbox:        Bbox{},
-			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%5D%5D%7D",
-			expectError: false,
-		},
-		{
-			name:        "Basic rectangle",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
-			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B1%2C2%5D%2C%5B3%2C2%5D%2C%5B3%2C4%5D%2C%5B1%2C4%5D%2C%5B1%2C2%5D%5D%5D%7D",
-			expectError: false,
-		},
-		{
-			name:        "Real world example (New York City)",
-			bbox:        Bbox{Left: -74.25909, Bottom: 40.477399, Right: -73.700181, Top: 40.916178},
-			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-74.25909%2C40.477399%5D%2C%5B-73.700181%2C40.477399%5D%2C%5B-73.700181%2C40.916178%5D%2C%5B-74.25909%2C40.916178%5D%2C%5B-74.25909%2C40.477399%5D%5D%5D%7D",
-			expectError: false,
-		},
-		{
-			name:        "Global extent (world bounds)",
-			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
-			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-180%2C-90%5D%2C%5B180%2C-90%5D%2C%5B180%2C90%5D%2C%5B-180%2C90%5D%2C%5B-180%2C-90%5D%5D%5D%7D",
-			expectError: false,
-		},
-		{
-			name:        "High precision decimal coordinates",
-			bbox:        Bbox{Left: 10.123456789, Bottom: 20.987654321, Right: 30.111111111, Top: 40.999999999},
-			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B10.123456789%2C20.987654321%5D%2C%5B30.111111111%2C20.987654321%5D%2C%5B30.111111111%2C40.999999999%5D%2C%5B10.123456789%2C40.999999999%5D%2C%5B10.123456789%2C20.987654321%5D%5D%5D%7D",
-			expectError: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := GeojsonIoUrlFormat(tc.bbox)
-
-			// Check error status
-			if tc.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-			}
-			if !tc.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			// Only check result if we don't expect an error
-			if !tc.expectError {
-				if result != tc.expected {
-					t.Errorf("Expected %q but got %q", tc.expected, result)
-				}
-			}
-		})
-	}
-}
-
-func TestOsmUrlFormat(t *testing.T) {
-	tests := []struct {
-		name        string
-		bbox        Bbox
-		expected    string
-		expectError bool
-	}{
-		{
-			name:        "Zero value bbox",
+			name:        "osm - Zero value bbox",
+			urlType:     "openstreetmap.com",
 			bbox:        Bbox{},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=0&minlat=0&maxlon=0&maxlat=0",
 			expectError: false,
 		},
 		{
-			name:        "Real world example (London)",
+			name:        "osm - Real world example (London)",
+			urlType:     "openstreetmap.com",
 			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
 			expectError: false,
 		},
 		{
-			name:        "Large coordinates",
+			name:        "osm - Case insenstive",
+			urlType:     "OpenStreetMap.com",
+			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
+			expectError: false,
+		},
+		{
+			name:        "osm - Large coordinates",
+			urlType:     "openstreetmap.com",
 			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-180&minlat=-90&maxlon=180&maxlat=90",
 			expectError: false,
+		},
+		{
+			name:        "osm alias - Basic test",
+			urlType:     "osm",
+			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
+			expectError: false,
+		},
+		{
+			name:        "geojson.io - Zero value bbox",
+			urlType:     "geojson.io",
+			bbox:        Bbox{},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "geojson.io - Basic rectangle",
+			urlType:     "geojson.io",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B1%2C2%5D%2C%5B3%2C2%5D%2C%5B3%2C4%5D%2C%5B1%2C4%5D%2C%5B1%2C2%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "geojson.io - Real world example (New York City)",
+			urlType:     "geojson.io",
+			bbox:        Bbox{Left: -74.25909, Bottom: 40.477399, Right: -73.700181, Top: 40.916178},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-74.25909%2C40.477399%5D%2C%5B-73.700181%2C40.477399%5D%2C%5B-73.700181%2C40.916178%5D%2C%5B-74.25909%2C40.916178%5D%2C%5B-74.25909%2C40.477399%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "geojson.io - Global extent (world bounds)",
+			urlType:     "geojson.io",
+			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-180%2C-90%5D%2C%5B180%2C-90%5D%2C%5B180%2C90%5D%2C%5B-180%2C90%5D%2C%5B-180%2C-90%5D%5D%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "geojson.io - High precision decimal coordinates",
+			urlType:     "geojson.io",
+			bbox:        Bbox{Left: 10.123456789, Bottom: 20.987654321, Right: 30.111111111, Top: 40.999999999},
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B10.123456789%2C20.987654321%5D%2C%5B30.111111111%2C20.987654321%5D%2C%5B30.111111111%2C40.999999999%5D%2C%5B10.123456789%2C40.999999999%5D%2C%5B10.123456789%2C20.987654321%5D%5D%5D%7D",
+			expectError: false,
+		},
+		// Error cases
+		{
+			name:        "Error - Empty urlType",
+			urlType:     "",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "Error - Unknown urlType",
+			urlType:     "unknown-provider",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "Error - Invalid urlType",
+			urlType:     "invalid.provider.com",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected:    "",
+			expectError: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := OsmUrlFormat(tc.bbox)
+			result, err := UrlFormat(tc.urlType, tc.bbox)
 
 			// Check error status
 			if tc.expectError && err == nil {
@@ -308,7 +322,7 @@ func TestOsmUrlFormat(t *testing.T) {
 
 func TestWktFormatStructure(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
-	result, err := WktFormat(bbox)
+	result, err := WktFormat("", bbox)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -392,6 +406,24 @@ func TestFormat(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "URL format",
+			formatType:  "url=openstreetmap.org",
+			expected:    "https://www.openstreetmap.org/?box=yes&minlon=1&minlat=2&maxlon=3&maxlat=4",
+			expectError: false,
+		},
+		{
+			name:        "URL missing type",
+			formatType:  "url",
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "URL missing type after =",
+			formatType:  "url=",
+			expected:    "",
+			expectError: true,
+		},
+		{
 			name:        "Invalid format",
 			formatType:  "invalid",
 			expected:    "",
@@ -464,7 +496,7 @@ func TestGetBboxFormatter(t *testing.T) {
 			// Test that the formatter works if it's not nil
 			if !tc.expectNil && formatter != nil {
 				bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
-				result, err := formatter(bbox)
+				result, err := formatter("", bbox)
 				if err != nil {
 					t.Errorf("Formatter returned error: %v", err)
 				}
@@ -517,7 +549,7 @@ func TestCommaFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := CommaFormat(tc.bbox)
+			result, err := CommaFormat("", tc.bbox)
 
 			// Check error status
 			if tc.expectError && err == nil {
@@ -572,7 +604,7 @@ func TestGeojsonFormat(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := GeojsonFormat(tc.bbox)
+			result, err := GeojsonFormat("", tc.bbox)
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
@@ -586,7 +618,7 @@ func TestGeojsonFormat(t *testing.T) {
 
 func TestGeojsonFormatStructure(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
-	result, err := GeojsonFormat(bbox)
+	result, err := GeojsonFormat("", bbox)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
