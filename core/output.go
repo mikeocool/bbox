@@ -109,21 +109,23 @@ func GeojsonIoUrl(bbox Bbox) (string, error) {
 
 // Format type constants
 const (
+	FormatGoTpl   = "go-template"
 	FormatComma   = "comma"
 	FormatSpace   = "space"
 	FormatTab     = "tab"
-	FormatGeoJSON = "geojson"
-	FormatWKT     = "wkt"
+	FormatGeoJson = "geojson"
+	FormatWkt     = "wkt"
 	FormatUrl     = "url"
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
 var bboxOutputFormatters = map[string]func(string, Bbox) (string, error){
+	FormatGoTpl:   TemplatedFormat,
 	FormatComma:   CommaFormat,
 	FormatSpace:   SpaceFormat,
 	FormatTab:     TabFormat,
-	FormatGeoJSON: GeojsonFormat,
-	FormatWKT:     WktFormat,
+	FormatGeoJson: GeojsonFormat,
+	FormatWkt:     WktFormat,
 	FormatUrl:     UrlFormat,
 }
 
@@ -187,8 +189,9 @@ var pointOutputFormatters = map[string]func([2]float64) (string, error){
 	FormatComma:   CommaFormatPoint,
 	FormatSpace:   SpaceFormatPoint,
 	FormatTab:     TabFormatPoint,
-	FormatWKT:     WktFormatPoint,
-	FormatGeoJSON: GeojsonFormatPoint,
+	FormatWkt:     WktFormatPoint,
+	FormatGeoJson: GeojsonFormatPoint,
+	// TODO url?
 }
 
 // GetFormatter returns the format function for the given format type.

@@ -86,6 +86,7 @@ Output formats:
     * overpass ql
     * go-template
     * option to open browser for url formats
+    * variations on geojson
 * place input
 * tile command
 * units on width and heightw
