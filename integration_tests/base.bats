@@ -44,9 +44,33 @@ setup() {
     assert_failure
 }
 
-@test "load file" {
+@test "load geojson" {
     run ./bbox --file $DIR/data/campsites.geojson
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}
+
+@test "load geojson without extension" {
+    run ./bbox --file $DIR/data/coords
+    assert_output "-10 -5 10 5"
+    assert_success
+}
+
+@test "load shapfile" {
+    run ./bbox --file $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp
+    assert_output "-179.5899789 -89.9999998 179.3833036 82.4833232"
+    assert_success
+}
+
+@test "pipe geojson" {
+    run /bin/bash -c "cat $DIR/data/campsites.geojson | ./bbox"
+    assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}
+
+@test "pipe shapefile" {
+    run /bin/bash -c "cat $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp | ./bbox"
+    assert_output "-179.5899789 -89.9999998 179.3833036 82.4833232"
     assert_success
 }
 
