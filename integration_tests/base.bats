@@ -44,6 +44,12 @@ setup() {
     assert_failure
 }
 
+@test "go-template output" {
+    run ./bbox -l -1 --bottom -2 -r 1 -t 2  -o go-template='{{.Top}} {{.Right}} {{.Bottom}} {{.Left}}'
+    assert_output "2 1 -2 -1"
+    assert_success
+}
+
 @test "load geojson" {
     run ./bbox --file $DIR/data/campsites.geojson
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"

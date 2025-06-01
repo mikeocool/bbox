@@ -84,7 +84,7 @@ Output formats:
     * lines
     * hex wkb
     * overpass ql
-    * go-template
+    * dublin core
     * option to open browser for url formats
     * variations on geojson
 * place input

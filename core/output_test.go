@@ -382,6 +382,12 @@ func TestFormat(t *testing.T) {
 		expectError bool
 	}{
 		{
+			name:        "template format",
+			formatType:  "go-template={{.Top}} {{.Right}} {{.Bottom}} {{.Left}}",
+			expected:    "4 3 2 1",
+			expectError: false,
+		},
+		{
 			name:        "Comma format",
 			formatType:  FormatComma,
 			expected:    "1,2,3,4",
@@ -395,13 +401,13 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:        "GeoJSON format",
-			formatType:  FormatGeoJSON,
+			formatType:  FormatGeoJson,
 			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
 			expectError: false,
 		},
 		{
 			name:        "WKT format",
-			formatType:  FormatWKT,
+			formatType:  FormatWkt,
 			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
 			expectError: false,
 		},
@@ -467,12 +473,12 @@ func TestGetBboxFormatter(t *testing.T) {
 		},
 		{
 			name:       "GeoJSON formatter",
-			formatType: FormatGeoJSON,
+			formatType: FormatGeoJson,
 			expectNil:  false,
 		},
 		{
 			name:       "WKT formatter",
-			formatType: FormatWKT,
+			formatType: FormatWkt,
 			expectNil:  false,
 		},
 		{
@@ -952,12 +958,12 @@ func TestGetPointFormatter(t *testing.T) {
 		},
 		{
 			name:       "GeoJSON formatter",
-			formatType: FormatGeoJSON,
+			formatType: FormatGeoJson,
 			expectNil:  false,
 		},
 		{
 			name:       "WKT formatter",
-			formatType: FormatWKT,
+			formatType: FormatWkt,
 			expectNil:  false,
 		},
 		{
@@ -1022,13 +1028,13 @@ func TestFormatPoint(t *testing.T) {
 		},
 		{
 			name:        "GeoJSON format",
-			formatType:  FormatGeoJSON,
+			formatType:  FormatGeoJson,
 			expected:    `{"type":"Point","coordinates":[1,2]}`,
 			expectError: false,
 		},
 		{
 			name:        "WKT format",
-			formatType:  FormatWKT,
+			formatType:  FormatWkt,
 			expected:    "POINT (1 2)",
 			expectError: false,
 		},
