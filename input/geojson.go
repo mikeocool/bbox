@@ -41,7 +41,8 @@ func SniffGeojson(data []byte) bool {
 	// Look for common JSON patterns even if incomplete
 	if strings.Contains(dataStr, `"type"`) ||
 		strings.Contains(dataStr, `"geometry"`) ||
-		strings.Contains(dataStr, `"coordinates"`) {
+		strings.Contains(dataStr, `"coordinates"`) ||
+		strings.Contains(dataStr, `"features"`) {
 		return true
 	}
 

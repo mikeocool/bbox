@@ -151,7 +151,7 @@ func TestParseRaw(t *testing.T) {
 
 		// Invalid inputs - parsing errors
 		{
-			name:        "Valid JSON but invalid GeoJSON - empty FeatureCollection",
+			name:        "empty FeatureCollection geojson",
 			input:       `{"type":"FeatureCollection","features":[]}`,
 			expectError: true,
 			errorMsg:    "no features found",

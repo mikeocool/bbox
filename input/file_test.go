@@ -180,7 +180,7 @@ func TestParseDataWithRealFiles(t *testing.T) {
 		}
 	})
 
-	t.Run("Real Shapefile (expected to fail with reader)", func(t *testing.T) {
+	t.Run("Real Shapefile", func(t *testing.T) {
 		file, err := os.Open("../integration_tests/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp")
 		if err != nil {
 			t.Skipf("Skipping real shapefile test: %v", err)
@@ -188,10 +188,21 @@ func TestParseDataWithRealFiles(t *testing.T) {
 		}
 		defer file.Close()
 
-		_, err = ParseData(file)
+		got, err := ParseData(file)
 		// ParseShapefile requires file length information that's not available from io.Reader
-		if err == nil {
-			t.Errorf("ParseData() expected error for shapefile from reader (shapefile parsing requires file length)")
+		if err != nil {
+			t.Errorf("ParseData() unexpected error = %v", err)
+			return
+		}
+
+		expected := core.Bbox{
+			Left:   -179.5899789,
+			Bottom: -89.9999998,
+			Right:  179.3833036,
+			Top:    82.4833232,
+		}
+		if got != expected {
+			t.Errorf("ParseData() got unexpected bounds: %v", got)
 		}
 	})
 
