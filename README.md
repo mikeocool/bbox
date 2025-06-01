@@ -74,6 +74,8 @@ Output formats:
 
 # TODO
 * split command
+* cleanup draw UI
+* when bbox is pre-populated on map, make it editable
 * geojsonl
 * osm file input
     * https://github.com/paulmach/osm
@@ -82,12 +84,9 @@ Output formats:
     * lines
     * hex wkb
     * overpass ql
-    * link to google maps?
     * go-template
     * option to open browser for url formats
 * place input
-* cleanup draw UI
-* when bbox is pre-populated on map, make it editable
 * tile command
 * units on width and heightw
 * option to specify decimal precision/format

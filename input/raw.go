@@ -12,8 +12,10 @@ import (
 )
 
 func ParseRaw(input []byte) (core.Bbox, error) {
+	// TODO integrate ParseData here
+
 	// attempt to parse as a GeoJSON document
-	bbox, err := ParseGeojson(input)
+	bbox, err := ParseGeojson(bytes.NewReader(input))
 	if err != nil {
 		if !errors.Is(err, ErrCouldNotParseGeoJSON) {
 			fmt.Println("Failed to parse GeoJSON")

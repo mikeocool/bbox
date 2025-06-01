@@ -1,6 +1,7 @@
 package input
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
@@ -540,7 +541,7 @@ func TestParseGeojson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseGeojson([]byte(tt.input))
+			got, err := ParseGeojson(bytes.NewReader([]byte(tt.input)))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseGeojson() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -576,7 +577,7 @@ func TestParseGeojsonNegativeCoordinates(t *testing.T) {
 		Top:    90,
 	}
 
-	got, err := ParseGeojson([]byte(input))
+	got, err := ParseGeojson(bytes.NewReader([]byte(input)))
 	if err != nil {
 		t.Errorf("ParseGeojson() unexpected error = %v", err)
 		return
@@ -609,7 +610,7 @@ func TestParseGeojsonInvalidByteInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ParseGeojson(tt.input)
+			_, err := ParseGeojson(bytes.NewReader(tt.input))
 			if err == nil {
 				t.Errorf("ParseGeojson() expected error for invalid byte input, got nil")
 			}
@@ -627,7 +628,7 @@ func TestParseGeojsonLargeCoordinates(t *testing.T) {
 		}
 	}`
 
-	got, err := ParseGeojson([]byte(input))
+	got, err := ParseGeojson(bytes.NewReader([]byte(input)))
 	if err != nil {
 		t.Errorf("ParseGeojson() unexpected error = %v", err)
 		return
@@ -648,7 +649,7 @@ func TestParseGeojsonEmptyGeometryCollection(t *testing.T) {
 		}
 	}`
 
-	_, err := ParseGeojson([]byte(input))
+	_, err := ParseGeojson(bytes.NewReader([]byte(input)))
 	if err == nil {
 		t.Errorf("ParseGeojson() expected error for empty GeometryCollection, got nil")
 	}

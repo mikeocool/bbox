@@ -1,11 +1,14 @@
 package input
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/mikeocool/bbox/core"
 )
@@ -13,12 +16,44 @@ import (
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
 var ErrNoFeaturesFound = errors.New("no features found")
 
-func LoadGeojson(filename string) (core.Bbox, error) {
-	data, err := os.ReadFile(filename)
+func LoadGeojsonFile(filename string) (core.Bbox, error) {
+	file, err := os.Open(filename)
 	if err != nil {
 		return core.Bbox{}, err
 	}
-	return ParseGeojson(data)
+	defer file.Close()
+	return ParseGeojson(file)
+}
+
+// Check if a fragment of the file looks like GeoJSON
+func SniffGeojson(data []byte) bool {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 {
+		return false
+	}
+
+	// Must start with { or [
+	if trimmed[0] != '{' && trimmed[0] != '[' {
+		return false
+	}
+
+	dataStr := strings.ToLower(string(data))
+	// Look for common JSON patterns even if incomplete
+	if strings.Contains(dataStr, `"type"`) ||
+		strings.Contains(dataStr, `"geometry"`) ||
+		strings.Contains(dataStr, `"coordinates"`) {
+		return true
+	}
+
+	// Check if it's just a list of coordinates
+	allowedChars := "[],. -0123456789\t\n\r\x00"
+	for _, char := range dataStr {
+		if !strings.ContainsRune(allowedChars, char) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ParseGeojson parses various GeoJSON formats and returns the bounding box of all features.
@@ -29,8 +64,13 @@ func LoadGeojson(filename string) (core.Bbox, error) {
 // - Single Polygon
 // - 3D coordinate array (polygon with rings): [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
-func ParseGeojson(input []byte) (core.Bbox, error) {
+func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	var bbox core.Bbox
+
+	input, err := io.ReadAll(r)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to read GeoJSON data: %w", err)
+	}
 
 	// Try parsing as FeatureCollection
 	var featureCollection FeatureCollection
