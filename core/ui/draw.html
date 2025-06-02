@@ -1,194 +1,287 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <title>Draw Bounding Box</title>
-    <meta charset='utf-8'>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css' />
-    <script src='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js'></script>
-    <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        html, body, #map {
-            height: 100%;
-            width: 100%;
-        }
-        #done-button {
-            position: absolute;
-            top: 10px;
-            right: 50px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-        #done-button:hover {
-            background-color: #45a049;
-        }
-        #done-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body>
-    <div id="map"></div>
-    <button id="done-button" disabled>Done</button>
-
-    <script>
-        {{if not .Bbox.IsZero}}
-            const bboxBounds = {{.Bbox.Bounds}};
-            const bboxPolygonCoords = {{.Bbox.Polygon}};
-        {{else}}
-            const bboxBounds = null;
-            const bboxPolygonCoords = null;
-        {{end}}
-        // Initialize the map with OpenStreetMap tiles
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: {
-                version: 8,
-                sources: {
-                    'osm': {
-                        type: 'raster',
-                        tiles: [
-                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                        ],
-                        tileSize: 256,
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    }
-                },
-                layers: [
-                    {
-                        id: 'osm-tiles',
-                        type: 'raster',
-                        source: 'osm',
-                        minzoom: 0,
-                        maxzoom: 19
-                    }
-                ]
-            },
-            center: [0, 0],
-            zoom: 2
-        });
-
-        // Add zoom controls
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-        // Add geolocate control
-        map.addControl(
-            new maplibregl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: false
-            }),
-            'top-right'
-        );
-
-        let drawnRectangle = null;
-        const doneButton = document.getElementById('done-button');
-
-        // Initialize TerraDrawControl with rectangle mode only
-        const drawControl = new MaplibreTerradrawControl.MaplibreTerradrawControl({
-            modes: ['rectangle','delete'],
-            open: true,
-        });
-        map.addControl(drawControl, 'top-left');
-
-        const draw = drawControl.getTerraDrawInstance();
-
-            // Listen for all terra-draw events
-        draw.on('change', function(ids, type) {
-
-            if (type === 'create' || type === 'update') {
-                // Get the feature data for the first ID
-                if (ids && ids.length > 0) {
-                    const snapshot = draw.getSnapshot();
-                    const feature = snapshot?.find((feature) => feature.id === ids[0]);
-                    drawnRectangle = feature;
-                    doneButton.disabled = false;
-                }
-            } else if (type === 'delete') {
-                drawnRectangle = null;
-                doneButton.disabled = true;
+    <head>
+        <title>Draw Bounding Box</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css"
+        />
+        <script src="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css"
+        />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Helvetica, Ariel, sans-serif;
             }
-        });
 
-        map.once('load', () => {
-            const drawInstance = drawControl.getTerraDrawInstance();
-            if(bboxPolygonCoords) {
-                if(drawInstance) {
-                    drawInstance?.addFeatures([{
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Polygon',
-                            coordinates: [bboxPolygonCoords]
-                        },
-                        properties: {
-							mode: 'rectangle'
-						}
-                    }]);
+            #map {
+                height: 80vh;
+            }
+
+            #pannel {
+                position: relative;
+                top: 0;
+                left: 0;
+                height: 20vh;
+                width: 100%;
+                background-color: rgba(255, 255, 255, 0.9);
+                border-top: 1px solid #ccc;
+                padding: 1rem;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+                border-radius: 4px;
+            }
+
+            #coords {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1rem;
+            }
+
+            #coords > div {
+                text-align: center;
+            }
+
+            #coords > div > span {
+                display: block;
+            }
+
+            #coords .val {
+                font-size: 12px;
+                padding-bottom: 0.2rem;
+            }
+
+            #coords .label {
+                font-size: 10px;
+                color: #999;
+            }
+
+            #done-button {
+                padding: 10px 20px;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                width: 100%;
+            }
+            #done-button:hover {
+                background-color: #45a049;
+            }
+            #done-button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+
+            /* Media queries for responsive layout */
+
+            @media (min-width: 768px) {
+                #map {
+                    height: 100vh;
                 }
 
-                map.fitBounds(bboxBounds, {padding: 50, duration: 1000, // Animation duration in milliseconds
-                  essential: true});
+                #pannel {
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    height: auto;
+                    width: 250px;
+                }
             }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id="pannel">
+            <div id="coords">
+                <div class="left">
+                    <span class="val">--</span>
+                    <span class="label">Left</span>
+                </div>
+                <div class="bottom">
+                    <span class="val">--</span>
+                    <span class="label">Top</span>
+                </div>
+                <div class="right">
+                    <span class="val">--</span>
+                    <span class="label">Right</span>
+                </div>
+                <div class="top">
+                    <span class="val">--</span>
+                    <span class="label">Bottom</span>
+                </div>
+            </div>
+            <button id="done-button" disabled>Done</button>
+        </div>
 
-        });
+        <script>
+              {{if not .Bbox.IsZero}}
+                  const bboxBounds = {{.Bbox.Bounds}};
+                  const bboxPolygonCoords = {{.Bbox.Polygon}};
+              {{else}}
+                  const bboxBounds = null;
+                  const bboxPolygonCoords = null;
+              {{end}}
+              // Initialize the map with OpenStreetMap tiles
+              const map = new maplibregl.Map({
+                  container: 'map',
+                  style: {
+                      version: 8,
+                      sources: {
+                          'osm': {
+                              type: 'raster',
+                              tiles: [
+                                  'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                              ],
+                              tileSize: 256,
+                              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          }
+                      },
+                      layers: [
+                          {
+                              id: 'osm-tiles',
+                              type: 'raster',
+                              source: 'osm',
+                              minzoom: 0,
+                              maxzoom: 19
+                          }
+                      ]
+                  },
+                  center: [0, 0],
+                  zoom: 2
+              });
 
-        // Handle the "Done" button click
-        doneButton.addEventListener('click', function() {
-            if (drawnRectangle) {
-                // Extract the coordinates from the drawn rectangle
-                // Extract the coordinates from the drawn rectangle
-                const coordinates = drawnRectangle.geometry.coordinates[0];
+              // Add zoom controls
+              map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-                // Find min/max values from the coordinates
-                const xValues = coordinates.map(coord => coord[0]);
-                const yValues = coordinates.map(coord => coord[1]);
+              // Add geolocate control
+              map.addControl(
+                  new maplibregl.GeolocateControl({
+                      positionOptions: {
+                          enableHighAccuracy: true
+                      },
+                      trackUserLocation: true,
+                      showUserHeading: false
+                  }),
+                  'top-right'
+              );
 
-                const bboxData = {
-                    "left": Math.min(...xValues),
-                    "bottom": Math.min(...yValues),
-                    "right": Math.max(...xValues),
-                    "top": Math.max(...yValues)
-                };
+              let drawnRectangle = null;
+              const doneButton = document.getElementById('done-button');
 
-                // Post the coordinates to the /bbox endpoint
-                fetch('/bbox', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(bboxData)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Bounding box submitted successfully!');
-                    } else {
-                        alert('Error submitting bounding box');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error submitting bounding box: ' + error.message);
-                });
+              // Initialize TerraDrawControl with rectangle mode only
+              const drawControl = new MaplibreTerradrawControl.MaplibreTerradrawControl({
+                  modes: ['rectangle','delete'],
+                  open: true,
+              });
+              map.addControl(drawControl, 'top-right');
+
+              const draw = drawControl.getTerraDrawInstance();
+
+                  // Listen for all terra-draw events
+              draw.on('change', function(ids, type) {
+
+                  if (type === 'create' || type === 'update') {
+                      // Get the feature data for the first ID
+                      if (ids && ids.length > 0) {
+                          const snapshot = draw.getSnapshot();
+                          const feature = snapshot?.find((feature) => feature.id === ids[0]);
+                          drawnRectangle = feature;
+// Update the coordinate display
+                          const coordinates = feature.geometry.coordinates[0];
+                          const xValues = coordinates.map(coord => coord[0]);
+                          const yValues = coordinates.map(coord => coord[1]);
+
+                          const left = Math.min(...xValues);
+                          const right = Math.max(...xValues);
+                          const bottom = Math.min(...yValues);
+                          const top = Math.max(...yValues);
+
+                          document.querySelector('#coords .left .val').textContent = left.toFixed(4);
+                          document.querySelector('#coords .right .val').textContent = right.toFixed(4);
+                          document.querySelector('#coords .bottom .val').textContent = bottom.toFixed(4);
+                          document.querySelector('#coords .top .val').textContent = top.toFixed(4);
+
+                          doneButton.disabled = false;
+                      }
+                  } else if (type === 'delete') {
+                      drawnRectangle = null;
+                      doneButton.disabled = true;
+                  }
+              });
+
+              map.once('load', () => {
+                  const drawInstance = drawControl.getTerraDrawInstance();
+                  if(bboxPolygonCoords) {
+                      if(drawInstance) {
+                          drawInstance?.addFeatures([{
+                              type: 'Feature',
+                              geometry: {
+                                  type: 'Polygon',
+                                  coordinates: [bboxPolygonCoords]
+                              },
+                              properties: {
+            	mode: 'rectangle'
             }
-        });
+                          }]);
+                      }
 
+                      map.fitBounds(bboxBounds, {padding: 50, duration: 1000, // Animation duration in milliseconds
+                        essential: true});
+                  }
 
-    </script>
-</body>
+              });
+
+              // Handle the "Done" button click
+              doneButton.addEventListener('click', function() {
+                  if (drawnRectangle) {
+                      // Extract the coordinates from the drawn rectangle
+                      // Extract the coordinates from the drawn rectangle
+                      const coordinates = drawnRectangle.geometry.coordinates[0];
+
+                      // Find min/max values from the coordinates
+                      const xValues = coordinates.map(coord => coord[0]);
+                      const yValues = coordinates.map(coord => coord[1]);
+
+                      const bboxData = {
+                          "left": Math.min(...xValues),
+                          "bottom": Math.min(...yValues),
+                          "right": Math.max(...xValues),
+                          "top": Math.max(...yValues)
+                      };
+
+                      // Post the coordinates to the /bbox endpoint
+                      fetch('/bbox', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(bboxData)
+                      })
+                      .then(response => {
+                          if (response.ok) {
+                              alert('Bounding box submitted successfully!');
+                          } else {
+                              alert('Error submitting bounding box');
+                          }
+                      })
+                      .catch(error => {
+                          console.error('Error:', error);
+                          alert('Error submitting bounding box: ' + error.message);
+                      });
+                  }
+              });
+        </script>
+    </body>
 </html>

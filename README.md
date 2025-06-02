@@ -77,6 +77,7 @@ Output formats:
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
 * Add a verbose flag
+* Fix issue where parser raw ends up parsing everything as float
 * geojsonl
 * osm file input
     * https://github.com/paulmach/osm
@@ -102,3 +103,5 @@ Output formats:
 * add http api
 * --grow/shrink/padding args?
 * area command?
+* Text description of Bbox - get closest major city to all four corners and center, and the dedup to describe
+“12km x 12km box 45 km north east of Minneapolis

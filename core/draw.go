@@ -17,6 +17,8 @@ import (
 	"time"
 )
 
+const defaultPort = 5500
+
 //go:embed ui/draw.html
 var drawHTML []byte
 
@@ -33,7 +35,7 @@ type TemplateContext struct {
 // It returns the received bounding box data as a Bbox struct.
 func StartDrawServer(bbox Bbox) (Bbox, error) {
 	// Find the first available port starting from 5000
-	port := findAvailablePort(5000)
+	port := findAvailablePort(defaultPort)
 	if port == 0 {
 		return Bbox{}, fmt.Errorf("could not find an available port")
 	}
