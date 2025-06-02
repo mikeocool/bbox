@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -25,7 +24,7 @@ var RootCmd = &cobra.Command{
 	Short: "A CLI application for bounding box operations",
 	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
 	Args:  cobra.ArbitraryArgs,
-	Run:   runRoot,
+	RunE:  runRoot,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -107,23 +106,23 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 	return bbox, nil
 }
 
-func runRoot(cmd *cobra.Command, args []string) {
+func runRoot(cmd *cobra.Command, args []string) error {
 	bbox, err := getBboxFromInput(args)
 	if err != nil {
 		if errors.Is(err, ErrInputCouldNotCreateBbox) {
-			cmd.Usage()
-			return
+			return err
 			// TODO non-zero exit status
 		} else {
-			log.Fatalf("%v", err)
+			return err
 		}
 	}
 
 	formatted, err := core.FormatBbox(bbox, outputFormat)
 	if err != nil {
-		log.Fatalf("Error formatting bounding box: %v", err)
+		return fmt.Errorf("Error formatting bounding box: %w", err)
 	}
 
 	// Output the formatted bounding box
 	fmt.Println(formatted)
+	return nil
 }

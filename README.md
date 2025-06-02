@@ -76,6 +76,7 @@ Output formats:
 * split command
 * cleanup draw UI
 * when bbox is pre-populated on map, make it editable
+* Add a verbose flag
 * geojsonl
 * osm file input
     * https://github.com/paulmach/osm
