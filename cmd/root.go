@@ -74,7 +74,7 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 	if input.IsInputFromPipe() {
 		stdinBytes, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			return core.Bbox{}, fmt.Errorf("Error reading from stdin: %v", err)
+			return core.Bbox{}, fmt.Errorf("Error reading from stdin: %w", err)
 		}
 		inputParams.Raw = stdinBytes
 	} else if len(args) > 0 {

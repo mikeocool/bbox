@@ -53,7 +53,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	// Parse the HTML template
 	tmpl, err := template.New("draw").Parse(string(drawHTML))
 	if err != nil {
-		return Bbox{}, fmt.Errorf("failed to parse template: %v", err)
+		return Bbox{}, fmt.Errorf("failed to parse template: %w", err)
 	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +148,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	defer shutdownCancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		return Bbox{}, fmt.Errorf("server shutdown error: %v", err)
+		return Bbox{}, fmt.Errorf("server shutdown error: %w", err)
 	}
 	fmt.Println("Server stopped")
 
