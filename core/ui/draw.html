@@ -9,11 +9,7 @@
             href="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css"
         />
         <script src="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css"
-        />
+
         <style>
             body {
                 margin: 0;
@@ -64,7 +60,7 @@
                 color: #999;
             }
 
-            #done-button {
+            #pannel button {
                 padding: 10px 20px;
                 background-color: #4caf50;
                 color: white;
@@ -74,12 +70,16 @@
                 cursor: pointer;
                 width: 100%;
             }
-            #done-button:hover {
+            #pannel button:hover {
                 background-color: #45a049;
             }
-            #done-button:disabled {
+            #pannel button:disabled {
                 background-color: #cccccc;
                 cursor: not-allowed;
+            }
+
+            #done-button {
+                display: none;
             }
 
             a#clear {
@@ -127,11 +127,25 @@
                     <span class="label">Top</span>
                 </div>
             </div>
-            <button id="done-button" disabled>Done</button>
+            <button id="draw-button">Draw Box</button>
+            <button id="done-button">Done</button>
             <a id="clear" href="#">Clear Box</a>
         </div>
 
         <script>
+            /*
+            TODO
+            - fix button state transitions
+                - Draw Box -> Cancel Drawing -> Draw Box
+                - Draw Box -> start drawing -> Done / Clear
+                - finish drawing -> Done / Clear
+                - Done -> submit
+                - Clear -> remove box -> Draw Box
+            - make the clear button work
+            - fix showing box when one is already specified
+            - allow editting box by clicking on corners
+            */
+
             {{if not .Bbox.IsZero}}
                 const bboxBounds = {{.Bbox.Bounds}};
                 const bboxPolygonCoords = {{.Bbox.Polygon}};
@@ -142,11 +156,10 @@
 
             let drawnBbox = null;
 
-            function bboxUpdated(feature) {
-                drawnBbox = feature;
+            function bboxUpdated(coordinates) {
+                drawnBbox = coordinates;
                 if(drawnBbox !== null) {
                     // Update the coordinate display
-                    const coordinates = drawnBbox.geometry.coordinates[0];
                     const xValues = coordinates.map(coord => coord[0]);
                     const yValues = coordinates.map(coord => coord[1]);
 
@@ -160,14 +173,14 @@
                     document.querySelector('#coords .bottom .val').textContent = bottom.toFixed(4);
                     document.querySelector('#coords .top .val').textContent = top.toFixed(4);
 
-                    doneButton.disabled = false;
+                    doneButton.style.display = 'block';
                 } else {
                     document.querySelector('#coords .left .val').textContent = '-';
                     document.querySelector('#coords .right .val').textContent = '-';
                     document.querySelector('#coords .bottom .val').textContent = '-';
                     document.querySelector('#coords .top .val').textContent = '-';
 
-                    doneButton.disabled = true;
+                    doneButton.style.display = 'none';
                 }
             }
 
@@ -186,7 +199,21 @@
                             ],
                             tileSize: 256,
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        }
+                        },
+                        'box': {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: []
+                            }
+                        },
+                        'box-corners': {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: []
+                            }
+                        },
                     },
                     layers: [
                         {
@@ -195,6 +222,35 @@
                             source: 'osm',
                             minzoom: 0,
                             maxzoom: 19
+                        },
+                        {
+                            id: 'box-fill',
+                            type: 'fill',
+                            source: 'box',
+                            paint: {
+                                'fill-color': '#007cbf',
+                                'fill-opacity': 0.3
+                            }
+                        },
+                        {
+                            id: 'box-outline',
+                            type: 'line',
+                            source: 'box',
+                            paint: {
+                                'line-color': '#007cbf',
+                                'line-width': 2
+                            }
+                        },
+                        {
+                            id: 'box-corners',
+                            type: 'circle',
+                            source: 'box-corners',
+                            paint: {
+                                'circle-radius': 4,
+                                'circle-color': '#007cbf',
+                                'circle-stroke-color': '#ffffff',
+                                'circle-stroke-width': 2
+                            }
                         }
                     ]
                 },
@@ -217,74 +273,148 @@
                 'top-right'
             );
 
-            // Initialize TerraDrawControl with rectangle mode only
-            const drawControl = new MaplibreTerradrawControl.MaplibreTerradrawControl({
-                modes: ['rectangle'],
-                open: true,
-            });
-            map.addControl(drawControl, 'top-right');
-
-            const draw = drawControl.getTerraDrawInstance();
-
-                // Listen for all terra-draw events
-            draw.on('change', function(ids, type) {
-                if (type === 'create' || type === 'update') {
-                    const prevBbox = drawnBbox;
-
-                    // Get the feature data for the first ID
-                    if (ids && ids.length > 0) {
-                        const snapshot = draw.getSnapshot();
-                        const feature = snapshot?.find((feature) => feature.id === ids[0]);
-                        bboxUpdated(feature);
-                    }
-
-                    if(type === 'create' && prevBbox !== null) {
-                        // remove the old bbox
-                        const drawInstance = drawControl.getTerraDrawInstance();
-                        drawInstance.removeFeatures([prevBbox.id])
-                    }
-                } else if (type === 'delete') {
-                    if(ids && ids[0] == drawnBbox.id) {
-                        bboxUpdated(null);
-                    }
-                }
-            });
-
             map.once('load', () => {
-                const drawInstance = drawControl.getTerraDrawInstance();
+
                 // draw initial bbox is coords are available in bboxPolygonCoords
                 if(bboxPolygonCoords) {
-                    if(drawInstance) {
-                        drawInstance?.addFeatures([{
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Polygon',
-                                coordinates: [bboxPolygonCoords]
-                            },
-                            properties: {
-                                mode: 'rectangle'
-                            }
-                        }]);
-                    }
+                    // if(drawInstance) {
+                    //     drawInstance?.addFeatures([{
+                    //         type: 'Feature',
+                    //         geometry: {
+                    //             type: 'Polygon',
+                    //             coordinates: [bboxPolygonCoords]
+                    //         },
+                    //         properties: {
+                    //             mode: 'rectangle'
+                    //         }
+                    //     }]);
+                    // }
 
-                    map.fitBounds(bboxBounds, {
-                        padding: 50,
-                        duration: 1000, // Animation duration in milliseconds
-                        essential: true
-                    });
+                    // map.fitBounds(bboxBounds, {
+                    //     padding: 50,
+                    //     duration: 1000, // Animation duration in milliseconds
+                    //     essential: true
+                    // });
                 }
 
             });
 
-            const clearButton = document.getElementById('clear');
+            let isDrawing = false;
+            let anchorPoint = null;
+
+            function createCornerPoints(coordinates) {
+                const corners = [];
+                // Skip the last point since it's the same as the first (closing the polygon)
+                for (let i = 0; i < coordinates.length - 1; i++) {
+                    corners.push({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: coordinates[i]
+                        },
+                        properties: {
+                            corner: i
+                        }
+                    });
+                }
+                return corners;
+            }
+
+            function createRectangle(start, end) {
+                const minLng = Math.min(start.lng, end.lng);
+                const maxLng = Math.max(start.lng, end.lng);
+                const minLat = Math.min(start.lat, end.lat);
+                const maxLat = Math.max(start.lat, end.lat);
+
+                return [
+                    [minLng, minLat], // bottom-left
+                    [maxLng, minLat], // bottom-right
+                    [maxLng, maxLat], // top-right
+                    [minLng, maxLat], // top-left
+                    [minLng, minLat]  // close the polygon
+                ];
+            }
+
+            function updateBox(end) {
+                if (!anchorPoint) return;
+
+                const coordinates = createRectangle(anchorPoint, end);
+
+                map.getSource('box').setData({
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [coordinates]
+                        }
+                    }]
+                });
+
+                const cornerPoints = createCornerPoints(coordinates);
+                map.getSource('box-corners').setData({
+                    type: 'FeatureCollection',
+                    features: cornerPoints
+                });
+
+                bboxUpdated(coordinates)
+            }
+
+            function startNewBox(pt) {
+                anchorPoint = pt;
+
+                map.getCanvas().style.cursor = 'crosshair';
+            }
+
+            function finishDrawing(endPt) {
+                if (!anchorPoint) return;
+
+                updateBox(endPt);
+                // TODO update drawnBbox?
+
+                isDrawing = false;
+                anchorPoint = null;
+                map.getCanvas().style.cursor = '';
+            }
+
+            const drawButton = document.getElementById('draw-button');
             const doneButton = document.getElementById('done-button');
+            const clearButton = document.getElementById('clear');
+
+            map.on('click', function(e) {
+                if(!isDrawing) return;
+
+                if(!anchorPoint) {
+                    console.log('start drawing new box');
+                    startNewBox(e.lngLat);
+                } else {
+                    console.log('finish drawing');
+                    finishDrawing(e.lngLat);
+                }
+            });
+
+            map.on('mousemove', function(e) {
+                if (isDrawing && anchorPoint) {
+                    updateBox(e.lngLat);
+                }
+            });
+
+            // TODO escape key --cancel drawing
+
+
+            drawButton.addEventListener('click', function() {
+                isDrawing = true;
+                map.getCanvas().style.cursor = 'crosshair';
+
+                // TODO swap draw-button to cancel drawing button
+            });
 
             // Handle the "Done" button click
             doneButton.addEventListener('click', function() {
                 if (drawnBbox) {
                     // Extract the coordinates from the drawn rectangle
                     // Extract the coordinates from the drawn rectangle
-                    const coordinates = drawnBbox.geometry.coordinates[0];
+                    const coordinates = drawnBbox;
 
                     // Find min/max values from the coordinates
                     const xValues = coordinates.map(coord => coord[0]);
@@ -320,11 +450,10 @@
             });
 
             clearButton.addEventListener('click', function() {
-                const drawInstance = drawControl.getTerraDrawInstance();
-                drawInstance.removeFeatures([drawnBox.id]);
+                // const drawInstance = drawControl.getTerraDrawInstance();
+                // drawInstance.removeFeatures([drawnBox.id]);
                 bboxUpdated(null)
                 drawnBox = null;
-
             });
         </script>
     </body>
