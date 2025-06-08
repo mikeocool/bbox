@@ -82,6 +82,13 @@
                 cursor: not-allowed;
             }
 
+            a#clear {
+                text-decoration: none;
+                color: #ccc;
+                font-size: 11px;
+                display: none;
+            }
+
             /* Media queries for responsive layout */
 
             @media (min-width: 768px) {
@@ -121,6 +128,7 @@
                 </div>
             </div>
             <button id="done-button" disabled>Done</button>
+            <a id="clear" href="#">Clear Box</a>
         </div>
 
         <script>
@@ -209,11 +217,9 @@
                 'top-right'
             );
 
-            const doneButton = document.getElementById('done-button');
-
             // Initialize TerraDrawControl with rectangle mode only
             const drawControl = new MaplibreTerradrawControl.MaplibreTerradrawControl({
-                modes: ['rectangle','delete'],
+                modes: ['rectangle'],
                 open: true,
             });
             map.addControl(drawControl, 'top-right');
@@ -222,7 +228,6 @@
 
                 // Listen for all terra-draw events
             draw.on('change', function(ids, type) {
-
                 if (type === 'create' || type === 'update') {
                     const prevBbox = drawnBbox;
 
@@ -239,7 +244,6 @@
                         drawInstance.removeFeatures([prevBbox.id])
                     }
                 } else if (type === 'delete') {
-                    // TODO this doesnt seem to get firecd when the trash button is used
                     if(ids && ids[0] == drawnBbox.id) {
                         bboxUpdated(null);
                     }
@@ -271,6 +275,9 @@
                 }
 
             });
+
+            const clearButton = document.getElementById('clear');
+            const doneButton = document.getElementById('done-button');
 
             // Handle the "Done" button click
             doneButton.addEventListener('click', function() {
@@ -310,6 +317,14 @@
                         alert('Error submitting bounding box: ' + error.message);
                     });
                 }
+            });
+
+            clearButton.addEventListener('click', function() {
+                const drawInstance = drawControl.getTerraDrawInstance();
+                drawInstance.removeFeatures([drawnBox.id]);
+                bboxUpdated(null)
+                drawnBox = null;
+
             });
         </script>
     </body>
