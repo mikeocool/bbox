@@ -521,7 +521,9 @@
                     })
                     .then(response => {
                         if (response.ok) {
-                            alert('Bounding box submitted successfully!');
+                            // TODO make this an overlay
+                            // With a message like "Bounding box created successfully - You can close this window and continue on the command line."
+                            alert('Bounding box created successfully!');
                         } else {
                             alert('Error submitting bounding box');
                         }

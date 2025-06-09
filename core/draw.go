@@ -118,7 +118,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 
 	// Start the server in a goroutine
 	go func() {
-		fmt.Printf("Go to http://localhost:%d to draw your bounding box\n", s.Port)
+		log.Printf("Go to http://localhost:%d to draw your bounding box\n", s.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -139,20 +139,20 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	// Wait for either the bbox data or a signal
 	select {
 	case bbox = <-bboxCh:
-		fmt.Println("Received bounding box data")
+		log.Println("Received bounding box data")
 	case <-sigCh:
-		fmt.Println("Interrupted by user")
+		log.Println("Interrupted by user")
 	}
 
 	// Shutdown the server
-	fmt.Println("Shutting down server...")
+	log.Println("Shutting down server...")
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		return Bbox{}, fmt.Errorf("server shutdown error: %w", err)
 	}
-	fmt.Println("Server stopped")
+	log.Println("Server stopped")
 
 	return bbox, nil
 }

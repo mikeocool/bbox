@@ -78,6 +78,7 @@ Output formats:
     * vector tiles(?)
     * preview bbox in common formats
     * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
+    * Show popup success message with button to close window when done
 * Add a verbose flag
 * Fix issue where parser raw ends up parsing everything as float
 * geojsonl
