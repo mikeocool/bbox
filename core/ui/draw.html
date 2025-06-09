@@ -352,24 +352,13 @@
 
                 // draw initial bbox is coords are available in bboxPolygonCoords
                 if(bboxPolygonCoords) {
-                    // if(drawInstance) {
-                    //     drawInstance?.addFeatures([{
-                    //         type: 'Feature',
-                    //         geometry: {
-                    //             type: 'Polygon',
-                    //             coordinates: [bboxPolygonCoords]
-                    //         },
-                    //         properties: {
-                    //             mode: 'rectangle'
-                    //         }
-                    //     }]);
-                    // }
+                    bboxUpdated(bboxPolygonCoords);
 
-                    // map.fitBounds(bboxBounds, {
-                    //     padding: 50,
-                    //     duration: 1000, // Animation duration in milliseconds
-                    //     essential: true
-                    // });
+                    map.fitBounds(bboxBounds, {
+                        padding: 50,
+                        duration: 1000, // Animation duration in milliseconds
+                        essential: true
+                    });
                 }
 
             });
