@@ -175,9 +175,6 @@
         <script>
             /*
             TODO
-            - make the cancel button work and style it
-            - make the clear button work
-            - fix showing box when one is already specified
             - allow editting box by clicking on corners
             */
 
@@ -449,6 +446,40 @@
                 if (isDrawing && anchorPoint) {
                     updateBox(e.lngLat);
                 }
+            });
+
+            map.on('mouseenter', 'box-corners', () => {
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'box-corners', () => {
+                map.getCanvas().style.cursor = '';
+            });
+
+            map.on('mousedown', 'box-corners', (e) => {
+                if(isDrawing) return;
+
+                e.preventDefault();
+                // Get the clicked corner index
+                const cornerIndex = e.features[0].properties.corner;
+
+                // Set anchor point to the opposite corner
+                // Corner indices: 0=bottom-left, 1=bottom-right, 2=top-right, 3=top-left
+                let oppositeCornerIndex;
+                switch(cornerIndex) {
+                    case 0: oppositeCornerIndex = 2; break; // bottom-left -> top-right
+                    case 1: oppositeCornerIndex = 3; break; // bottom-right -> top-left
+                    case 2: oppositeCornerIndex = 0; break; // top-right -> bottom-left
+                    case 3: oppositeCornerIndex = 1; break; // top-left -> bottom-right
+                }
+
+                const oppositeCoord = drawnBbox[oppositeCornerIndex];
+                anchorPoint = { lng: oppositeCoord[0], lat: oppositeCoord[1] };
+
+                map.once('mouseup', (e) => { finishDrawing(e.lngLat); })
+                // Start drawing mode to allow reshaping
+                startDrawingMode();
             });
 
             // TODO escape key --cancel drawing
