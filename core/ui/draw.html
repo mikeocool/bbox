@@ -61,6 +61,7 @@
             }
 
             #pannel button {
+                display: none; //override
                 padding: 10px 20px;
                 background-color: #4caf50;
                 color: white;
@@ -78,14 +79,50 @@
                 cursor: not-allowed;
             }
 
-            #done-button {
+            #pannel #cancel-button {
+                background-color: #cc6666;
+            }
+            #pannel #cancel-button:hover {
+                background-color: #b85555;
+            }
+
+            // hide the draw button if we're drawing or
+            // if a bbox already exists
+            #pannel #draw-button {
+                display: block;
+            }
+
+            #pannel.mode-drawing #draw-button,
+            #pannel.box-drawn #draw-button {
                 display: none;
+            }
+
+            // hide the cancel once a box is drawn
+            #pannel.mode-drawing #cancel-button {
+                display: block;
+            }
+
+            #pannel.mode-drawing.box-drawn #cancel-button {
+                display: none;
+            }
+
+            // done buttons
+            #pannel #done-button,
+            #pannel #clear {
+                display: none;
+            }
+
+            #pannel.box-drawn #done-button,
+            #pannel.box-drawn #clear {
+               display: block;
             }
 
             a#clear {
                 text-decoration: none;
+                text-align: center;
                 color: #ccc;
                 font-size: 11px;
+                margin-top: 0.75rem;
                 display: none;
             }
 
@@ -128,6 +165,9 @@
                 </div>
             </div>
             <button id="draw-button">Draw Box</button>
+
+            <button id="cancel-button">Cancel</button>
+
             <button id="done-button">Done</button>
             <a id="clear" href="#">Clear Box</a>
         </div>
@@ -135,12 +175,7 @@
         <script>
             /*
             TODO
-            - fix button state transitions
-                - Draw Box -> Cancel Drawing -> Draw Box
-                - Draw Box -> start drawing -> Done / Clear
-                - finish drawing -> Done / Clear
-                - Done -> submit
-                - Clear -> remove box -> Draw Box
+            - make the cancel button work and style it
             - make the clear button work
             - fix showing box when one is already specified
             - allow editting box by clicking on corners
@@ -156,9 +191,43 @@
 
             let drawnBbox = null;
 
+            const pannelEl = document.querySelector('#pannel');
+
+            function modeUpdated() {
+                let clsNames = [];
+                if(drawnBbox != null) {
+                    clsNames.push("box-drawn");
+                }
+                if(isDrawing) {
+                    clsNames.push("mode-drawing");
+                    map.getCanvas().style.cursor = 'crosshair';
+                } else {
+                    map.getCanvas().style.cursor = '';
+                }
+                pannelEl.className = clsNames.join(" ");
+            }
+
             function bboxUpdated(coordinates) {
                 drawnBbox = coordinates;
+
                 if(drawnBbox !== null) {
+                    map.getSource('box').setData({
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Polygon',
+                                coordinates: [coordinates]
+                            }
+                        }]
+                    });
+
+                    const cornerPoints = createCornerPoints(coordinates);
+                    map.getSource('box-corners').setData({
+                        type: 'FeatureCollection',
+                        features: cornerPoints
+                    });
+
                     // Update the coordinate display
                     const xValues = coordinates.map(coord => coord[0]);
                     const yValues = coordinates.map(coord => coord[1]);
@@ -172,16 +241,22 @@
                     document.querySelector('#coords .right .val').textContent = right.toFixed(4);
                     document.querySelector('#coords .bottom .val').textContent = bottom.toFixed(4);
                     document.querySelector('#coords .top .val').textContent = top.toFixed(4);
-
-                    doneButton.style.display = 'block';
                 } else {
+                    map.getSource('box').setData({
+                        type: 'FeatureCollection',
+                        features: []
+                    });
+                    map.getSource('box-corners').setData({
+                        type: 'FeatureCollection',
+                        features: []
+                    });
+
                     document.querySelector('#coords .left .val').textContent = '-';
                     document.querySelector('#coords .right .val').textContent = '-';
                     document.querySelector('#coords .bottom .val').textContent = '-';
                     document.querySelector('#coords .top .val').textContent = '-';
-
-                    doneButton.style.display = 'none';
                 }
+                modeUpdated();
             }
 
             // Initialize the map with OpenStreetMap tiles
@@ -339,45 +414,35 @@
                 if (!anchorPoint) return;
 
                 const coordinates = createRectangle(anchorPoint, end);
-
-                map.getSource('box').setData({
-                    type: 'FeatureCollection',
-                    features: [{
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Polygon',
-                            coordinates: [coordinates]
-                        }
-                    }]
-                });
-
-                const cornerPoints = createCornerPoints(coordinates);
-                map.getSource('box-corners').setData({
-                    type: 'FeatureCollection',
-                    features: cornerPoints
-                });
-
                 bboxUpdated(coordinates)
             }
 
             function startNewBox(pt) {
                 anchorPoint = pt;
+            }
 
-                map.getCanvas().style.cursor = 'crosshair';
+            function startDrawingMode() {
+                isDrawing = true;
+                modeUpdated();
+            }
+
+            function cancelDrawingMode() {
+                isDrawing = false;
+                anchorPoint = null;
+                modeUpdated();
             }
 
             function finishDrawing(endPt) {
                 if (!anchorPoint) return;
 
-                updateBox(endPt);
-                // TODO update drawnBbox?
-
                 isDrawing = false;
+                updateBox(endPt);
+
                 anchorPoint = null;
-                map.getCanvas().style.cursor = '';
             }
 
             const drawButton = document.getElementById('draw-button');
+            const cancelButton = document.getElementById('cancel-button');
             const doneButton = document.getElementById('done-button');
             const clearButton = document.getElementById('clear');
 
@@ -385,10 +450,8 @@
                 if(!isDrawing) return;
 
                 if(!anchorPoint) {
-                    console.log('start drawing new box');
                     startNewBox(e.lngLat);
                 } else {
-                    console.log('finish drawing');
                     finishDrawing(e.lngLat);
                 }
             });
@@ -403,10 +466,11 @@
 
 
             drawButton.addEventListener('click', function() {
-                isDrawing = true;
-                map.getCanvas().style.cursor = 'crosshair';
+                startDrawingMode();
+            });
 
-                // TODO swap draw-button to cancel drawing button
+            cancelButton.addEventListener('click', function() {
+                cancelDrawingMode();
             });
 
             // Handle the "Done" button click
