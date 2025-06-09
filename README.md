@@ -75,9 +75,6 @@ Output formats:
 # TODO
 * split command
 * cleanup draw UI
-    * when bbox is pre-populated on map, make it editable
-    * fix issue when delete button is used
-    * make call to action for drawing box more obvious
     * vector tiles(?)
     * preview bbox in common formats
     * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
