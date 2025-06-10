@@ -1,6 +1,7 @@
 package core
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -191,6 +192,128 @@ func TestWktFormat(t *testing.T) {
 				if result != tc.expected {
 					t.Errorf("Expected %q but got %q", tc.expected, result)
 				}
+			}
+		})
+	}
+}
+
+func TestParseFormatDetails(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expected    map[string]string
+		expectError bool
+	}{
+		{
+			name:        "empty string",
+			input:       "",
+			expected:    map[string]string{},
+			expectError: false,
+		},
+		{
+			name:        "single key-value pair",
+			input:       "key1:value1",
+			expected:    map[string]string{"key1": "value1"},
+			expectError: false,
+		},
+		{
+			name:        "multiple key-value pairs",
+			input:       "key1:value1,key2:value2,key3:value3",
+			expected:    map[string]string{"key1": "value1", "key2": "value2", "key3": "value3"},
+			expectError: false,
+		},
+		{
+			name:        "whitespace around pairs",
+			input:       " key1:value1 , key2:value2 ",
+			expected:    map[string]string{"key1": "value1", "key2": "value2"},
+			expectError: false,
+		},
+		{
+			name:        "whitespace around keys and values",
+			input:       " key1 : value1 , key2 : value2 ",
+			expected:    map[string]string{"key1": "value1", "key2": "value2"},
+			expectError: false,
+		},
+		{
+			name:        "empty value allowed",
+			input:       "key1:,key2:value2",
+			expected:    map[string]string{"key1": "", "key2": "value2"},
+			expectError: false,
+		},
+		{
+			name:        "value with colon",
+			input:       "key1:value:with:colons,key2:simple",
+			expected:    map[string]string{"key1": "value:with:colons", "key2": "simple"},
+			expectError: false,
+		},
+		{
+			name:        "empty pairs skipped",
+			input:       "key1:value1,,key2:value2, ,key3:value3",
+			expected:    map[string]string{"key1": "value1", "key2": "value2", "key3": "value3"},
+			expectError: false,
+		},
+		{
+			name:        "only commas and spaces",
+			input:       ", , ,",
+			expected:    map[string]string{},
+			expectError: false,
+		},
+		{
+			name:        "missing colon",
+			input:       "key1value1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "missing colon in one pair",
+			input:       "key1:value1,key2value2",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "empty key",
+			input:       ":value1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "empty key with spaces",
+			input:       " : value1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "empty key mixed with valid pairs",
+			input:       "key1:value1,:value2",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "special characters in values",
+			input:       "url:https://example.com,path:/some/path,query:a=1&b=2",
+			expected:    map[string]string{"url": "https://example.com", "path": "/some/path", "query": "a=1&b=2"},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParseFormatDetails(tt.input)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Expected %v but got %v", tt.expected, result)
 			}
 		})
 	}

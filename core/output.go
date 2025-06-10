@@ -21,6 +21,40 @@ func ParseFormat(formatStr string) (string, string) {
 	return formatType, formatDetails
 }
 
+// ParseFormatDetails parses a format details string into key-value pairs.
+// It handles strings in the format "key1:value1,key2:value2" and returns a map.
+func ParseFormatDetails(details string) (map[string]string, error) {
+	result := make(map[string]string)
+
+	if details == "" {
+		return result, nil
+	}
+
+	pairs := strings.Split(details, ",")
+	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+
+		parts := strings.SplitN(pair, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid format detail: %s", pair)
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		if key == "" {
+			return nil, fmt.Errorf("empty key in format detail: %s", pair)
+		}
+
+		result[key] = value
+	}
+
+	return result, nil
+}
+
 // TemplatedFormat formats a Bbox using a given template string.
 // The template can reference any of the Bbox fields using {{.FieldName}} syntax.
 // For example: "{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}"
@@ -238,7 +272,7 @@ func CommaFormatCollection(_ string, boxes []Bbox) (string, error) {
 }
 
 func TabFormatCollection(_ string, boxes []Bbox) (string, error) {
-	return JoinedFormatCollection(TabFormat, boxes)
+	return JoinedFormatCollection(CommaFormat, boxes)
 }
 
 var colletionOutputFormatters = map[string]func(string, []Bbox) (string, error){
