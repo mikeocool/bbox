@@ -115,8 +115,8 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	bbox, err := getBboxFromInput(args)
 	if err != nil {
 		if errors.Is(err, ErrInputCouldNotCreateBbox) {
+			cmd.Usage()
 			return err
-			// TODO non-zero exit status
 		} else {
 			return err
 		}
