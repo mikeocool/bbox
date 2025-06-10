@@ -134,11 +134,13 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
 
+	boxCreated := false
 	var bbox Bbox
 
 	// Wait for either the bbox data or a signal
 	select {
 	case bbox = <-bboxCh:
+		boxCreated = true
 		log.Println("Received bounding box data")
 	case <-sigCh:
 		log.Println("Interrupted by user")
@@ -153,6 +155,10 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 		return Bbox{}, fmt.Errorf("server shutdown error: %w", err)
 	}
 	log.Println("Server stopped")
+
+	if !boxCreated {
+		return Bbox{}, fmt.Errorf("No bounding box submitted")
+	}
 
 	return bbox, nil
 }

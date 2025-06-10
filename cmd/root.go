@@ -20,11 +20,13 @@ var outputFormat string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "bbox",
-	Short: "A CLI application for bounding box operations",
-	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
-	Args:  cobra.ArbitraryArgs,
-	RunE:  runRoot,
+	Use:           "bbox",
+	Short:         "A CLI application for bounding box operations",
+	Long:          `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
+	Args:          cobra.ArbitraryArgs,
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE:          runRoot,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -96,7 +98,6 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 
 	if drawFlag {
 		// Start the drawing server
-		// TODO pass in bbox is it's set
 		bbox, err = core.StartDrawServer(bbox)
 		if err != nil {
 			return core.Bbox{}, fmt.Errorf("Error running draw server: %w", err)
