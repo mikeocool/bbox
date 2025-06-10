@@ -70,3 +70,37 @@ func (b Bbox) Union(other Bbox) Bbox {
 		Top:    math.Max(b.Top, other.Top),
 	}
 }
+
+// Slice divides the bounding box into a grid of columns and rows,
+// returning a slice of bounding boxes for each cell in the grid.
+// The boxes are returned in row-major order (left to right, top to bottom).
+func (b Bbox) Slice(columns, rows int) []Bbox {
+	if columns <= 0 || rows <= 0 {
+		return []Bbox{}
+	}
+
+	totalWidth := b.Right - b.Left
+	totalHeight := b.Top - b.Bottom
+	cellWidth := totalWidth / float64(columns)
+	cellHeight := totalHeight / float64(rows)
+
+	boxes := make([]Bbox, 0, columns*rows)
+
+	for row := range rows {
+		for col := range columns {
+			left := b.Left + float64(col)*cellWidth
+			right := b.Left + float64(col+1)*cellWidth
+			bottom := b.Bottom + float64(rows-row-1)*cellHeight
+			top := b.Bottom + float64(rows-row)*cellHeight
+
+			boxes = append(boxes, Bbox{
+				Left:   left,
+				Bottom: bottom,
+				Right:  right,
+				Top:    top,
+			})
+		}
+	}
+
+	return boxes
+}

@@ -9,6 +9,18 @@ import (
 	"text/template"
 )
 
+func ParseFormat(formatStr string) (string, string) {
+	formatType := formatStr
+	formatDetails := ""
+	parts := strings.SplitN(formatStr, "=", 2)
+	if len(parts) > 1 {
+		formatType = parts[0]
+		formatDetails = parts[1]
+	}
+
+	return formatType, formatDetails
+}
+
 // TemplatedFormat formats a Bbox using a given template string.
 // The template can reference any of the Bbox fields using {{.FieldName}} syntax.
 // For example: "{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}"
@@ -136,13 +148,7 @@ func GetBboxFormatter(formatType string) func(string, Bbox) (string, error) {
 
 // Format formats a Bbox using the specified format type.
 func FormatBbox(bbox Bbox, format string) (string, error) {
-	formatType := format
-	formatDetails := ""
-	parts := strings.SplitN(format, "=", 2)
-	if len(parts) > 1 {
-		formatType = parts[0]
-		formatDetails = parts[1]
-	}
+	formatType, formatDetails := ParseFormat(format)
 
 	formatter := GetBboxFormatter(formatType)
 	if formatter == nil {
@@ -206,4 +212,43 @@ func FormatPoint(point [2]float64, formatType string) (string, error) {
 		return "", fmt.Errorf("unknown output format: %s", formatType)
 	}
 	return formatter(point)
+}
+
+// Collections
+func SpaceFormatCollection(_ string, boxes []Bbox) (string, error) {
+	out := make([]string, len(boxes))
+	for _, box := range boxes {
+		val, err := SpaceFormat("", box)
+		if err != nil {
+			return "", err
+		}
+		out = append(out, val)
+	}
+
+	return strings.Join(out, "\n"), nil
+}
+
+var colletionOutputFormatters = map[string]func(string, []Bbox) (string, error){
+	// TOOD
+	//FormatComma: CommaFormatCollection,
+	FormatSpace: SpaceFormatCollection,
+	// FormatTab:     TabFormatPoint,
+	// FormatWkt:     WktFormatPoint,
+	// FormatGeoJson: GeojsonFormatPoint,
+	// TODO url?
+}
+
+// GetFormatter returns the format function for the given format type.
+func GetCollectionFormatter(formatType string) func(string, []Bbox) (string, error) {
+	return colletionOutputFormatters[formatType]
+}
+
+func FormatCollection(boxes []Bbox, format string) (string, error) {
+	formatType, formatDetails := ParseFormat(format)
+
+	formatter := GetCollectionFormatter(formatType)
+	if formatter == nil {
+		return "", fmt.Errorf("unknown output format: %s", formatType)
+	}
+	return formatter(formatDetails, boxes)
 }
