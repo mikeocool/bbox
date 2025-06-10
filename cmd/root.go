@@ -20,13 +20,17 @@ var outputFormat string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:           "bbox",
-	Short:         "A CLI application for bounding box operations",
-	Long:          `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
-	Args:          cobra.ArbitraryArgs,
+	Use:   "bbox",
+	Short: "A CLI application for bounding box operations",
+	Long:  `A CLI application that provides tools for working with bounding boxes, including a web-based drawing interface.`,
+	Args:  cobra.ArbitraryArgs,
+
+	// we'll manage printing errors and usage orselves
+	// cobra does it in a lot of cases where we dont want it
 	SilenceUsage:  true,
 	SilenceErrors: true,
-	RunE:          runRoot,
+
+	RunE: runRoot,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
