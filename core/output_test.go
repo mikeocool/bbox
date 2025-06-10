@@ -1063,3 +1063,84 @@ func TestFormatPoint(t *testing.T) {
 		})
 	}
 }
+
+func TestSpaceFormatCollection(t *testing.T) {
+	tests := []struct {
+		name        string
+		boxes       []Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Empty collection",
+			boxes:       []Bbox{},
+			expected:    "",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - zero values",
+			boxes:       []Bbox{{Left: 0, Bottom: 0, Right: 0, Top: 0}},
+			expected:    "0 0 0 0",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - integer coordinates",
+			boxes:       []Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
+			expected:    "1 2 3 4",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - decimal coordinates",
+			boxes:       []Bbox{{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125}},
+			expected:    "10.5 20.25 30.75 40.125",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - negative coordinates",
+			boxes:       []Bbox{{Left: -10, Bottom: -20, Right: -5, Top: -15}},
+			expected:    "-10 -20 -5 -15",
+			expectError: false,
+		},
+		{
+			name: "Multiple bboxes",
+			boxes: []Bbox{
+				{Left: 1, Bottom: 2, Right: 3, Top: 4},
+				{Left: 5, Bottom: 6, Right: 7, Top: 8},
+				{Left: 9, Bottom: 10, Right: 11, Top: 12},
+			},
+			expected:    "1 2 3 4\n5 6 7 8\n9 10 11 12",
+			expectError: false,
+		},
+		{
+			name: "Multiple bboxes with mixed coordinate types",
+			boxes: []Bbox{
+				{Left: 0, Bottom: 0, Right: 0, Top: 0},
+				{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+				{Left: 100, Bottom: 200, Right: 300, Top: 400},
+			},
+			expected:    "0 0 0 0\n-10.5 20.25 -5.75 15.125\n100 200 300 400",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := SpaceFormatCollection("", tc.boxes)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}

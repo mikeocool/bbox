@@ -215,24 +215,37 @@ func FormatPoint(point [2]float64, formatType string) (string, error) {
 }
 
 // Collections
-func SpaceFormatCollection(_ string, boxes []Bbox) (string, error) {
+// JoinedFormatCollection formats a collection of bboxes using the provided formatter function
+// and joins the results with newlines
+func JoinedFormatCollection(formatter func(string, Bbox) (string, error), boxes []Bbox) (string, error) {
 	out := make([]string, len(boxes))
-	for _, box := range boxes {
-		val, err := SpaceFormat("", box)
+	for i, box := range boxes {
+		val, err := formatter("", box)
 		if err != nil {
 			return "", err
 		}
-		out = append(out, val)
+		out[i] = val
 	}
-
 	return strings.Join(out, "\n"), nil
+}
+
+func SpaceFormatCollection(_ string, boxes []Bbox) (string, error) {
+	return JoinedFormatCollection(SpaceFormat, boxes)
+}
+
+func CommaFormatCollection(_ string, boxes []Bbox) (string, error) {
+	return JoinedFormatCollection(CommaFormat, boxes)
+}
+
+func TabFormatCollection(_ string, boxes []Bbox) (string, error) {
+	return JoinedFormatCollection(TabFormat, boxes)
 }
 
 var colletionOutputFormatters = map[string]func(string, []Bbox) (string, error){
 	// TOOD
-	//FormatComma: CommaFormatCollection,
+	FormatComma: CommaFormatCollection,
 	FormatSpace: SpaceFormatCollection,
-	// FormatTab:     TabFormatPoint,
+	FormatTab:   TabFormatCollection,
 	// FormatWkt:     WktFormatPoint,
 	// FormatGeoJson: GeojsonFormatPoint,
 	// TODO url?

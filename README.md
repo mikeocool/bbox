@@ -73,7 +73,8 @@ Output formats:
 -o kml
 
 # TODO
-* split command
+* slice command
+    * finish output
 * cleanup draw UI
     * vector tiles(?)
     * preview bbox in common formats
