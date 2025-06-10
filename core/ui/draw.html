@@ -173,16 +173,9 @@
         </div>
 
         <script>
-            /*
-            TODO
-            - allow editting box by clicking on corners
-            */
-
             {{if not .Bbox.IsZero}}
-                const bboxBounds = {{.Bbox.Bounds}};
                 const bboxPolygonCoords = {{.Bbox.Polygon}};
             {{else}}
-                const bboxBounds = null;
                 const bboxPolygonCoords = null;
             {{end}}
 
@@ -351,7 +344,7 @@
                 if(bboxPolygonCoords) {
                     bboxUpdated(bboxPolygonCoords);
 
-                    map.fitBounds(bboxBounds, {
+                    map.fitBounds(getBounds(bboxPolygonCoords), {
                         padding: 50,
                         duration: 1000, // Animation duration in milliseconds
                         essential: true
@@ -393,6 +386,18 @@
                     [maxLng, maxLat], // top-right
                     [minLng, maxLat], // top-left
                     [minLng, minLat]  // close the polygon
+                ];
+            }
+
+            function getBounds(coordinates) {
+                const xValues = coordinates.map(coord => coord[0]);
+                const yValues = coordinates.map(coord => coord[1]);
+
+                return [
+                    Math.min(...xValues), // left
+                    Math.min(...yValues), // bottom
+                    Math.max(...xValues), // right
+                    Math.max(...yValues) // top
                 ];
             }
 
@@ -496,19 +501,13 @@
             // Handle the "Done" button click
             doneButton.addEventListener('click', function() {
                 if (drawnBbox) {
-                    // Extract the coordinates from the drawn rectangle
-                    // Extract the coordinates from the drawn rectangle
-                    const coordinates = drawnBbox;
-
-                    // Find min/max values from the coordinates
-                    const xValues = coordinates.map(coord => coord[0]);
-                    const yValues = coordinates.map(coord => coord[1]);
+                    const [left, bottom, right, top] = getBounds(drawnBbox);
 
                     const bboxData = {
-                        "left": Math.min(...xValues),
-                        "bottom": Math.min(...yValues),
-                        "right": Math.max(...xValues),
-                        "top": Math.max(...yValues)
+                        "left": left,
+                        "bottom": bottom,
+                        "right": right,
+                        "top": top
                     };
 
                     // Post the coordinates to the /bbox endpoint
@@ -536,8 +535,6 @@
             });
 
             clearButton.addEventListener('click', function() {
-                // const drawInstance = drawControl.getTerraDrawInstance();
-                // drawInstance.removeFeatures([drawnBox.id]);
                 bboxUpdated(null)
                 drawnBox = null;
             });
