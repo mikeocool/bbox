@@ -42,34 +42,38 @@ func Execute() {
 	}
 }
 
+func GetFlagFloat64(cmd *cobra.Command, flag string) *float64 {
+	if cmd.PersistentFlags().Changed(flag) {
+		val, err := cmd.PersistentFlags().GetFloat64(flag)
+		if err != nil {
+			return nil
+		}
+		return &val
+	}
+	return nil
+}
+
 func init() {
-	var left, bottom, right, top float64
-	RootCmd.PersistentFlags().Float64VarP(&left, "left", "l", 0, "Left coordinate of bounding box")
-	RootCmd.PersistentFlags().Float64VarP(&bottom, "bottom", "b", 0, "Bottom coordinate of bounding box")
-	RootCmd.PersistentFlags().Float64VarP(&right, "right", "r", 0, "Right coordinate of bounding box")
-	RootCmd.PersistentFlags().Float64VarP(&top, "top", "t", 0, "Top coordinate of bounding box")
+	// input flags
+	RootCmd.PersistentFlags().Float64P("left", "l", 0, "Left coordinate of bounding box")
+	RootCmd.PersistentFlags().Float64P("bottom", "b", 0, "Bottom coordinate of bounding box")
+	RootCmd.PersistentFlags().Float64P("right", "r", 0, "Right coordinate of bounding box")
+	RootCmd.PersistentFlags().Float64P("top", "t", 0, "Top coordinate of bounding box")
 	RootCmd.PersistentFlags().Float64SliceVar(&inputParams.Center, "center", []float64{}, "Center coordinates [x,y] of bounding box")
 	RootCmd.PersistentFlags().StringVar(&inputParams.Width, "width", "", "Width of bounding box")
 	RootCmd.PersistentFlags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
 	RootCmd.PersistentFlags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.PersistentFlags().StringSliceVarP(&inputParams.File, "file", "f", []string{}, "Path to file to load")
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
+
 	RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "space", "Output format or destination")
 
 	RootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		// Check if flags were specified and set the pointers accordingly
-		if cmd.PersistentFlags().Changed("left") {
-			inputParams.Left = &left
-		}
-		if cmd.PersistentFlags().Changed("bottom") {
-			inputParams.Bottom = &bottom
-		}
-		if cmd.PersistentFlags().Changed("right") {
-			inputParams.Right = &right
-		}
-		if cmd.PersistentFlags().Changed("top") {
-			inputParams.Top = &top
-		}
+		// If the flags have had values passed in set them
+		inputParams.Left = GetFlagFloat64(cmd, "left")
+		inputParams.Bottom = GetFlagFloat64(cmd, "bottom")
+		inputParams.Top = GetFlagFloat64(cmd, "top")
+		inputParams.Right = GetFlagFloat64(cmd, "right")
 	}
 }
 
