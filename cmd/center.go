@@ -28,7 +28,7 @@ func runCenter(cmd *cobra.Command, args []string) error {
 	}
 
 	center := bbox.Center()
-	formatted, err := core.FormatPoint(center, outputFormat)
+	formatted, err := core.FormatPoint(center, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting point: %v", err)
 	}

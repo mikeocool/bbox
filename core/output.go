@@ -4,10 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/url"
 	"strings"
-	"text/template"
 )
+
+type OutputSettings struct {
+	FormatType    string
+	FormatDetails string
+	GeojsonIndent int
+	GeojsonType   string
+}
 
 func ParseFormat(formatStr string) (string, string) {
 	formatType := formatStr
@@ -21,44 +28,7 @@ func ParseFormat(formatStr string) (string, string) {
 	return formatType, formatDetails
 }
 
-// ParseFormatDetails parses a format details string into key-value pairs.
-// It handles strings in the format "key1:value1,key2:value2" and returns a map.
-func ParseFormatDetails(details string) (map[string]string, error) {
-	result := make(map[string]string)
-
-	if details == "" {
-		return result, nil
-	}
-
-	pairs := strings.Split(details, ",")
-	for _, pair := range pairs {
-		pair = strings.TrimSpace(pair)
-		if pair == "" {
-			continue
-		}
-
-		parts := strings.SplitN(pair, ":", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid format detail: %s", pair)
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		if key == "" {
-			return nil, fmt.Errorf("empty key in format detail: %s", pair)
-		}
-
-		result[key] = value
-	}
-
-	return result, nil
-}
-
-// TemplatedFormat formats a Bbox using a given template string.
-// The template can reference any of the Bbox fields using {{.FieldName}} syntax.
-// For example: "{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}"
-func TemplatedFormat(templateStr string, bbox Bbox) (string, error) {
+func FormatWithTemplate(templateStr string, bbox Bbox) (string, error) {
 	tmpl, err := template.New("bbox").Parse(templateStr)
 	if err != nil {
 		return "", err
@@ -72,27 +42,34 @@ func TemplatedFormat(templateStr string, bbox Bbox) (string, error) {
 	return buf.String(), nil
 }
 
+// TemplatedFormat formats a Bbox using a given template string.
+// The template can reference any of the Bbox fields using {{.FieldName}} syntax.
+// For example: "{{.MinX}} {{.MinY}} {{.MaxX}} {{.MaxY}}"
+func TemplatedFormat(settings OutputSettings, bbox Bbox) (string, error) {
+	return FormatWithTemplate(settings.FormatDetails, bbox)
+}
+
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX,MinY,MaxX,MaxY".
-func CommaFormat(_ string, bbox Bbox) (string, error) {
-	return TemplatedFormat("{{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
+func CommaFormat(_ OutputSettings, bbox Bbox) (string, error) {
+	return FormatWithTemplate("{{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
 }
 
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX MinY MaxX MaxY".
-func SpaceFormat(_ string, bbox Bbox) (string, error) {
-	return TemplatedFormat("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
+func SpaceFormat(_ OutputSettings, bbox Bbox) (string, error) {
+	return FormatWithTemplate("{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}", bbox)
 }
 
 // CommaFormat formats a Bbox as a comma-separated string of its coordinates.
 // The returned string will be in the format "MinX\tMinY\tMaxX\tMaxY".
-func TabFormat(_ string, bbox Bbox) (string, error) {
-	return TemplatedFormat("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
+func TabFormat(_ OutputSettings, bbox Bbox) (string, error) {
+	return FormatWithTemplate("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
 }
 
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
-func GeojsonFormat(_ string, bbox Bbox) (string, error) {
+func GeojsonFormat(_ OutputSettings, bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
 
 	geojson := struct {
@@ -113,7 +90,7 @@ func GeojsonFormat(_ string, bbox Bbox) (string, error) {
 
 // WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.
 // The returned string will be in the format "POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))".
-func WktFormat(_ string, bbox Bbox) (string, error) {
+func WktFormat(_ OutputSettings, bbox Bbox) (string, error) {
 	coords := bbox.Polygon()
 
 	// Build WKT polygon string
@@ -129,14 +106,15 @@ func WktFormat(_ string, bbox Bbox) (string, error) {
 	return wkt, nil
 }
 
-func UrlFormat(urlType string, bbox Bbox) (string, error) {
+func UrlFormat(settings OutputSettings, bbox Bbox) (string, error) {
+	urlType := settings.FormatDetails
 	if urlType == "" {
 		return "", fmt.Errorf("no url type specified")
 	}
 
 	switch strings.ToLower(urlType) {
 	case "openstreetmap.org", "openstreetmap.com", "osm":
-		return TemplatedFormat("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
+		return FormatWithTemplate("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
 	case "geojson.io":
 		return GeojsonIoUrl(bbox)
 	default:
@@ -145,7 +123,7 @@ func UrlFormat(urlType string, bbox Bbox) (string, error) {
 }
 
 func GeojsonIoUrl(bbox Bbox) (string, error) {
-	geojson, err := GeojsonFormat("", bbox)
+	geojson, err := GeojsonFormat(OutputSettings{}, bbox)
 	if err != nil {
 		return "", err
 	}
@@ -165,7 +143,7 @@ const (
 )
 
 // FormatFunctions maps format type constants to their corresponding format functions
-var bboxOutputFormatters = map[string]func(string, Bbox) (string, error){
+var bboxOutputFormatters = map[string]func(OutputSettings, Bbox) (string, error){
 	FormatGoTpl:   TemplatedFormat,
 	FormatComma:   CommaFormat,
 	FormatSpace:   SpaceFormat,
@@ -176,39 +154,38 @@ var bboxOutputFormatters = map[string]func(string, Bbox) (string, error){
 }
 
 // GetFormatter returns the format function for the given format type.
-func GetBboxFormatter(formatType string) func(string, Bbox) (string, error) {
+func GetBboxFormatter(formatType string) func(OutputSettings, Bbox) (string, error) {
 	return bboxOutputFormatters[formatType]
 }
 
 // Format formats a Bbox using the specified format type.
-func FormatBbox(bbox Bbox, format string) (string, error) {
-	formatType, formatDetails := ParseFormat(format)
+func FormatBbox(bbox Bbox, settings OutputSettings) (string, error) {
 
-	formatter := GetBboxFormatter(formatType)
+	formatter := GetBboxFormatter(settings.FormatType)
 	if formatter == nil {
-		return "", fmt.Errorf("unknown output format: %s", formatType)
+		return "", fmt.Errorf("unknown output format: %s", settings.FormatType)
 	}
-	return formatter(formatDetails, bbox)
+	return formatter(settings, bbox)
 }
 
 // Point Format functions
-func CommaFormatPoint(point [2]float64) (string, error) {
+func CommaFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("%g,%g", point[0], point[1]), nil
 }
 
-func SpaceFormatPoint(point [2]float64) (string, error) {
+func SpaceFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("%g %g", point[0], point[1]), nil
 }
 
-func TabFormatPoint(point [2]float64) (string, error) {
+func TabFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("%g\t%g", point[0], point[1]), nil
 }
 
-func WktFormatPoint(point [2]float64) (string, error) {
+func WktFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("POINT (%g %g)", point[0], point[1]), nil
 }
 
-func GeojsonFormatPoint(coords [2]float64) (string, error) {
+func GeojsonFormatPoint(_ OutputSettings, coords [2]float64) (string, error) {
 	geojson := struct {
 		Type        string     `json:"type"`
 		Coordinates [2]float64 `json:"coordinates"`
@@ -225,7 +202,7 @@ func GeojsonFormatPoint(coords [2]float64) (string, error) {
 	return string(data), nil
 }
 
-var pointOutputFormatters = map[string]func([2]float64) (string, error){
+var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
 	FormatComma:   CommaFormatPoint,
 	FormatSpace:   SpaceFormatPoint,
 	FormatTab:     TabFormatPoint,
@@ -235,26 +212,27 @@ var pointOutputFormatters = map[string]func([2]float64) (string, error){
 }
 
 // GetFormatter returns the format function for the given format type.
-func GetPointFormatter(formatType string) func([2]float64) (string, error) {
+func GetPointFormatter(formatType string) func(OutputSettings, [2]float64) (string, error) {
 	return pointOutputFormatters[formatType]
 }
 
 // Format formats a Point using the specified format type.
-func FormatPoint(point [2]float64, formatType string) (string, error) {
-	formatter := GetPointFormatter(formatType)
+func FormatPoint(point [2]float64, settings OutputSettings) (string, error) {
+	formatter := GetPointFormatter(settings.FormatType)
 	if formatter == nil {
-		return "", fmt.Errorf("unknown output format: %s", formatType)
+		return "", fmt.Errorf("unknown output format: %s", settings.FormatType)
 	}
-	return formatter(point)
+	return formatter(settings, point)
 }
 
 // Collections
 // JoinedFormatCollection formats a collection of bboxes using the provided formatter function
 // and joins the results with newlines
-func JoinedFormatCollection(formatter func(string, Bbox) (string, error), boxes []Bbox) (string, error) {
+func JoinedFormatCollection(formatter func(OutputSettings, Bbox) (string, error), boxes []Bbox) (string, error) {
 	out := make([]string, len(boxes))
 	for i, box := range boxes {
-		val, err := formatter("", box)
+		// TODO pass through settings?
+		val, err := formatter(OutputSettings{}, box)
 		if err != nil {
 			return "", err
 		}
@@ -263,19 +241,19 @@ func JoinedFormatCollection(formatter func(string, Bbox) (string, error), boxes 
 	return strings.Join(out, "\n"), nil
 }
 
-func SpaceFormatCollection(_ string, boxes []Bbox) (string, error) {
+func SpaceFormatCollection(_ OutputSettings, boxes []Bbox) (string, error) {
 	return JoinedFormatCollection(SpaceFormat, boxes)
 }
 
-func CommaFormatCollection(_ string, boxes []Bbox) (string, error) {
+func CommaFormatCollection(_ OutputSettings, boxes []Bbox) (string, error) {
 	return JoinedFormatCollection(CommaFormat, boxes)
 }
 
-func TabFormatCollection(_ string, boxes []Bbox) (string, error) {
-	return JoinedFormatCollection(CommaFormat, boxes)
+func TabFormatCollection(_ OutputSettings, boxes []Bbox) (string, error) {
+	return JoinedFormatCollection(TabFormat, boxes)
 }
 
-var colletionOutputFormatters = map[string]func(string, []Bbox) (string, error){
+var colletionOutputFormatters = map[string]func(OutputSettings, []Bbox) (string, error){
 	// TOOD
 	FormatComma: CommaFormatCollection,
 	FormatSpace: SpaceFormatCollection,
@@ -286,16 +264,18 @@ var colletionOutputFormatters = map[string]func(string, []Bbox) (string, error){
 }
 
 // GetFormatter returns the format function for the given format type.
-func GetCollectionFormatter(formatType string) func(string, []Bbox) (string, error) {
-	return colletionOutputFormatters[formatType]
+func GetCollectionFormatter(formatType string) (func(OutputSettings, []Bbox) (string, error), error) {
+	formatter, exists := colletionOutputFormatters[formatType]
+	if !exists {
+		return nil, fmt.Errorf("unknown output format: %s", formatType)
+	}
+	return formatter, nil
 }
 
-func FormatCollection(boxes []Bbox, format string) (string, error) {
-	formatType, formatDetails := ParseFormat(format)
-
-	formatter := GetCollectionFormatter(formatType)
-	if formatter == nil {
-		return "", fmt.Errorf("unknown output format: %s", formatType)
+func FormatCollection(boxes []Bbox, settings OutputSettings) (string, error) {
+	formatter, err := GetCollectionFormatter(settings.FormatType)
+	if err != nil {
+		return "", err
 	}
-	return formatter(formatDetails, boxes)
+	return formatter(settings, boxes)
 }

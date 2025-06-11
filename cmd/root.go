@@ -16,7 +16,7 @@ import (
 // Flag variables
 var inputParams input.InputParams
 var drawFlag bool
-var outputFormat string
+var outputSettings core.OutputSettings
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -31,6 +31,19 @@ var RootCmd = &cobra.Command{
 	SilenceErrors: true,
 
 	RunE: runRoot,
+
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// If the flags have had values passed in set them
+		inputParams.Left = GetFlagFloat64(cmd, "left")
+		inputParams.Bottom = GetFlagFloat64(cmd, "bottom")
+		inputParams.Top = GetFlagFloat64(cmd, "top")
+		inputParams.Right = GetFlagFloat64(cmd, "right")
+
+		outputFlag := cmd.Flag("output")
+		format, details := core.ParseFormat(outputFlag.Value.String())
+		outputSettings.FormatType = format
+		outputSettings.FormatDetails = details
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -42,12 +55,10 @@ func Execute() {
 	}
 }
 
-func GetFlagFloat64(cmd *cobra.Command, flag string) *float64 {
-	if cmd.PersistentFlags().Changed(flag) {
-		val, err := cmd.PersistentFlags().GetFloat64(flag)
-		if err != nil {
-			return nil
-		}
+func GetFlagFloat64(cmd *cobra.Command, flagName string) *float64 {
+	flag := cmd.Flag(flagName)
+	if flag != nil && flag.Changed {
+		val, _ := cmd.Flags().GetFloat64(flagName)
 		return &val
 	}
 	return nil
@@ -66,15 +77,9 @@ func init() {
 	RootCmd.PersistentFlags().StringSliceVarP(&inputParams.File, "file", "f", []string{}, "Path to file to load")
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 
-	RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "space", "Output format or destination")
-
-	RootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		// If the flags have had values passed in set them
-		inputParams.Left = GetFlagFloat64(cmd, "left")
-		inputParams.Bottom = GetFlagFloat64(cmd, "bottom")
-		inputParams.Top = GetFlagFloat64(cmd, "top")
-		inputParams.Right = GetFlagFloat64(cmd, "right")
-	}
+	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")
+	RootCmd.PersistentFlags().IntVar(&outputSettings.GeojsonIndent, "geojson-indent", 0, "Indentation level for geojson output format")
+	RootCmd.PersistentFlags().StringVar(&outputSettings.GeojsonType, "geojson-type", "", "Type of geojson object to output - featurecollection, feature, polygon, or coordinates")
 }
 
 var ErrInputCouldNotCreateBbox = errors.New("could not create bounding box")
@@ -126,7 +131,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	formatted, err := core.FormatBbox(bbox, outputFormat)
+	formatted, err := core.FormatBbox(bbox, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting bounding box: %w", err)
 	}

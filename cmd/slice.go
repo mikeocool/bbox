@@ -30,7 +30,7 @@ func runSlice(cmd *cobra.Command, args []string) error {
 	columns, _ := cmd.Flags().GetInt("columns")
 	rows, _ := cmd.Flags().GetInt("rows")
 	boxes := bbox.Slice(columns, rows)
-	formatted, err := core.FormatCollection(boxes, outputFormat)
+	formatted, err := core.FormatCollection(boxes, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting result: %v", err)
 	}
