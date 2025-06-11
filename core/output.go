@@ -73,53 +73,12 @@ func TabFormat(_ OutputSettings, bbox Bbox) (string, error) {
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
 func GeojsonFormat(settings OutputSettings, bbox Bbox) (string, error) {
 	geojsonType := strings.ToLower(settings.GeojsonType)
-	// TODO ensure this is a valid geojson type
 
-	coords := bbox.Polygon()
-	if geojsonType == "coordinates" {
-		return marshalGeojson(coords, settings)
+	geom := []geojson.Geometry{
+		geojson.PolygonGeometry([][][2]float64{bbox.Polygon()}),
 	}
 
-	coordsData, _ := json.Marshal([][][2]float64{coords})
-	geom := geojson.Geometry{
-		Type:        "Polygon",
-		Coordinates: json.RawMessage(coordsData),
-	}
-
-	if geojsonType == "geometry" || geojsonType == "" {
-		return marshalGeojson(geom, settings)
-	}
-
-	feature := geojson.Feature{
-		Type:     "Feature",
-		Geometry: geom,
-	}
-
-	if geojsonType == "feature" {
-		return marshalGeojson(feature, settings)
-	}
-
-	collection := geojson.FeatureCollection{
-		Type: "FeatureCollection",
-		Features: []geojson.Feature{feature},
-	}
-
-	return marshalGeojson(collection, settings)
-}
-
-func marshalGeojson(geojson any, settings OutputSettings) (string, error) {
-	var data []byte
-	var err error
-	if settings.GeojsonIndent > 0 {
-		data, err = json.MarshalIndent(geojson, "", strings.Repeat(" ", settings.GeojsonIndent))
-	} else {
-		data, err = json.Marshal(geojson)
-	}
-	if err != nil {
-		return "", err
-	}
-
-	return string(data), nil
+	return geojson.Format(geom, geojsonType, settings.GeojsonIndent)
 }
 
 // WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.

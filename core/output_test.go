@@ -673,16 +673,16 @@ func TestGeojsonFormatTypes(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
 	tests := []struct {
-		name         string
-		geojsonType  string
-		expected     string
-		expectError  bool
+		name          string
+		geojsonType   string
+		expected      string
+		expectError   bool
 		shouldContain []string
 	}{
 		{
 			name:        "coordinates type",
 			geojsonType: "coordinates",
-			expected:    `[[1,2],[3,2],[3,4],[1,4],[1,2]]`,
+			expected:    `[[[1,2],[3,2],[3,4],[1,4],[1,2]]]`,
 			expectError: false,
 		},
 		{
@@ -732,7 +732,7 @@ func TestGeojsonFormatTypes(t *testing.T) {
 		{
 			name:        "case insensitive - COORDINATES",
 			geojsonType: "COORDINATES",
-			expected:    `[[1,2],[3,2],[3,4],[1,4],[1,2]]`,
+			expected:    `[[[1,2],[3,2],[3,4],[1,4],[1,2]]]`,
 			expectError: false,
 		},
 		{
@@ -789,9 +789,9 @@ func TestGeojsonFormatWithIndent(t *testing.T) {
 	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
 	tests := []struct {
-		name        string
-		indent      int
-		geojsonType string
+		name          string
+		indent        int
+		geojsonType   string
 		shouldContain []string
 	}{
 		{
