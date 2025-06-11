@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
+
+	"github.com/mikeocool/bbox/geojson"
 )
 
 type OutputSettings struct {
@@ -69,18 +71,52 @@ func TabFormat(_ OutputSettings, bbox Bbox) (string, error) {
 
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
-func GeojsonFormat(_ OutputSettings, bbox Bbox) (string, error) {
-	coords := bbox.Polygon()
+func GeojsonFormat(settings OutputSettings, bbox Bbox) (string, error) {
+	geojsonType := strings.ToLower(settings.GeojsonType)
+	// TODO ensure this is a valid geojson type
 
-	geojson := struct {
-		Type        string         `json:"type"`
-		Coordinates [][][2]float64 `json:"coordinates"`
-	}{
-		Type:        "Polygon",
-		Coordinates: [][][2]float64{coords},
+	coords := bbox.Polygon()
+	if geojsonType == "coordinates" {
+		return marshalGeojson(coords, settings)
 	}
 
-	data, err := json.Marshal(geojson)
+	geom := geojson.Geometry{
+		Type:        "Polygon",
+		Coordinates: json.RawMessage(func() []byte {
+			data, _ := json.Marshal([][][2]float64{coords})
+			return data
+		}()),
+	}
+
+	if geojsonType == "geometry" {
+		return marshalGeojson(geom, settings)
+	}
+
+	feature := geojson.Feature{
+		Type:     "Feature",
+		Geometry: geom,
+	}
+
+	if geojsonType == "feature" {
+		return marshalGeojson(feature, settings)
+	}
+
+	collection := geojson.FeatureCollection{
+		Type: "FeatureCollection",
+		Features: []geojson.Feature{feature},
+	}
+
+	return marshalGeojson(collection, settings)
+}
+
+func marshalGeojson(geojson any, settings OutputSettings) (string, error) {
+	var data []byte
+	var err error
+	if settings.GeojsonIndent > 0 {
+		data, err = json.MarshalIndent(geojson, "", strings.Repeat(" ", settings.GeojsonIndent))
+	} else {
+		data, err = json.Marshal(geojson)
+	}
 	if err != nil {
 		return "", err
 	}

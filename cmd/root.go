@@ -79,7 +79,7 @@ func init() {
 
 	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")
 	RootCmd.PersistentFlags().IntVar(&outputSettings.GeojsonIndent, "geojson-indent", 0, "Indentation level for geojson output format")
-	RootCmd.PersistentFlags().StringVar(&outputSettings.GeojsonType, "geojson-type", "", "Type of geojson object to output - featurecollection, feature, polygon, or coordinates")
+	RootCmd.PersistentFlags().StringVar(&outputSettings.GeojsonType, "geojson-type", "geometry", "Type of geojson object to output - featurecollection, feature, geometry, or coordinates")
 }
 
 var ErrInputCouldNotCreateBbox = errors.New("could not create bounding box")

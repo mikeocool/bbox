@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/mikeocool/bbox/core"
+	"github.com/mikeocool/bbox/geojson"
 )
 
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
@@ -74,13 +75,13 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	}
 
 	// Try parsing as FeatureCollection
-	var featureCollection FeatureCollection
+	var featureCollection geojson.FeatureCollection
 	if err := json.Unmarshal(input, &featureCollection); err == nil && featureCollection.Type == "FeatureCollection" {
 		return calculateBboxFromFeatures(featureCollection.Features)
 	}
 
 	// Try parsing as array of Features
-	var features []Feature
+	var features []geojson.Feature
 	if err := json.Unmarshal(input, &features); err == nil && len(features) > 0 {
 		// Verify it's actually an array of features
 		if isValidFeatureArray(features) {
@@ -89,56 +90,35 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	}
 
 	// Try parsing as single Feature
-	var feature Feature
+	var feature geojson.Feature
 	if err := json.Unmarshal(input, &feature); err == nil && feature.Type == "Feature" {
-		return calculateBboxFromFeatures([]Feature{feature})
+		return calculateBboxFromFeatures([]geojson.Feature{feature})
 	}
 
 	// Try parsing as Polygon
-	var polygon Polygon
+	var polygon geojson.Polygon
 	if err := json.Unmarshal(input, &polygon); err == nil && polygon.Type == "Polygon" {
 		return calculateBboxFromCoordinates(polygon.Coordinates)
 	}
 
 	// Try parsing as raw coordinates (3D array for polygon)
-	var coordinates [][][]float64
+	var coordinates [][][2]float64
 	if err := json.Unmarshal(input, &coordinates); err == nil && len(coordinates) > 0 {
 		return calculateBboxFromCoordinates(coordinates)
 	}
 
 	// Try parsing as 2D array (single ring)
-	var coordinates2D [][]float64
+	var coordinates2D [][2]float64
 	if err := json.Unmarshal(input, &coordinates2D); err == nil && len(coordinates2D) > 0 {
 		// Wrap in an additional array to make it a 3D array
-		return calculateBboxFromCoordinates([][][]float64{coordinates2D})
+		return calculateBboxFromCoordinates([][][2]float64{coordinates2D})
 	}
 
 	return bbox, ErrCouldNotParseGeoJSON
 }
 
-// GeoJSON type definitions
-type FeatureCollection struct {
-	Type     string    `json:"type"`
-	Features []Feature `json:"features"`
-}
-
-type Feature struct {
-	Type     string   `json:"type"`
-	Geometry Geometry `json:"geometry"`
-}
-
-type Geometry struct {
-	Type        string          `json:"type"`
-	Coordinates json.RawMessage `json:"coordinates"`
-}
-
-type Polygon struct {
-	Type        string        `json:"type"`
-	Coordinates [][][]float64 `json:"coordinates"`
-}
-
 // isValidFeatureArray checks if the array contains at least one valid feature
-func isValidFeatureArray(features []Feature) bool {
+func isValidFeatureArray(features []geojson.Feature) bool {
 	for _, f := range features {
 		if f.Type == "Feature" {
 			return true
@@ -148,7 +128,7 @@ func isValidFeatureArray(features []Feature) bool {
 }
 
 // calculateBboxFromFeatures calculates bounding box from an array of features
-func calculateBboxFromFeatures(features []Feature) (core.Bbox, error) {
+func calculateBboxFromFeatures(features []geojson.Feature) (core.Bbox, error) {
 	if len(features) == 0 {
 		return core.Bbox{}, ErrNoFeaturesFound
 	}
@@ -264,7 +244,7 @@ func calculateBboxFromFeatures(features []Feature) (core.Bbox, error) {
 }
 
 // calculateBboxFromCoordinates calculates bounding box from polygon coordinates
-func calculateBboxFromCoordinates(coords [][][]float64) (core.Bbox, error) {
+func calculateBboxFromCoordinates(coords [][][2]float64) (core.Bbox, error) {
 	if len(coords) == 0 {
 		return core.Bbox{}, fmt.Errorf("no coordinates found")
 	}
