@@ -79,6 +79,8 @@ Output formats:
     * vector tiles(?)
     * preview bbox in common formats
     * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
+    * handle click and drag when creating box
+    * touch interactions/small screen UI
     * Show popup success message with button to close window when done
 * Add a verbose flag
 * Fix issue where parser raw ends up parsing everything as float
@@ -92,7 +94,6 @@ Output formats:
     * overpass ql
     * dublin core
     * option to open browser for url formats
-    * variations on geojson
 * place input
 * tile command
 * units on width and heightw
