@@ -102,16 +102,14 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	}
 
 	// Try parsing as raw coordinates (3D array for polygon)
-	var coordinates [][][2]float64
-	if err := json.Unmarshal(input, &coordinates); err == nil && len(coordinates) > 0 {
-		return calculateBboxFromCoordinates(coordinates)
+	if coords, err := parseRaw3DCoordinates(input); err == nil {
+		return calculateBboxFromCoordinates(coords)
 	}
 
 	// Try parsing as 2D array (single ring)
-	var coordinates2D [][2]float64
-	if err := json.Unmarshal(input, &coordinates2D); err == nil && len(coordinates2D) > 0 {
+	if coords, err := parseRaw2DCoordinates(input); err == nil {
 		// Wrap in an additional array to make it a 3D array
-		return calculateBboxFromCoordinates([][][2]float64{coordinates2D})
+		return calculateBboxFromCoordinates([][][2]float64{coords})
 	}
 
 	return bbox, ErrCouldNotParseGeoJSON
@@ -274,6 +272,64 @@ func calculateBboxFromCoordinates(coords [][][2]float64) (core.Bbox, error) {
 		Right:  maxLon,
 		Top:    maxLat,
 	}, nil
+}
+
+// parseRaw3DCoordinates validates and parses 3D coordinate arrays like [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
+func parseRaw3DCoordinates(input []byte) ([][][2]float64, error) {
+	// First unmarshal into a flexible structure to validate dimensions
+	var rawCoords [][][]interface{}
+	if err := json.Unmarshal(input, &rawCoords); err != nil {
+		return nil, err
+	}
+	
+	if len(rawCoords) == 0 {
+		return nil, fmt.Errorf("empty coordinate array")
+	}
+	
+	// Validate that each coordinate has at least 2 dimensions
+	for _, ring := range rawCoords {
+		for _, coord := range ring {
+			if len(coord) < 2 {
+				return nil, fmt.Errorf("coordinate has insufficient dimensions: %v", coord)
+			}
+		}
+	}
+	
+	// Now unmarshal into the typed structure
+	var coordinates [][][2]float64
+	if err := json.Unmarshal(input, &coordinates); err != nil {
+		return nil, err
+	}
+	
+	return coordinates, nil
+}
+
+// parseRaw2DCoordinates validates and parses 2D coordinate arrays like [[0,0],[0,1],[1,1],[1,0],[0,0]]
+func parseRaw2DCoordinates(input []byte) ([][2]float64, error) {
+	// First unmarshal into a flexible structure to validate dimensions
+	var rawCoords [][]interface{}
+	if err := json.Unmarshal(input, &rawCoords); err != nil {
+		return nil, err
+	}
+	
+	if len(rawCoords) == 0 {
+		return nil, fmt.Errorf("empty coordinate array")
+	}
+	
+	// Validate that each coordinate has at least 2 dimensions
+	for _, coord := range rawCoords {
+		if len(coord) < 2 {
+			return nil, fmt.Errorf("coordinate has insufficient dimensions: %v", coord)
+		}
+	}
+	
+	// Now unmarshal into the typed structure
+	var coordinates [][2]float64
+	if err := json.Unmarshal(input, &coordinates); err != nil {
+		return nil, err
+	}
+	
+	return coordinates, nil
 }
 
 // updateBounds updates the min/max bounds with the given coordinate
