@@ -80,15 +80,13 @@ func GeojsonFormat(settings OutputSettings, bbox Bbox) (string, error) {
 		return marshalGeojson(coords, settings)
 	}
 
+	coordsData, _ := json.Marshal([][][2]float64{coords})
 	geom := geojson.Geometry{
 		Type:        "Polygon",
-		Coordinates: json.RawMessage(func() []byte {
-			data, _ := json.Marshal([][][2]float64{coords})
-			return data
-		}()),
+		Coordinates: json.RawMessage(coordsData),
 	}
 
-	if geojsonType == "geometry" {
+	if geojsonType == "geometry" || geojsonType == "" {
 		return marshalGeojson(geom, settings)
 	}
 

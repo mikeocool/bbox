@@ -669,6 +669,181 @@ func TestGeojsonFormatStructure(t *testing.T) {
 	})
 }
 
+func TestGeojsonFormatTypes(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+
+	tests := []struct {
+		name         string
+		geojsonType  string
+		expected     string
+		expectError  bool
+		shouldContain []string
+	}{
+		{
+			name:        "coordinates type",
+			geojsonType: "coordinates",
+			expected:    `[[1,2],[3,2],[3,4],[1,4],[1,2]]`,
+			expectError: false,
+		},
+		{
+			name:        "geometry type explicit",
+			geojsonType: "geometry",
+			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+			expectError: false,
+		},
+		{
+			name:        "empty type defaults to geometry",
+			geojsonType: "",
+			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+			expectError: false,
+		},
+		{
+			name:        "feature type",
+			geojsonType: "feature",
+			expectError: false,
+			shouldContain: []string{
+				`"type":"Feature"`,
+				`"geometry":{"type":"Polygon"`,
+				`"coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]`,
+			},
+		},
+		{
+			name:        "featurecollection type",
+			geojsonType: "featurecollection",
+			expectError: false,
+			shouldContain: []string{
+				`"type":"FeatureCollection"`,
+				`"features":[`,
+				`"type":"Feature"`,
+				`"geometry":{"type":"Polygon"`,
+				`"coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]`,
+			},
+		},
+		{
+			name:        "unknown type defaults to featurecollection",
+			geojsonType: "unknown",
+			expectError: false,
+			shouldContain: []string{
+				`"type":"FeatureCollection"`,
+				`"features":[`,
+				`"type":"Feature"`,
+			},
+		},
+		{
+			name:        "case insensitive - COORDINATES",
+			geojsonType: "COORDINATES",
+			expected:    `[[1,2],[3,2],[3,4],[1,4],[1,2]]`,
+			expectError: false,
+		},
+		{
+			name:        "case insensitive - GEOMETRY",
+			geojsonType: "GEOMETRY",
+			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
+			expectError: false,
+		},
+		{
+			name:        "case insensitive - FEATURE",
+			geojsonType: "FEATURE",
+			expectError: false,
+			shouldContain: []string{
+				`"type":"Feature"`,
+				`"geometry":{"type":"Polygon"`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := OutputSettings{
+				GeojsonType: tc.geojsonType,
+			}
+			result, err := GeojsonFormat(settings, bbox)
+
+			if tc.expectError && err == nil {
+				t.Error("Expected error but got none")
+				return
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if tc.expected != "" {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+
+			if len(tc.shouldContain) > 0 {
+				for _, substr := range tc.shouldContain {
+					if !strings.Contains(result, substr) {
+						t.Errorf("Result should contain %q, but got %q", substr, result)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGeojsonFormatWithIndent(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+
+	tests := []struct {
+		name        string
+		indent      int
+		geojsonType string
+		shouldContain []string
+	}{
+		{
+			name:        "geometry with 2 space indent",
+			indent:      2,
+			geojsonType: "geometry",
+			shouldContain: []string{
+				"{\n  \"type\": \"Polygon\"",
+				"\n  \"coordinates\": [",
+			},
+		},
+		{
+			name:        "feature with 4 space indent",
+			indent:      4,
+			geojsonType: "feature",
+			shouldContain: []string{
+				"{\n    \"type\": \"Feature\"",
+				"\n    \"geometry\": {",
+				"\n        \"type\": \"Polygon\"",
+			},
+		},
+		{
+			name:        "no indent",
+			indent:      0,
+			geojsonType: "geometry",
+			shouldContain: []string{
+				`{"type":"Polygon"`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := OutputSettings{
+				GeojsonType:   tc.geojsonType,
+				GeojsonIndent: tc.indent,
+			}
+			result, err := GeojsonFormat(settings, bbox)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			for _, substr := range tc.shouldContain {
+				if !strings.Contains(result, substr) {
+					t.Errorf("Result should contain %q, but got %q", substr, result)
+				}
+			}
+		})
+	}
+}
+
 func TestCommaFormatPoint(t *testing.T) {
 	tests := []struct {
 		name     string
