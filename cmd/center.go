@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mikeocool/bbox/core"
+	"github.com/mikeocool/bbox/output"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func runCenter(cmd *cobra.Command, args []string) error {
 	}
 
 	center := bbox.Center()
-	formatted, err := core.FormatPoint(center, outputSettings)
+	formatted, err := output.FormatPoint(center, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting point: %v", err)
 	}

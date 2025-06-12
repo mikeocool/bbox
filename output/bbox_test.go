@@ -1,14 +1,16 @@
-package core
+package output
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func TestTemplatedFormat(t *testing.T) {
 	// Test with zero value Bbox
 	t.Run("Zero value bbox", func(t *testing.T) {
-		result, err := TemplatedFormat(OutputSettings{FormatDetails: "{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}"}, Bbox{})
+		result, err := TemplatedFormat(OutputSettings{FormatDetails: "{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}"}, core.Bbox{})
 		if err != nil {
 			t.Errorf("Unexpected error with zero value bbox: %v", err)
 		}
@@ -21,70 +23,70 @@ func TestTemplatedFormat(t *testing.T) {
 	tests := []struct {
 		name        string
 		template    string
-		bbox        Bbox
+		bbox        core.Bbox
 		expected    string
 		expectError bool
 	}{
 		{
 			name:        "Basic format",
 			template:    "{{.Left}} {{.Bottom}} {{.Right}} {{.Top}}",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "1 2 3 4",
 			expectError: false,
 		},
 		{
 			name:        "JSON format",
 			template:    "{\"min_x\":{{.Left}},\"min_y\":{{.Bottom}},\"max_x\":{{.Right}},\"max_y\":{{.Top}}}",
-			bbox:        Bbox{Left: 10.5, Bottom: 20.5, Right: 30.5, Top: 40.5},
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.5, Right: 30.5, Top: 40.5},
 			expected:    "{\"min_x\":10.5,\"min_y\":20.5,\"max_x\":30.5,\"max_y\":40.5}",
 			expectError: false,
 		},
 		{
 			name:        "With missing function",
 			template:    "Width: {{.Right}} - {{.Left}} = {{sub .Right .Left}}, Height: {{.Top}} - {{.Bottom}} = {{sub .Top .Bottom}}",
-			bbox:        Bbox{Left: 10, Bottom: 20, Right: 30, Top: 50},
+			bbox:        core.Bbox{Left: 10, Bottom: 20, Right: 30, Top: 50},
 			expected:    "",
 			expectError: true, // Will error because the "sub" function is not defined
 		},
 		{
 			name:        "Template execution error",
 			template:    "{{if .NonExistentMethod.Call}}This will fail at execution time{{end}}",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true, // Will error during execution, not parsing
 		},
 		{
 			name:        "Invalid template syntax",
 			template:    "{{if .Left}}Only one closing bracket",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true,
 		},
 		{
 			name:        "Malformed template",
 			template:    "{{.Left} {{.Bottom}}",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true,
 		},
 		{
 			name:        "With special characters",
 			template:    "<bbox min=\"{{.Left}},{{.Bottom}}\" max=\"{{.Right}},{{.Top}}\"/>",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "<bbox min=\"1,2\" max=\"3,4\"/>",
 			expectError: false,
 		},
 		{
 			name:        "Mixed text and fields",
 			template:    "Min: ({{.Left}}, {{.Bottom}}), Max: ({{.Right}}, {{.Top}})",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "Min: (1, 2), Max: (3, 4)",
 			expectError: false,
 		},
 		{
 			name:        "With formatting",
 			template:    "{{printf \"%.2f\" .Left}} {{printf \"%.2f\" .Bottom}} {{printf \"%.2f\" .Right}} {{printf \"%.2f\" .Top}}",
-			bbox:        Bbox{Left: 1.123, Bottom: 2.456, Right: 3.789, Top: 4.012},
+			bbox:        core.Bbox{Left: 1.123, Bottom: 2.456, Right: 3.789, Top: 4.012},
 			expected:    "1.12 2.46 3.79 4.01",
 			expectError: false,
 		},
@@ -113,7 +115,7 @@ func TestTemplatedFormat(t *testing.T) {
 
 	// Add a test for empty template
 	t.Run("Empty template", func(t *testing.T) {
-		result, err := TemplatedFormat(OutputSettings{FormatDetails: ""}, Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0})
+		result, err := TemplatedFormat(OutputSettings{FormatDetails: ""}, core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0})
 		if err != nil {
 			t.Errorf("Unexpected error with empty template: %v", err)
 		}
@@ -126,49 +128,49 @@ func TestTemplatedFormat(t *testing.T) {
 func TestWktFormat(t *testing.T) {
 	tests := []struct {
 		name        string
-		bbox        Bbox
+		bbox        core.Bbox
 		expected    string
 		expectError bool
 	}{
 		{
 			name:        "Zero value bbox",
-			bbox:        Bbox{},
+			bbox:        core.Bbox{},
 			expected:    "POLYGON((0 0, 0 0, 0 0, 0 0, 0 0))",
 			expectError: false,
 		},
 		{
 			name:        "Integer coordinates",
-			bbox:        Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
 			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
 			expectError: false,
 		},
 		{
 			name:        "Decimal coordinates",
-			bbox:        Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
 			expected:    "POLYGON((10.5 20.25, 30.75 20.25, 30.75 40.125, 10.5 40.125, 10.5 20.25))",
 			expectError: false,
 		},
 		{
 			name:        "Negative coordinates",
-			bbox:        Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
 			expected:    "POLYGON((-10 -20, -5 -20, -5 -15, -10 -15, -10 -20))",
 			expectError: false,
 		},
 		{
 			name:        "Mixed sign coordinates",
-			bbox:        Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			bbox:        core.Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
 			expected:    "POLYGON((-10.5 20.25, -5.75 20.25, -5.75 15.125, -10.5 15.125, -10.5 20.25))",
 			expectError: false,
 		},
 		{
 			name:        "Large coordinates",
-			bbox:        Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
+			bbox:        core.Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
 			expected:    "POLYGON((1.000000123e+06 2.000000456e+06, 3.000000789e+06 2.000000456e+06, 3.000000789e+06 4.000000012e+06, 1.000000123e+06 4.000000012e+06, 1.000000123e+06 2.000000456e+06))",
 			expectError: false,
 		},
 		{
 			name:        "Very small coordinates",
-			bbox:        Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
+			bbox:        core.Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
 			expected:    "POLYGON((0.0001 0.0002, 0.0003 0.0002, 0.0003 0.0004, 0.0001 0.0004, 0.0001 0.0002))",
 			expectError: false,
 		},
@@ -200,77 +202,77 @@ func TestUrlFormat(t *testing.T) {
 	tests := []struct {
 		name        string
 		urlType     string
-		bbox        Bbox
+		bbox        core.Bbox
 		expected    string
 		expectError bool
 	}{
 		{
 			name:        "osm - Zero value bbox",
 			urlType:     "openstreetmap.com",
-			bbox:        Bbox{},
+			bbox:        core.Bbox{},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=0&minlat=0&maxlon=0&maxlat=0",
 			expectError: false,
 		},
 		{
 			name:        "osm - Real world example (London)",
 			urlType:     "openstreetmap.com",
-			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			bbox:        core.Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
 			expectError: false,
 		},
 		{
 			name:        "osm - Case insenstive",
 			urlType:     "OpenStreetMap.com",
-			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			bbox:        core.Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
 			expectError: false,
 		},
 		{
 			name:        "osm - Large coordinates",
 			urlType:     "openstreetmap.com",
-			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
+			bbox:        core.Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-180&minlat=-90&maxlon=180&maxlat=90",
 			expectError: false,
 		},
 		{
 			name:        "osm alias - Basic test",
 			urlType:     "osm",
-			bbox:        Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
+			bbox:        core.Bbox{Left: -0.489, Bottom: 51.28, Right: 0.236, Top: 51.686},
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=-0.489&minlat=51.28&maxlon=0.236&maxlat=51.686",
 			expectError: false,
 		},
 		{
 			name:        "geojson.io - Zero value bbox",
 			urlType:     "geojson.io",
-			bbox:        Bbox{},
+			bbox:        core.Bbox{},
 			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%2C%5B0%2C0%5D%5D%5D%7D",
 			expectError: false,
 		},
 		{
 			name:        "geojson.io - Basic rectangle",
 			urlType:     "geojson.io",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B1%2C2%5D%2C%5B3%2C2%5D%2C%5B3%2C4%5D%2C%5B1%2C4%5D%2C%5B1%2C2%5D%5D%5D%7D",
 			expectError: false,
 		},
 		{
 			name:        "geojson.io - Real world example (New York City)",
 			urlType:     "geojson.io",
-			bbox:        Bbox{Left: -74.25909, Bottom: 40.477399, Right: -73.700181, Top: 40.916178},
+			bbox:        core.Bbox{Left: -74.25909, Bottom: 40.477399, Right: -73.700181, Top: 40.916178},
 			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-74.25909%2C40.477399%5D%2C%5B-73.700181%2C40.477399%5D%2C%5B-73.700181%2C40.916178%5D%2C%5B-74.25909%2C40.916178%5D%2C%5B-74.25909%2C40.477399%5D%5D%5D%7D",
 			expectError: false,
 		},
 		{
 			name:        "geojson.io - Global extent (world bounds)",
 			urlType:     "geojson.io",
-			bbox:        Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
+			bbox:        core.Bbox{Left: -180, Bottom: -90, Right: 180, Top: 90},
 			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B-180%2C-90%5D%2C%5B180%2C-90%5D%2C%5B180%2C90%5D%2C%5B-180%2C90%5D%2C%5B-180%2C-90%5D%5D%5D%7D",
 			expectError: false,
 		},
 		{
 			name:        "geojson.io - High precision decimal coordinates",
 			urlType:     "geojson.io",
-			bbox:        Bbox{Left: 10.123456789, Bottom: 20.987654321, Right: 30.111111111, Top: 40.999999999},
+			bbox:        core.Bbox{Left: 10.123456789, Bottom: 20.987654321, Right: 30.111111111, Top: 40.999999999},
 			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Polygon%22%2C%22coordinates%22%3A%5B%5B%5B10.123456789%2C20.987654321%5D%2C%5B30.111111111%2C20.987654321%5D%2C%5B30.111111111%2C40.999999999%5D%2C%5B10.123456789%2C40.999999999%5D%2C%5B10.123456789%2C20.987654321%5D%5D%5D%7D",
 			expectError: false,
 		},
@@ -278,21 +280,21 @@ func TestUrlFormat(t *testing.T) {
 		{
 			name:        "Error - Empty urlType",
 			urlType:     "",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true,
 		},
 		{
 			name:        "Error - Unknown urlType",
 			urlType:     "unknown-provider",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true,
 		},
 		{
 			name:        "Error - Invalid urlType",
 			urlType:     "invalid.provider.com",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected:    "",
 			expectError: true,
 		},
@@ -321,7 +323,7 @@ func TestUrlFormat(t *testing.T) {
 }
 
 func TestWktFormatStructure(t *testing.T) {
-	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 	result, err := WktFormat(OutputSettings{}, bbox)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
@@ -373,7 +375,7 @@ func TestWktFormatStructure(t *testing.T) {
 }
 
 func TestFormat(t *testing.T) {
-	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
 	tests := []struct {
 		name        string
@@ -509,7 +511,7 @@ func TestGetBboxFormatter(t *testing.T) {
 
 			// Test that the formatter works if it's not nil
 			if !tc.expectNil && formatter != nil {
-				bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+				bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 				result, err := formatter(OutputSettings{}, bbox)
 				if err != nil {
 					t.Errorf("Formatter returned error: %v", err)
@@ -525,37 +527,37 @@ func TestGetBboxFormatter(t *testing.T) {
 func TestCommaFormat(t *testing.T) {
 	tests := []struct {
 		name        string
-		bbox        Bbox
+		bbox        core.Bbox
 		expected    string
 		expectError bool
 	}{
 		{
 			name:        "Zero value bbox",
-			bbox:        Bbox{},
+			bbox:        core.Bbox{},
 			expected:    "0,0,0,0",
 			expectError: false,
 		},
 		{
 			name:        "Integer coordinates",
-			bbox:        Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
 			expected:    "1,2,3,4",
 			expectError: false,
 		},
 		{
 			name:        "Decimal coordinates",
-			bbox:        Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
 			expected:    "10.5,20.25,30.75,40.125",
 			expectError: false,
 		},
 		{
 			name:        "Negative coordinates",
-			bbox:        Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
 			expected:    "-10,-20,-5,-15",
 			expectError: false,
 		},
 		{
 			name:        "Mixed sign coordinates",
-			bbox:        Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			bbox:        core.Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
 			expected:    "-10.5,20.25,-5.75,15.125",
 			expectError: false,
 		},
@@ -586,32 +588,32 @@ func TestCommaFormat(t *testing.T) {
 func TestGeojsonFormat(t *testing.T) {
 	tests := []struct {
 		name     string
-		bbox     Bbox
+		bbox     core.Bbox
 		expected string
 	}{
 		{
 			name:     "Basic rectangle",
-			bbox:     Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox:     core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			expected: `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
 		},
 		{
 			name:     "Zero value bbox",
-			bbox:     Bbox{},
+			bbox:     core.Bbox{},
 			expected: `{"type":"Polygon","coordinates":[[[0,0],[0,0],[0,0],[0,0],[0,0]]]}`,
 		},
 		{
 			name:     "Negative coordinates",
-			bbox:     Bbox{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
+			bbox:     core.Bbox{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
 			expected: `{"type":"Polygon","coordinates":[[[-10,-20],[-5,-20],[-5,-15],[-10,-15],[-10,-20]]]}`,
 		},
 		{
 			name:     "Mixed positive/negative coordinates",
-			bbox:     Bbox{Left: -1.5, Bottom: -2.5, Right: 1.5, Top: 2.5},
+			bbox:     core.Bbox{Left: -1.5, Bottom: -2.5, Right: 1.5, Top: 2.5},
 			expected: `{"type":"Polygon","coordinates":[[[-1.5,-2.5],[1.5,-2.5],[1.5,2.5],[-1.5,2.5],[-1.5,-2.5]]]}`,
 		},
 		{
 			name:     "Decimal coordinates",
-			bbox:     Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+			bbox:     core.Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
 			expected: `{"type":"Polygon","coordinates":[[[10.25,20.75],[30.125,20.75],[30.125,40.875],[10.25,40.875],[10.25,20.75]]]}`,
 		},
 	}
@@ -631,7 +633,7 @@ func TestGeojsonFormat(t *testing.T) {
 }
 
 func TestGeojsonFormatStructure(t *testing.T) {
-	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 	result, err := GeojsonFormat(OutputSettings{}, bbox)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
@@ -676,7 +678,7 @@ func TestGeojsonFormatStructure(t *testing.T) {
 }
 
 func TestGeojsonFormatTypes(t *testing.T) {
-	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
 	tests := []struct {
 		name          string
@@ -792,7 +794,7 @@ func TestGeojsonFormatTypes(t *testing.T) {
 }
 
 func TestGeojsonFormatWithIndent(t *testing.T) {
-	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox := core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
 
 	tests := []struct {
 		name          string
@@ -853,42 +855,42 @@ func TestGeojsonFormatWithIndent(t *testing.T) {
 func TestWkbhexFormat(t *testing.T) {
 	tests := []struct {
 		name        string
-		bbox        Bbox
+		bbox        core.Bbox
 		expectError bool
 	}{
 		{
 			name:        "Zero value bbox",
-			bbox:        Bbox{},
+			bbox:        core.Bbox{},
 			expectError: false,
 		},
 		{
 			name:        "Integer coordinates",
-			bbox:        Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
 			expectError: false,
 		},
 		{
 			name:        "Decimal coordinates",
-			bbox:        Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
 			expectError: false,
 		},
 		{
 			name:        "Negative coordinates",
-			bbox:        Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
 			expectError: false,
 		},
 		{
 			name:        "Mixed sign coordinates",
-			bbox:        Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			bbox:        core.Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
 			expectError: false,
 		},
 		{
 			name:        "Large coordinates",
-			bbox:        Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
+			bbox:        core.Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
 			expectError: false,
 		},
 		{
 			name:        "Very small coordinates",
-			bbox:        Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
+			bbox:        core.Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
 			expectError: false,
 		},
 	}
@@ -921,599 +923,5 @@ func TestWkbhexFormat(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestCommaFormatPoint(t *testing.T) {
-	tests := []struct {
-		name     string
-		point    [2]float64
-		expected string
-	}{
-		{
-			name:     "Zero coordinates",
-			point:    [2]float64{0.0, 0.0},
-			expected: "0,0",
-		},
-		{
-			name:     "Positive integers",
-			point:    [2]float64{1.0, 2.0},
-			expected: "1,2",
-		},
-		{
-			name:     "Decimal coordinates",
-			point:    [2]float64{10.5, 20.25},
-			expected: "10.5,20.25",
-		},
-		{
-			name:     "Negative coordinates",
-			point:    [2]float64{-10.0, -20.0},
-			expected: "-10,-20",
-		},
-		{
-			name:     "Mixed sign coordinates",
-			point:    [2]float64{-10.5, 20.25},
-			expected: "-10.5,20.25",
-		},
-		{
-			name:     "Large coordinates",
-			point:    [2]float64{1000000.123, 2000000.456},
-			expected: "1.000000123e+06,2.000000456e+06",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := CommaFormatPoint(OutputSettings{}, tc.point)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestSpaceFormatPoint(t *testing.T) {
-	tests := []struct {
-		name     string
-		point    [2]float64
-		expected string
-	}{
-		{
-			name:     "Zero coordinates",
-			point:    [2]float64{0.0, 0.0},
-			expected: "0 0",
-		},
-		{
-			name:     "Positive integers",
-			point:    [2]float64{1.0, 2.0},
-			expected: "1 2",
-		},
-		{
-			name:     "Decimal coordinates",
-			point:    [2]float64{10.5, 20.25},
-			expected: "10.5 20.25",
-		},
-		{
-			name:     "Negative coordinates",
-			point:    [2]float64{-10.0, -20.0},
-			expected: "-10 -20",
-		},
-		{
-			name:     "Mixed sign coordinates",
-			point:    [2]float64{-10.5, 20.25},
-			expected: "-10.5 20.25",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := SpaceFormatPoint(OutputSettings{}, tc.point)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestTabFormatPoint(t *testing.T) {
-	tests := []struct {
-		name     string
-		point    [2]float64
-		expected string
-	}{
-		{
-			name:     "Zero coordinates",
-			point:    [2]float64{0.0, 0.0},
-			expected: "0\t0",
-		},
-		{
-			name:     "Positive integers",
-			point:    [2]float64{1.0, 2.0},
-			expected: "1\t2",
-		},
-		{
-			name:     "Decimal coordinates",
-			point:    [2]float64{10.5, 20.25},
-			expected: "10.5\t20.25",
-		},
-		{
-			name:     "Negative coordinates",
-			point:    [2]float64{-10.0, -20.0},
-			expected: "-10\t-20",
-		},
-		{
-			name:     "Mixed sign coordinates",
-			point:    [2]float64{-10.5, 20.25},
-			expected: "-10.5\t20.25",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := TabFormatPoint(OutputSettings{}, tc.point)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestWktFormatPoint(t *testing.T) {
-	tests := []struct {
-		name     string
-		point    [2]float64
-		expected string
-	}{
-		{
-			name:     "Zero coordinates",
-			point:    [2]float64{0.0, 0.0},
-			expected: "POINT (0 0)",
-		},
-		{
-			name:     "Positive integers",
-			point:    [2]float64{1.0, 2.0},
-			expected: "POINT (1 2)",
-		},
-		{
-			name:     "Decimal coordinates",
-			point:    [2]float64{10.5, 20.25},
-			expected: "POINT (10.5 20.25)",
-		},
-		{
-			name:     "Negative coordinates",
-			point:    [2]float64{-10.0, -20.0},
-			expected: "POINT (-10 -20)",
-		},
-		{
-			name:     "Mixed sign coordinates",
-			point:    [2]float64{-10.5, 20.25},
-			expected: "POINT (-10.5 20.25)",
-		},
-		{
-			name:     "Large coordinates",
-			point:    [2]float64{1000000.123, 2000000.456},
-			expected: "POINT (1.000000123e+06 2.000000456e+06)",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := WktFormatPoint(OutputSettings{}, tc.point)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestGeojsonFormatPoint(t *testing.T) {
-	tests := []struct {
-		name     string
-		point    [2]float64
-		expected string
-	}{
-		{
-			name:     "Zero coordinates",
-			point:    [2]float64{0.0, 0.0},
-			expected: `{"type":"Point","coordinates":[0,0]}`,
-		},
-		{
-			name:     "Positive integers",
-			point:    [2]float64{1.0, 2.0},
-			expected: `{"type":"Point","coordinates":[1,2]}`,
-		},
-		{
-			name:     "Decimal coordinates",
-			point:    [2]float64{10.5, 20.25},
-			expected: `{"type":"Point","coordinates":[10.5,20.25]}`,
-		},
-		{
-			name:     "Negative coordinates",
-			point:    [2]float64{-10.0, -20.0},
-			expected: `{"type":"Point","coordinates":[-10,-20]}`,
-		},
-		{
-			name:     "Mixed sign coordinates",
-			point:    [2]float64{-10.5, 20.25},
-			expected: `{"type":"Point","coordinates":[-10.5,20.25]}`,
-		},
-		{
-			name:     "Large coordinates",
-			point:    [2]float64{1000000.123, 2000000.456},
-			expected: `{"type":"Point","coordinates":[1000000.123,2000000.456]}`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := GeojsonFormatPoint(OutputSettings{}, tc.point)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestGeojsonFormatPointStructure(t *testing.T) {
-	point := [2]float64{1.0, 2.0}
-	result, err := GeojsonFormatPoint(OutputSettings{}, point)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	t.Run("Contains required GeoJSON fields", func(t *testing.T) {
-		if !strings.Contains(result, `"type":"Point"`) {
-			t.Error("Result should contain type field with Point value")
-		}
-		if !strings.Contains(result, `"coordinates"`) {
-			t.Error("Result should contain coordinates field")
-		}
-	})
-
-	t.Run("Coordinates are properly formatted", func(t *testing.T) {
-		if !strings.Contains(result, `"coordinates":[1,2]`) {
-			t.Error("Coordinates should be formatted as an array [x,y]")
-		}
-	})
-}
-
-func TestGetPointFormatter(t *testing.T) {
-	tests := []struct {
-		name       string
-		formatType string
-		expectNil  bool
-	}{
-		{
-			name:       "Comma formatter",
-			formatType: FormatComma,
-			expectNil:  false,
-		},
-		{
-			name:       "Space formatter",
-			formatType: FormatSpace,
-			expectNil:  false,
-		},
-		{
-			name:       "Tab formatter",
-			formatType: FormatTab,
-			expectNil:  false,
-		},
-		{
-			name:       "GeoJSON formatter",
-			formatType: FormatGeoJson,
-			expectNil:  false,
-		},
-		{
-			name:       "WKT formatter",
-			formatType: FormatWkt,
-			expectNil:  false,
-		},
-		{
-			name:       "Invalid formatter",
-			formatType: "invalid",
-			expectNil:  true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			formatter := GetPointFormatter(tc.formatType)
-
-			if tc.expectNil && formatter != nil {
-				t.Errorf("Expected nil formatter but got one")
-			}
-			if !tc.expectNil && formatter == nil {
-				t.Errorf("Expected formatter but got nil")
-			}
-
-			// Test that the formatter works if it's not nil
-			if !tc.expectNil && formatter != nil {
-				point := [2]float64{1.0, 2.0}
-				result, err := formatter(OutputSettings{}, point)
-				if err != nil {
-					t.Errorf("Formatter returned error: %v", err)
-				}
-				if result == "" {
-					t.Errorf("Formatter returned empty result")
-				}
-			}
-		})
-	}
-}
-
-func TestFormatPoint(t *testing.T) {
-	point := [2]float64{1.0, 2.0}
-
-	tests := []struct {
-		name        string
-		formatType  string
-		expected    string
-		expectError bool
-	}{
-		{
-			name:        "Comma format",
-			formatType:  FormatComma,
-			expected:    "1,2",
-			expectError: false,
-		},
-		{
-			name:        "Space format",
-			formatType:  FormatSpace,
-			expected:    "1 2",
-			expectError: false,
-		},
-		{
-			name:        "Tab format",
-			formatType:  FormatTab,
-			expected:    "1\t2",
-			expectError: false,
-		},
-		{
-			name:        "GeoJSON format",
-			formatType:  FormatGeoJson,
-			expected:    `{"type":"Point","coordinates":[1,2]}`,
-			expectError: false,
-		},
-		{
-			name:        "WKT format",
-			formatType:  FormatWkt,
-			expected:    "POINT (1 2)",
-			expectError: false,
-		},
-		{
-			name:        "Invalid format",
-			formatType:  "invalid",
-			expected:    "",
-			expectError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := FormatPoint(point, OutputSettings{FormatType: tc.formatType})
-
-			if tc.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-			}
-			if !tc.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			if !tc.expectError && result != tc.expected {
-				t.Errorf("Expected %q but got %q", tc.expected, result)
-			}
-		})
-	}
-}
-
-func TestSpaceFormatCollection(t *testing.T) {
-	tests := []struct {
-		name        string
-		boxes       []Bbox
-		expected    string
-		expectError bool
-	}{
-		{
-			name:        "Empty collection",
-			boxes:       []Bbox{},
-			expected:    "",
-			expectError: false,
-		},
-		{
-			name:        "Single bbox - zero values",
-			boxes:       []Bbox{{Left: 0, Bottom: 0, Right: 0, Top: 0}},
-			expected:    "0 0 0 0",
-			expectError: false,
-		},
-		{
-			name:        "Single bbox - integer coordinates",
-			boxes:       []Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
-			expected:    "1 2 3 4",
-			expectError: false,
-		},
-		{
-			name:        "Single bbox - decimal coordinates",
-			boxes:       []Bbox{{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125}},
-			expected:    "10.5 20.25 30.75 40.125",
-			expectError: false,
-		},
-		{
-			name:        "Single bbox - negative coordinates",
-			boxes:       []Bbox{{Left: -10, Bottom: -20, Right: -5, Top: -15}},
-			expected:    "-10 -20 -5 -15",
-			expectError: false,
-		},
-		{
-			name: "Multiple bboxes",
-			boxes: []Bbox{
-				{Left: 1, Bottom: 2, Right: 3, Top: 4},
-				{Left: 5, Bottom: 6, Right: 7, Top: 8},
-				{Left: 9, Bottom: 10, Right: 11, Top: 12},
-			},
-			expected:    "1 2 3 4\n5 6 7 8\n9 10 11 12",
-			expectError: false,
-		},
-		{
-			name: "Multiple bboxes with mixed coordinate types",
-			boxes: []Bbox{
-				{Left: 0, Bottom: 0, Right: 0, Top: 0},
-				{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
-				{Left: 100, Bottom: 200, Right: 300, Top: 400},
-			},
-			expected:    "0 0 0 0\n-10.5 20.25 -5.75 15.125\n100 200 300 400",
-			expectError: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := SpaceFormatCollection(OutputSettings{}, tc.boxes)
-
-			// Check error status
-			if tc.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-			}
-			if !tc.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			// Only check result if we don't expect an error
-			if !tc.expectError {
-				if result != tc.expected {
-					t.Errorf("Expected %q but got %q", tc.expected, result)
-				}
-			}
-		})
-	}
-}
-
-func TestWktFormatCollection(t *testing.T) {
-	tests := []struct {
-		name     string
-		boxes    []Bbox
-		settings OutputSettings
-		expected string
-	}{
-		{
-			name:     "empty collection",
-			boxes:    []Bbox{},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION()",
-		},
-		{
-			name: "single bbox",
-			boxes: []Bbox{
-				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((1 2, 3 2, 3 4, 1 4, 1 2)))",
-		},
-		{
-			name: "two bboxes",
-			boxes: []Bbox{
-				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
-				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((1 2, 3 2, 3 4, 1 4, 1 2)),\nPOLYGON((5 6, 7 6, 7 8, 5 8, 5 6)))",
-		},
-		{
-			name: "three bboxes with decimal coordinates",
-			boxes: []Bbox{
-				{Left: 1.5, Bottom: 2.5, Right: 3.5, Top: 4.5},
-				{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
-				{Left: -1.0, Bottom: -2.0, Right: -0.5, Top: -1.5},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((1.5 2.5, 3.5 2.5, 3.5 4.5, 1.5 4.5, 1.5 2.5)),\nPOLYGON((10.25 20.75, 30.125 20.75, 30.125 40.875, 10.25 40.875, 10.25 20.75)),\nPOLYGON((-1 -2, -0.5 -2, -0.5 -1.5, -1 -1.5, -1 -2)))",
-		},
-		{
-			name: "bbox with zero coordinates",
-			boxes: []Bbox{
-				{Left: 0.0, Bottom: 0.0, Right: 1.0, Top: 1.0},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))",
-		},
-		{
-			name: "bbox with negative coordinates",
-			boxes: []Bbox{
-				{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((-10 -20, -5 -20, -5 -15, -10 -15, -10 -20)))",
-		},
-		{
-			name: "bbox with very large coordinates",
-			boxes: []Bbox{
-				{Left: 1000000.0, Bottom: 2000000.0, Right: 3000000.0, Top: 4000000.0},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((1e+06 2e+06, 3e+06 2e+06, 3e+06 4e+06, 1e+06 4e+06, 1e+06 2e+06)))",
-		},
-		{
-			name: "bbox with very small coordinates",
-			boxes: []Bbox{
-				{Left: 0.000001, Bottom: 0.000002, Right: 0.000003, Top: 0.000004},
-			},
-			settings: OutputSettings{},
-			expected: "GEOMETRYCOLLECTION(POLYGON((1e-06 2e-06, 3e-06 2e-06, 3e-06 4e-06, 1e-06 4e-06, 1e-06 2e-06)))",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := WktFormatCollection(tt.settings, tt.boxes)
-			if err != nil {
-				t.Errorf("WktFormatCollection() error = %v", err)
-				return
-			}
-			if result != tt.expected {
-				t.Errorf("WktFormatCollection() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-func TestWktFormatCollectionSettings(t *testing.T) {
-	// Test that OutputSettings parameter doesn't affect the output
-	// (since WktFormatCollection doesn't use any settings currently)
-	boxes := []Bbox{
-		{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
-	}
-
-	settings1 := OutputSettings{
-		FormatType:    "wkt",
-		FormatDetails: "some details",
-		GeojsonIndent: 2,
-		GeojsonType:   "feature",
-	}
-
-	settings2 := OutputSettings{}
-
-	result1, err1 := WktFormatCollection(settings1, boxes)
-	result2, err2 := WktFormatCollection(settings2, boxes)
-
-	if err1 != nil || err2 != nil {
-		t.Errorf("WktFormatCollection() unexpected errors: %v, %v", err1, err2)
-	}
-
-	if result1 != result2 {
-		t.Errorf("WktFormatCollection() results should be identical regardless of settings: %v != %v", result1, result2)
 	}
 }

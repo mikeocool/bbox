@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mikeocool/bbox/core"
+	"github.com/mikeocool/bbox/output"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func runSlice(cmd *cobra.Command, args []string) error {
 	columns, _ := cmd.Flags().GetInt("columns")
 	rows, _ := cmd.Flags().GetInt("rows")
 	boxes := bbox.Slice(columns, rows)
-	formatted, err := core.FormatCollection(boxes, outputSettings)
+	formatted, err := output.FormatCollection(boxes, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting result: %v", err)
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/mikeocool/bbox/core"
 	"github.com/mikeocool/bbox/input"
+	"github.com/mikeocool/bbox/output"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +17,7 @@ import (
 // Flag variables
 var inputParams input.InputParams
 var drawFlag bool
-var outputSettings core.OutputSettings
+var outputSettings output.OutputSettings
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -40,7 +41,7 @@ var RootCmd = &cobra.Command{
 		inputParams.Right = GetFlagFloat64(cmd, "right")
 
 		outputFlag := cmd.Flag("output")
-		format, details := core.ParseFormat(outputFlag.Value.String())
+		format, details := output.ParseFormat(outputFlag.Value.String())
 		outputSettings.FormatType = format
 		outputSettings.FormatDetails = details
 	},
@@ -131,7 +132,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	formatted, err := core.FormatBbox(bbox, outputSettings)
+	formatted, err := output.FormatBbox(bbox, outputSettings)
 	if err != nil {
 		return fmt.Errorf("Error formatting bounding box: %w", err)
 	}

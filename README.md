@@ -22,20 +22,17 @@ bbox --draw --output comma
 
 bbox --center 1.0 2.0 --width 10 --height 10
 
-bbox --min-x 1.0 --min-y 1.0 --max-x 2.0 --max-y 2.0
-bbox --min-x 1.0 --min-y 1.0 --width 2.0 --height 2.0
-bbox --min-y 1.0 --max-x 2.0 --width 2.0 --height 2.0
+bbox --left 1.0 --bottom 1.0 --right 2.0 --top 2.0
+bbox --left 1.0 --bottom 1.0 --width 2.0 --height 2.0
+bbox --left 1.0 --bottom 1.0 --width 2.0 --height 2.0
 
-bbox --min-y 1.0 --max-x 2.0 --width 2.0mi --height 2.0mi
+bbox --left 1.0 --bottom 2.0 --width 2.0mi --height 2.0mi
 units: mi,ft,km,m
 
 bbox --place "Boston, MA" --width 10 --height 10
 
-# open browser to get location (or --my-location ip ? and use api?)
-bbox --my-location --width 10 --height 10
-
-bbox --raw "1.0 1.0 2.0 2.0" --output wkt
-bbox --raw "POLYGON((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0))" --output comma
+bbox --output wkt -- 1.0 1.0 2.0 2.0
+bbox "POLYGON((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0))" --output comma
 
 cat whatevs.txt | bbox --output wkt
 
@@ -51,7 +48,7 @@ bbox center
 bbox area
 
 # Slice
-bbox slice --center 1.0 2.0 --width 10 --height 10 --x-slices 5 --y-slices 10
+bbox slice --center 1.0 2.0 --width 10 --height 10 --rows 5 --columns 10
 
 # Tile
 bbox tile --center 1.0 2.0 --width 10 --height 10
