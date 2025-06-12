@@ -14,6 +14,12 @@ setup() {
     assert_success
 }
 
+@test "invalid raw input" {
+    run ./bbox cats
+    assert_output --partial "could not parse value"
+    assert_failure
+}
+
 @test "bounds input" {
     run ./bbox -l -91.020128093 -b 48.499043895 -r -90.586309459 -t 48.691033039
     assert_output "-91.020128093 48.499043895 -90.586309459 48.691033039"
