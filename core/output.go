@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -178,21 +177,14 @@ func WktFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("POINT (%g %g)", point[0], point[1]), nil
 }
 
-func GeojsonFormatPoint(_ OutputSettings, coords [2]float64) (string, error) {
-	geojson := struct {
-		Type        string     `json:"type"`
-		Coordinates [2]float64 `json:"coordinates"`
-	}{
-		Type:        "Point",
-		Coordinates: coords,
+func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, error) {
+	geojsonType := strings.ToLower(settings.GeojsonType)
+
+	geom := []geojson.Geometry{
+		geojson.PointGeometry(coords[0], coords[1]),
 	}
 
-	data, err := json.Marshal(geojson)
-	if err != nil {
-		return "", err
-	}
-
-	return string(data), nil
+	return geojson.Format(geom, geojsonType, settings.GeojsonIndent)
 }
 
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){

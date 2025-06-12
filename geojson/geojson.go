@@ -30,3 +30,20 @@ func PolygonGeometry(coords [][][2]float64) Geometry {
 		Coordinates: json.RawMessage(coordsData),
 	}
 }
+
+func PointGeometry(x, y float64) Geometry {
+	coords := [2]float64{x, y}
+	coordsData, _ := json.Marshal(coords)
+	return Geometry{
+		Type:        "Point",
+		Coordinates: json.RawMessage(coordsData),
+	}
+}
+
+func LineStringGeometry(coords [][2]float64) Geometry {
+	coordsData, _ := json.Marshal(coords)
+	return Geometry{
+		Type:        "LineString",
+		Coordinates: json.RawMessage(coordsData),
+	}
+}

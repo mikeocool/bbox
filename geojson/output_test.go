@@ -7,31 +7,6 @@ import (
 )
 
 func TestFormat(t *testing.T) {
-	// Helper function to create test geometries
-	pointGeom := func(x, y float64) Geometry {
-		coords, _ := json.Marshal([]float64{x, y})
-		return Geometry{
-			Type:        "Point",
-			Coordinates: json.RawMessage(coords),
-		}
-	}
-
-	polygonGeom := func(coords [][][2]float64) Geometry {
-		coordsData, _ := json.Marshal(coords)
-		return Geometry{
-			Type:        "Polygon",
-			Coordinates: json.RawMessage(coordsData),
-		}
-	}
-
-	lineStringGeom := func(coords [][2]float64) Geometry {
-		coordsData, _ := json.Marshal(coords)
-		return Geometry{
-			Type:        "LineString",
-			Coordinates: json.RawMessage(coordsData),
-		}
-	}
-
 	tests := []struct {
 		name            string
 		geoms           []Geometry
@@ -43,7 +18,7 @@ func TestFormat(t *testing.T) {
 	}{
 		{
 			name:       "Single geometry - default output type (geometry)",
-			geoms:      []Geometry{pointGeom(1.0, 2.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0)},
 			outputType: "",
 			indent:     0,
 			wantContains: []string{
@@ -57,7 +32,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Multiple geometries - default output type (feature-collection)",
-			geoms:      []Geometry{pointGeom(1.0, 2.0), pointGeom(3.0, 4.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0), PointGeometry(3.0, 4.0)},
 			outputType: "",
 			indent:     0,
 			wantContains: []string{
@@ -71,7 +46,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Single geometry - coordinates output",
-			geoms:      []Geometry{pointGeom(5.5, 6.5)},
+			geoms:      []Geometry{PointGeometry(5.5, 6.5)},
 			outputType: "coordinates",
 			indent:     0,
 			wantContains: []string{
@@ -85,7 +60,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Multiple geometries - coordinates output",
-			geoms:      []Geometry{pointGeom(1.0, 2.0), pointGeom(3.0, 4.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0), PointGeometry(3.0, 4.0)},
 			outputType: "coordinates",
 			indent:     0,
 			wantContains: []string{
@@ -98,7 +73,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Single geometry - geometry output",
-			geoms:      []Geometry{pointGeom(7.0, 8.0)},
+			geoms:      []Geometry{PointGeometry(7.0, 8.0)},
 			outputType: "geometry",
 			indent:     0,
 			wantContains: []string{
@@ -112,7 +87,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Multiple geometries - geometry output",
-			geoms:      []Geometry{pointGeom(1.0, 2.0), pointGeom(3.0, 4.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0), PointGeometry(3.0, 4.0)},
 			outputType: "geometry",
 			indent:     0,
 			wantContains: []string{
@@ -125,7 +100,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Single geometry - feature output",
-			geoms:      []Geometry{pointGeom(9.0, 10.0)},
+			geoms:      []Geometry{PointGeometry(9.0, 10.0)},
 			outputType: "feature",
 			indent:     0,
 			wantContains: []string{
@@ -139,7 +114,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Multiple geometries - feature output",
-			geoms:      []Geometry{pointGeom(1.0, 2.0), pointGeom(3.0, 4.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0), PointGeometry(3.0, 4.0)},
 			outputType: "feature",
 			indent:     0,
 			wantContains: []string{
@@ -151,7 +126,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Feature collection output",
-			geoms:      []Geometry{pointGeom(1.0, 2.0), pointGeom(3.0, 4.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0), PointGeometry(3.0, 4.0)},
 			outputType: "feature-collection",
 			indent:     0,
 			wantContains: []string{
@@ -162,7 +137,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Single geometry with indentation",
-			geoms:      []Geometry{pointGeom(1.0, 2.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0)},
 			outputType: "geometry",
 			indent:     2,
 			wantContains: []string{
@@ -171,7 +146,7 @@ func TestFormat(t *testing.T) {
 		},
 		{
 			name:       "Feature collection with indentation",
-			geoms:      []Geometry{pointGeom(1.0, 2.0)},
+			geoms:      []Geometry{PointGeometry(1.0, 2.0)},
 			outputType: "feature-collection",
 			indent:     4,
 			wantContains: []string{
@@ -184,7 +159,7 @@ func TestFormat(t *testing.T) {
 		{
 			name: "Complex polygon geometry",
 			geoms: []Geometry{
-				polygonGeom([][][2]float64{
+				PolygonGeometry([][][2]float64{
 					{{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}},
 				}),
 			},
@@ -198,7 +173,7 @@ func TestFormat(t *testing.T) {
 		{
 			name: "LineString geometry",
 			geoms: []Geometry{
-				lineStringGeom([][2]float64{{0, 0}, {1, 1}, {2, 2}}),
+				LineStringGeometry([][2]float64{{0, 0}, {1, 1}, {2, 2}}),
 			},
 			outputType: "feature",
 			indent:     0,
@@ -211,9 +186,9 @@ func TestFormat(t *testing.T) {
 		{
 			name: "Mixed geometry types",
 			geoms: []Geometry{
-				pointGeom(0, 0),
-				lineStringGeom([][2]float64{{1, 1}, {2, 2}}),
-				polygonGeom([][][2]float64{
+				PointGeometry(0, 0),
+				LineStringGeometry([][2]float64{{1, 1}, {2, 2}}),
+				PolygonGeometry([][][2]float64{
 					{{3, 3}, {3, 4}, {4, 4}, {4, 3}, {3, 3}},
 				}),
 			},
