@@ -2,6 +2,8 @@ package core
 
 import (
 	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -98,6 +100,36 @@ func WktFormat(_ OutputSettings, bbox Bbox) (string, error) {
 	return wkt, nil
 }
 
+// WkbhexFormat formats a Bbox as a WKB (Well-Known Binary) Polygon geometry encoded as hexadecimal.
+// The returned string will be the hexadecimal representation of the WKB binary data.
+func WkbhexFormat(_ OutputSettings, bbox Bbox) (string, error) {
+	coords := bbox.Polygon()
+
+	// Create buffer for WKB data
+	buf := new(bytes.Buffer)
+
+	// Write byte order (little endian)
+	binary.Write(buf, binary.LittleEndian, uint8(1))
+
+	// Write geometry type (polygon = 3)
+	binary.Write(buf, binary.LittleEndian, uint32(3))
+
+	// Write number of rings (always 1 for a simple polygon)
+	binary.Write(buf, binary.LittleEndian, uint32(1))
+
+	// Write number of points in the ring
+	binary.Write(buf, binary.LittleEndian, uint32(len(coords)))
+
+	// Write each coordinate pair
+	for _, coord := range coords {
+		binary.Write(buf, binary.LittleEndian, coord[0])
+		binary.Write(buf, binary.LittleEndian, coord[1])
+	}
+
+	// Convert to hex string
+	return strings.ToUpper(hex.EncodeToString(buf.Bytes())), nil
+}
+
 func UrlFormat(settings OutputSettings, bbox Bbox) (string, error) {
 	urlType := settings.FormatDetails
 	if urlType == "" {
@@ -131,6 +163,7 @@ const (
 	FormatTab     = "tab"
 	FormatGeoJson = "geojson"
 	FormatWkt     = "wkt"
+	FormatWkbhex  = "wkbhex"
 	FormatUrl     = "url"
 )
 
@@ -142,6 +175,7 @@ var bboxOutputFormatters = map[string]func(OutputSettings, Bbox) (string, error)
 	FormatTab:     TabFormat,
 	FormatGeoJson: GeojsonFormat,
 	FormatWkt:     WktFormat,
+	FormatWkbhex:  WkbhexFormat,
 	FormatUrl:     UrlFormat,
 }
 
@@ -188,6 +222,7 @@ func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, err
 }
 
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
+	// TODO go template
 	FormatComma:   CommaFormatPoint,
 	FormatSpace:   SpaceFormatPoint,
 	FormatTab:     TabFormatPoint,
@@ -260,7 +295,7 @@ func WktFormatCollection(settings OutputSettings, boxes []Bbox) (string, error) 
 }
 
 var colletionOutputFormatters = map[string]func(OutputSettings, []Bbox) (string, error){
-	// TOOD
+	// TODO go template (test with for loops)
 	FormatComma:   CommaFormatCollection,
 	FormatSpace:   SpaceFormatCollection,
 	FormatTab:     TabFormatCollection,

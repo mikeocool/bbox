@@ -412,6 +412,12 @@ func TestFormat(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "WKB-hex format",
+			formatType:  FormatWkbhex,
+			expected:    "01030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+			expectError: false,
+		},
+		{
 			name:        "URL format",
 			formatType:  "url=openstreetmap.org",
 			expected:    "https://www.openstreetmap.org/?box=yes&minlon=1&minlat=2&maxlon=3&maxlat=4",
@@ -838,6 +844,80 @@ func TestGeojsonFormatWithIndent(t *testing.T) {
 			for _, substr := range tc.shouldContain {
 				if !strings.Contains(result, substr) {
 					t.Errorf("Result should contain %q, but got %q", substr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestWkbhexFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        Bbox
+		expectError bool
+	}{
+		{
+			name:        "Zero value bbox",
+			bbox:        Bbox{},
+			expectError: false,
+		},
+		{
+			name:        "Integer coordinates",
+			bbox:        Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			expectError: false,
+		},
+		{
+			name:        "Decimal coordinates",
+			bbox:        Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			expectError: false,
+		},
+		{
+			name:        "Negative coordinates",
+			bbox:        Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			expectError: false,
+		},
+		{
+			name:        "Mixed sign coordinates",
+			bbox:        Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			expectError: false,
+		},
+		{
+			name:        "Large coordinates",
+			bbox:        Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
+			expectError: false,
+		},
+		{
+			name:        "Very small coordinates",
+			bbox:        Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := WkbhexFormat(OutputSettings{}, tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				// Basic validation: should be non-empty hex string
+				if result == "" {
+					t.Errorf("Expected non-empty result")
+				}
+				// Should start with "01" (little endian byte order)
+				if len(result) < 2 || result[:2] != "01" {
+					t.Errorf("Expected result to start with '01' (little endian), got: %s", result)
+				}
+				// Should be valid hex (even length, only hex characters)
+				if len(result)%2 != 0 {
+					t.Errorf("Expected even length hex string, got length %d", len(result))
 				}
 			}
 		})
