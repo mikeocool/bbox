@@ -85,3 +85,9 @@ setup() {
     assert_output "15,18.5"
     assert_success
 }
+
+@test "slice union" {
+    run /bin/bash -c "./bbox slice 10 17 20 20 --columns 5 --rows 6 | ./bbox"
+    assert_output "10 17 20 20"
+    assert_success
+}

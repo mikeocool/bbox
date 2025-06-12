@@ -238,13 +238,24 @@ func TabFormatCollection(_ OutputSettings, boxes []Bbox) (string, error) {
 	return JoinedFormatCollection(TabFormat, boxes)
 }
 
+func GeojsonFormatCollection(settings OutputSettings, boxes []Bbox) (string, error) {
+	geojsonType := strings.ToLower(settings.GeojsonType)
+
+	geoms := make([]geojson.Geometry, len(boxes))
+	for i, box := range boxes {
+		geoms[i] = geojson.PolygonGeometry([][][2]float64{box.Polygon()})
+	}
+
+	return geojson.Format(geoms, geojsonType, settings.GeojsonIndent)
+}
+
 var colletionOutputFormatters = map[string]func(OutputSettings, []Bbox) (string, error){
 	// TOOD
 	FormatComma: CommaFormatCollection,
 	FormatSpace: SpaceFormatCollection,
 	FormatTab:   TabFormatCollection,
 	// FormatWkt:     WktFormatPoint,
-	// FormatGeoJson: GeojsonFormatPoint,
+	FormatGeoJson: GeojsonFormatCollection,
 	// TODO url?
 }
 
