@@ -249,12 +249,22 @@ func GeojsonFormatCollection(settings OutputSettings, boxes []Bbox) (string, err
 	return geojson.Format(geoms, geojsonType, settings.GeojsonIndent)
 }
 
+func WktFormatCollection(settings OutputSettings, boxes []Bbox) (string, error) {
+	polys := make([]string, len(boxes))
+	for i, box := range boxes {
+		poly, _ := WktFormat(settings, box)
+		polys[i] = poly
+	}
+	val := fmt.Sprintf("GEOMETRYCOLLECTION(%s)", strings.Join(polys, ",\n"))
+	return val, nil
+}
+
 var colletionOutputFormatters = map[string]func(OutputSettings, []Bbox) (string, error){
 	// TOOD
-	FormatComma: CommaFormatCollection,
-	FormatSpace: SpaceFormatCollection,
-	FormatTab:   TabFormatCollection,
-	// FormatWkt:     WktFormatPoint,
+	FormatComma:   CommaFormatCollection,
+	FormatSpace:   SpaceFormatCollection,
+	FormatTab:     TabFormatCollection,
+	FormatWkt:     WktFormatCollection,
 	FormatGeoJson: GeojsonFormatCollection,
 	// TODO url?
 }

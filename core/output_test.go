@@ -1321,3 +1321,119 @@ func TestSpaceFormatCollection(t *testing.T) {
 		})
 	}
 }
+
+func TestWktFormatCollection(t *testing.T) {
+	tests := []struct {
+		name     string
+		boxes    []Bbox
+		settings OutputSettings
+		expected string
+	}{
+		{
+			name:     "empty collection",
+			boxes:    []Bbox{},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION()",
+		},
+		{
+			name: "single bbox",
+			boxes: []Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((1 2, 3 2, 3 4, 1 4, 1 2)))",
+		},
+		{
+			name: "two bboxes",
+			boxes: []Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((1 2, 3 2, 3 4, 1 4, 1 2)),\nPOLYGON((5 6, 7 6, 7 8, 5 8, 5 6)))",
+		},
+		{
+			name: "three bboxes with decimal coordinates",
+			boxes: []Bbox{
+				{Left: 1.5, Bottom: 2.5, Right: 3.5, Top: 4.5},
+				{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+				{Left: -1.0, Bottom: -2.0, Right: -0.5, Top: -1.5},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((1.5 2.5, 3.5 2.5, 3.5 4.5, 1.5 4.5, 1.5 2.5)),\nPOLYGON((10.25 20.75, 30.125 20.75, 30.125 40.875, 10.25 40.875, 10.25 20.75)),\nPOLYGON((-1 -2, -0.5 -2, -0.5 -1.5, -1 -1.5, -1 -2)))",
+		},
+		{
+			name: "bbox with zero coordinates",
+			boxes: []Bbox{
+				{Left: 0.0, Bottom: 0.0, Right: 1.0, Top: 1.0},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))",
+		},
+		{
+			name: "bbox with negative coordinates",
+			boxes: []Bbox{
+				{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((-10 -20, -5 -20, -5 -15, -10 -15, -10 -20)))",
+		},
+		{
+			name: "bbox with very large coordinates",
+			boxes: []Bbox{
+				{Left: 1000000.0, Bottom: 2000000.0, Right: 3000000.0, Top: 4000000.0},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((1e+06 2e+06, 3e+06 2e+06, 3e+06 4e+06, 1e+06 4e+06, 1e+06 2e+06)))",
+		},
+		{
+			name: "bbox with very small coordinates",
+			boxes: []Bbox{
+				{Left: 0.000001, Bottom: 0.000002, Right: 0.000003, Top: 0.000004},
+			},
+			settings: OutputSettings{},
+			expected: "GEOMETRYCOLLECTION(POLYGON((1e-06 2e-06, 3e-06 2e-06, 3e-06 4e-06, 1e-06 4e-06, 1e-06 2e-06)))",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := WktFormatCollection(tt.settings, tt.boxes)
+			if err != nil {
+				t.Errorf("WktFormatCollection() error = %v", err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("WktFormatCollection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestWktFormatCollectionSettings(t *testing.T) {
+	// Test that OutputSettings parameter doesn't affect the output
+	// (since WktFormatCollection doesn't use any settings currently)
+	boxes := []Bbox{
+		{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+	}
+
+	settings1 := OutputSettings{
+		FormatType:    "wkt",
+		FormatDetails: "some details",
+		GeojsonIndent: 2,
+		GeojsonType:   "feature",
+	}
+
+	settings2 := OutputSettings{}
+
+	result1, err1 := WktFormatCollection(settings1, boxes)
+	result2, err2 := WktFormatCollection(settings2, boxes)
+
+	if err1 != nil || err2 != nil {
+		t.Errorf("WktFormatCollection() unexpected errors: %v, %v", err1, err2)
+	}
+
+	if result1 != result2 {
+		t.Errorf("WktFormatCollection() results should be identical regardless of settings: %v != %v", result1, result2)
+	}
+}
