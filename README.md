@@ -71,7 +71,7 @@ Output formats:
 
 # TODO
 * slice command
-    * finish output
+    * add more output
 * cleanup draw UI
     * vector tiles(?)
     * preview bbox in common formats
@@ -80,19 +80,17 @@ Output formats:
     * touch interactions/small screen UI
     * Show popup success message with button to close window when done
 * Add a verbose flag
-* Fix issue where parser raw ends up parsing everything as float
-* geojsonl
+* geojsonl -- input/output
 * osm file input
     * https://github.com/paulmach/osm
 * kml input
 * output formats
     * lines
-    * hex wkb
     * overpass ql
-    * dublin core
     * option to open browser for url formats
-* place input
-* tile command
+* match input and output formats as closely as possible
+* --place input
+    * https://photon.komoot.io
 * units on width and heightw
 * option to specify decimal precision/format
 * handle projections
@@ -104,6 +102,8 @@ Output formats:
 * clean input error messaging
 * add http api
 * --grow/shrink/padding args?
-* area command?
 * Text description of Bbox - get closest major city to all four corners and center, and the dedup to describe
 “12km x 12km box 45 km north east of Minneapolis
+
+* tile command
+* area command?

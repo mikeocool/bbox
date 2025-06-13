@@ -37,6 +37,10 @@ func TabFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
 	return FormatWithTemplate("{{.Left}}\t{{.Bottom}}\t{{.Right}}\t{{.Top}}", bbox)
 }
 
+func DublinCoreFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
+	return FormatWithTemplate("northlimit={{.Top}} eastlimit={{.Right}} southlimit={{.Bottom}} westlimit={{.Left}}", bbox)
+}
+
 // GeojsonFormat formats a Bbox as a GeoJSON Polygon geometry.
 // The returned string will be a complete GeoJSON Polygon representing the bounding box.
 func GeojsonFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
@@ -126,14 +130,15 @@ func GeojsonIoUrl(bbox core.Bbox) (string, error) {
 
 // bboxOutputFormatters maps format type constants to their corresponding format functions
 var bboxOutputFormatters = map[string]func(OutputSettings, core.Bbox) (string, error){
-	FormatGoTpl:   TemplatedFormat,
-	FormatComma:   CommaFormat,
-	FormatSpace:   SpaceFormat,
-	FormatTab:     TabFormat,
-	FormatGeoJson: GeojsonFormat,
-	FormatWkt:     WktFormat,
-	FormatWkbhex:  WkbhexFormat,
-	FormatUrl:     UrlFormat,
+	FormatGoTpl:      TemplatedFormat,
+	FormatComma:      CommaFormat,
+	FormatSpace:      SpaceFormat,
+	FormatTab:        TabFormat,
+	FormatGeoJson:    GeojsonFormat,
+	FormatWkt:        WktFormat,
+	FormatWkbhex:     WkbhexFormat,
+	FormatDublinCore: DublinCoreFormat,
+	FormatUrl:        UrlFormat,
 }
 
 // GetBboxFormatter returns the format function for the given format type.

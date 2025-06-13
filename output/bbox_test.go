@@ -925,3 +925,74 @@ func TestWkbhexFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestDublinCoreFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		bbox     core.Bbox
+		expected string
+		wantErr  bool
+	}{
+		{
+			name: "Normal Values",
+			bbox: core.Bbox{
+				Top:    45.0,
+				Right:  -110.0,
+				Bottom: 44.0,
+				Left:   -111.0,
+			},
+			expected: "northlimit=45 eastlimit=-110 southlimit=44 westlimit=-111",
+			wantErr:  false,
+		},
+		{
+			name: "Decimal Values",
+			bbox: core.Bbox{
+				Top:    45.123,
+				Right:  -110.456,
+				Bottom: 44.789,
+				Left:   -111.012,
+			},
+			expected: "northlimit=45.123 eastlimit=-110.456 southlimit=44.789 westlimit=-111.012",
+			wantErr:  false,
+		},
+		{
+			name: "Zero Values",
+			bbox: core.Bbox{
+				Top:    0,
+				Right:  0,
+				Bottom: 0,
+				Left:   0,
+			},
+			expected: "northlimit=0 eastlimit=0 southlimit=0 westlimit=0",
+			wantErr:  false,
+		},
+		{
+			name: "Negative Values",
+			bbox: core.Bbox{
+				Top:    -10.5,
+				Right:  -20.5,
+				Bottom: -30.5,
+				Left:   -40.5,
+			},
+			expected: "northlimit=-10.5 eastlimit=-20.5 southlimit=-30.5 westlimit=-40.5",
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DublinCoreFormat(OutputSettings{}, tt.bbox)
+
+			// Check error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DublinCoreFormat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Check result
+			if got != tt.expected {
+				t.Errorf("DublinCoreFormat() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}

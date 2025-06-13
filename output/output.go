@@ -47,12 +47,13 @@ func FormatWithTemplate(templateStr string, bbox core.Bbox) (string, error) {
 
 // Format type constants
 const (
-	FormatGoTpl   = "go-template"
-	FormatComma   = "comma"
-	FormatSpace   = "space"
-	FormatTab     = "tab"
-	FormatGeoJson = "geojson"
-	FormatWkt     = "wkt"
-	FormatWkbhex  = "wkbhex"
-	FormatUrl     = "url"
+	FormatGoTpl      = "go-template"
+	FormatComma      = "comma"
+	FormatSpace      = "space"
+	FormatTab        = "tab"
+	FormatGeoJson    = "geojson"
+	FormatWkt        = "wkt"
+	FormatWkbhex     = "wkbhex"
+	FormatDublinCore = "dcsv"
+	FormatUrl        = "url"
 )
