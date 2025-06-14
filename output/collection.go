@@ -67,14 +67,12 @@ func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 
 // collectionOutputFormatters maps format type constants to their corresponding format functions
 var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (string, error){
-	// TODO go template (test with for loops)]
 	FormatGoTpl:   TemplatedFormatCollection,
 	FormatComma:   CommaFormatCollection,
 	FormatSpace:   SpaceFormatCollection,
 	FormatTab:     TabFormatCollection,
 	FormatWkt:     WktFormatCollection,
 	FormatGeoJson: GeojsonFormatCollection,
-	// TODO url?
 }
 
 // GetCollectionFormatter returns the format function for the given format type.
