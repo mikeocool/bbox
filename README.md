@@ -101,7 +101,7 @@ Output formats:
     * implement basic projections
 * clean input error messaging
 * add http api
-* --grow/shrink/padding args?
+* --buffer args to expands or contracts the size
 * Text description of Bbox - get closest major city to all four corners and center, and the dedup to describe
 “12km x 12km box 45 km north east of Minneapolis
 
