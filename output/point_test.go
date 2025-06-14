@@ -3,7 +3,101 @@ package output
 import (
 	"strings"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
+
+func TestTemplatedFormatPoint(t *testing.T) {
+	tests := []struct {
+		name        string
+		template    string
+		point       [2]float64
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Basic format",
+			template:    "{{.X}} {{.Y}}",
+			point:       [2]float64{1, 2},
+			expected:    "1 2",
+			expectError: false,
+		},
+		{
+			name:        "JSON format",
+			template:    "{\"x\":{{.X}},\"y\":{{.Y}}}",
+			point:       [2]float64{10.5, 20.5},
+			expected:    "{\"x\":10.5,\"y\":20.5}",
+			expectError: false,
+		},
+		{
+			name:        "With missing function",
+			template:    "{{.X}} {{sub .Y .X}}",
+			point:       [2]float64{10.5, 20.5},
+			expected:    "",
+			expectError: true, // Will error because the "sub" function is not defined
+		},
+		{
+			name:        "Template execution error",
+			template:    "{{if .NonExistentMethod.Call}}This will fail at execution time{{end}}",
+			point:       [2]float64{10.5, 20.5},
+			expected:    "",
+			expectError: true, // Will error during execution, not parsing
+		},
+		{
+			name:        "Invalid template syntax",
+			template:    "{{if .Left}}Only one closing bracket",
+			point:       [2]float64{10.5, 20.5},
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "Malformed template",
+			template:    "{{.Left} {{.Bottom}}",
+			point:       [2]float64{10.5, 20.5},
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "With formatting",
+			template:    "{{printf \"%.2f\" .X}} {{printf \"%.2f\" .Y}}",
+			point:       [2]float64{1.123, 2.456},
+			expected:    "1.12 2.46",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := TemplatedFormatPoint(OutputSettings{FormatDetails: tc.template}, tc.point)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if strings.TrimSpace(result) != strings.TrimSpace(tc.expected) {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+
+	// Add a test for empty template
+	t.Run("Empty template", func(t *testing.T) {
+		result, err := TemplatedFormat(OutputSettings{FormatDetails: ""}, core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0})
+		if err != nil {
+			t.Errorf("Unexpected error with empty template: %v", err)
+		}
+		if result != "" {
+			t.Errorf("Expected empty result for empty template, got %q", result)
+		}
+	})
+}
 
 func TestCommaFormatPoint(t *testing.T) {
 	tests := []struct {

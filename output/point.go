@@ -7,6 +7,19 @@ import (
 	"github.com/mikeocool/bbox/geojson"
 )
 
+func TemplatedFormatPoint(settings OutputSettings, point [2]float64) (string, error) {
+	// Give the point values names
+	pt := struct {
+		X float64
+		Y float64
+	}{
+		X: point[0],
+		Y: point[1],
+	}
+
+	return FormatWithTemplate(settings.FormatDetails, pt)
+}
+
 // CommaFormatPoint formats a point as a comma-separated string of its coordinates.
 // The returned string will be in the format "X,Y".
 func CommaFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
@@ -45,7 +58,7 @@ func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, err
 
 // pointOutputFormatters maps format type constants to their corresponding format functions
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
-	// TODO go template
+	FormatGoTpl:   TemplatedFormatPoint,
 	FormatComma:   CommaFormatPoint,
 	FormatSpace:   SpaceFormatPoint,
 	FormatTab:     TabFormatPoint,

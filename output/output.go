@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"strings"
-
-	"github.com/mikeocool/bbox/core"
 )
 
 type OutputSettings struct {
@@ -31,14 +29,14 @@ func ParseFormat(formatStr string) (string, string) {
 
 // FormatWithTemplate formats a Bbox using a given template string.
 // The template can reference any of the Bbox fields using {{.FieldName}} syntax.
-func FormatWithTemplate(templateStr string, bbox core.Bbox) (string, error) {
+func FormatWithTemplate(templateStr string, geom any) (string, error) {
 	tmpl, err := template.New("bbox").Parse(templateStr)
 	if err != nil {
 		return "", err
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, bbox); err != nil {
+	if err := tmpl.Execute(&buf, geom); err != nil {
 		return "", err
 	}
 
