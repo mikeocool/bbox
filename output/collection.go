@@ -8,6 +8,10 @@ import (
 	"github.com/mikeocool/bbox/geojson"
 )
 
+func TemplatedFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return FormatWithTemplate(settings.FormatDetails, boxes)
+}
+
 // JoinedFormatCollection formats a collection of bboxes using the provided formatter function
 // and joins the results with newlines
 func JoinedFormatCollection(formatter func(OutputSettings, core.Bbox) (string, error), boxes []core.Bbox) (string, error) {
@@ -63,7 +67,8 @@ func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 
 // collectionOutputFormatters maps format type constants to their corresponding format functions
 var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (string, error){
-	// TODO go template (test with for loops)
+	// TODO go template (test with for loops)]
+	FormatGoTpl:   TemplatedFormatCollection,
 	FormatComma:   CommaFormatCollection,
 	FormatSpace:   SpaceFormatCollection,
 	FormatTab:     TabFormatCollection,

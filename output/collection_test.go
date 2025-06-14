@@ -202,3 +202,90 @@ func TestWktFormatCollectionSettings(t *testing.T) {
 		t.Errorf("WktFormatCollection() results should be identical regardless of settings: %v != %v", result1, result2)
 	}
 }
+
+func TestTemplatedFormatCollection(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Empty collection with simple template",
+			settings:    OutputSettings{FormatDetails: "{{ range . }}{{ .Left }},{{ .Bottom }}{{ end }}"},
+			boxes:       []core.Bbox{},
+			expected:    "",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - access fields",
+			settings:    OutputSettings{FormatDetails: "{{ range . }}{{ .Left }},{{ .Bottom }},{{ .Right }},{{ .Top }}{{ end }}"},
+			boxes:       []core.Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
+			expected:    "1,2,3,4",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox - formatted output",
+			settings:    OutputSettings{FormatDetails: "{{ range . }}Box: [{{ printf \"%.2f\" .Left }}, {{ printf \"%.2f\" .Bottom }}, {{ printf \"%.2f\" .Right }}, {{ printf \"%.2f\" .Top }}]{{ end }}"},
+			boxes:       []core.Bbox{{Left: 1.123, Bottom: 2.456, Right: 3.789, Top: 4.012}},
+			expected:    "Box: [1.12, 2.46, 3.79, 4.01]",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes - iterate with range",
+			settings: OutputSettings{FormatDetails: "Boxes:\n{{ range . }}  - ({{ .Left }},{{ .Bottom }},{{ .Right }},{{ .Top }})\n{{ end }}"},
+			boxes: []core.Bbox{
+				{Left: 1, Bottom: 2, Right: 3, Top: 4},
+				{Left: 5, Bottom: 6, Right: 7, Top: 8},
+			},
+			expected:    "Boxes:\n  - (1,2,3,4)\n  - (5,6,7,8)\n",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes - formatted JSON-like output",
+			settings: OutputSettings{FormatDetails: "[\n{{ range $i, $box := . }}  {{ if $i }},{{ end }}  {\n    \"left\": {{ .Left }},\n    \"bottom\": {{ .Bottom }},\n    \"right\": {{ .Right }},\n    \"top\": {{ .Top }}\n  }\n{{ end }}\n]"},
+			boxes: []core.Bbox{
+				{Left: 10, Bottom: 20, Right: 30, Top: 40},
+				{Left: 50, Bottom: 60, Right: 70, Top: 80},
+			},
+			expected:    "[\n    {\n    \"left\": 10,\n    \"bottom\": 20,\n    \"right\": 30,\n    \"top\": 40\n  }\n  ,  {\n    \"left\": 50,\n    \"bottom\": 60,\n    \"right\": 70,\n    \"top\": 80\n  }\n\n]",
+			expectError: false,
+		},
+		{
+			name:        "Invalid template syntax",
+			settings:    OutputSettings{FormatDetails: "{{ .Left "},
+			boxes:       []core.Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "Invalid template field reference",
+			settings:    OutputSettings{FormatDetails: "{{ range . }}{{ .InvalidField }}{{ end }}"},
+			boxes:       []core.Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := TemplatedFormatCollection(tc.settings, tc.boxes)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError && err == nil {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
