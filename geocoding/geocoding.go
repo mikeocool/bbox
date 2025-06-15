@@ -22,6 +22,11 @@ type GeocodeResult struct {
 	Extent    *core.Bbox
 }
 
+// HTTPClient interface allows for dependency injection and testing
+type HTTPClient interface {
+	Get(url string) (*http.Response, error)
+}
+
 type photonResponse struct {
 	Features []photonFeature `json:"features"`
 }
@@ -37,15 +42,20 @@ type photonGeometry struct {
 }
 
 func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
+	return GeocodePlaceWithClient(geocoder, query, http.DefaultClient)
+}
+
+// GeocodePlaceWithClient allows dependency injection for testing
+func GeocodePlaceWithClient(geocoder Geocoder, query string, client HTTPClient) (*GeocodeResult, error) {
 	switch geocoder {
 	case GeocoderPhotonKamoot:
-		return geocodePhotonKamoot(query)
+		return geocodePhotonKamoot(query, client)
 	default:
 		return nil, fmt.Errorf("unsupported geocoder: %s", geocoder)
 	}
 }
 
-func geocodePhotonKamoot(query string) (*GeocodeResult, error) {
+func geocodePhotonKamoot(query string, client HTTPClient) (*GeocodeResult, error) {
 	// Build the URL with query parameter
 	baseURL := "https://photon.komoot.io/api"
 	params := url.Values{}
@@ -54,7 +64,7 @@ func geocodePhotonKamoot(query string) (*GeocodeResult, error) {
 	requestURL := baseURL + "?" + params.Encode()
 
 	// Make the HTTP request
-	resp, err := http.Get(requestURL)
+	resp, err := client.Get(requestURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request geocoding: %w", err)
 	}

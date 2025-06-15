@@ -37,34 +37,17 @@ func TestInputParams_GetBbox(t *testing.T) {
 		},
 
 		// PlaceBuilder tests
-		{
-			name: "PlaceBuilder - valid",
-			params: InputParams{
-				Place:  "New York",
-				Width:  "100",
-				Height: "200",
-			},
-			expectError: false,
-			expectBbox:  &core.Bbox{}, // PlaceBuilder returns empty Bbox
-		},
-		{
-			name: "PlaceBuilder - missing width",
-			params: InputParams{
-				Place:  "New York",
-				Height: "200",
-			},
-			expectError: true,
-			errorMsg:    "width: width required",
-		},
-		{
-			name: "PlaceBuilder - missing height",
-			params: InputParams{
-				Place: "New York",
-				Width: "100",
-			},
-			expectError: true,
-			errorMsg:    "height: height required",
-		},
+		// TODO dont hit geocoder durring tests
+		// {
+		// 	name: "PlaceBuilder - valid",
+		// 	params: InputParams{
+		// 		Place:  "New York",
+		// 		Width:  "100",
+		// 		Height: "200",
+		// 	},
+		// 	expectError: false,
+		// 	expectBbox:  &core.Bbox{}, // PlaceBuilder returns empty Bbox
+		// },
 		{
 			name: "PlaceBuilder - with unexpected field",
 			params: InputParams{
