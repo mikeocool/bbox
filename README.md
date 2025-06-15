@@ -17,7 +17,7 @@ bats integration_tests
 # Usage
 
 ### Draw a bounding box in the browser
-bbox --draw
+`bbox --draw`
 
 ### Draw a bounding box and output it in the terminal as GeoJSON
 `bbox --draw --output geojson --geojson-indent 4`
@@ -76,15 +76,17 @@ TODO way to limit the tiles
 
 
 Output formats:
+```
 -o comma
 -o space
+-o tab
 -o wkt
 -o hexwkb
 -o geojson
--o overpass-ql
--o osm-url
--o "template={{.MinX}} {{.MinY}}"
--o kml
+-o overpass-ql # TODO
+-o url=osm
+-o "go-template={{.Left}} {{.Bottom}} {{.Right}} {{.Top}}"
+```
 
 # TODO
 * geojsonl -- input/output
