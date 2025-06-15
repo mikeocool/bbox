@@ -91,6 +91,7 @@ Output formats:
 # TODO
 * make geocoder url configurable, option for custom auth/headers, add nominatim
 * geojsonl -- input/output
+* json format -- just a list of the 4 coords
 * geoparquet input
 * osm file input
     * https://github.com/paulmach/osm
