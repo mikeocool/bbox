@@ -90,8 +90,6 @@ Output formats:
 
 # TODO
 * geojsonl -- input/output
-* --place input
-    * https://photon.komoot.io
 * osm file input
     * https://github.com/paulmach/osm
 * align input and output options across commands
