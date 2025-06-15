@@ -2,12 +2,14 @@ package input
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/mikeocool/bbox/core"
+	"github.com/mikeocool/bbox/geocoding"
 )
 
 type InputParams struct {
@@ -189,17 +191,45 @@ var PlaceBuilder = BboxBuilder{
 		return params.Place != ""
 	},
 	ValidateParams: func(params *InputParams) error {
-		if !params.HasWidth() {
-			return InputValidationError{Field: "width", Message: "width required"}
-		}
-		if !params.HasHeight() {
-			return InputValidationError{Field: "height", Message: "height required"}
-		}
 		return nil
 	},
 	UsedFields: []string{"Place", "Width", "Height"},
 	Build: func(params *InputParams) (core.Bbox, error) {
-		return core.Bbox{}, nil // TODO
+		// Geocode the place
+		result, err := geocoding.GeocodePlace(geocoding.GeocoderPhotonKamoot, params.Place)
+		if err != nil {
+			return core.Bbox{}, err
+		}
+
+		log.Printf("Geocoder matched %s: %s\n", result.Type, result.FullName)
+
+		// If width and height are specified, create bounds around the center
+		if params.HasWidth() && params.HasHeight() {
+			width, err := strconv.ParseFloat(params.Width, 64)
+			if err != nil {
+				return core.Bbox{}, fmt.Errorf("invalid width: %w", err)
+			}
+
+			height, err := strconv.ParseFloat(params.Height, 64)
+			if err != nil {
+				return core.Bbox{}, fmt.Errorf("invalid height: %w", err)
+			}
+
+			return core.Bbox{
+				Left:   result.LocationX - width/2,
+				Bottom: result.LocationY - height/2,
+				Right:  result.LocationX + width/2,
+				Top:    result.LocationY + height/2,
+			}, nil
+		}
+
+		// Use extent if available
+		if result.Extent != nil {
+			return *result.Extent, nil
+		}
+
+		// No extent and no width/height
+		return core.Bbox{}, fmt.Errorf("Geocoder did not return extent for '%s', please a width and height", params.Place)
 	},
 }
 

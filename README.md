@@ -70,28 +70,26 @@ Output formats:
 -o kml
 
 # TODO
-* slice command
-    * add more output
+* geojsonl -- input/output
+* --place input
+    * https://photon.komoot.io
+* osm file input
+    * https://github.com/paulmach/osm
+* align input and output options across commands
 * cleanup draw UI
+    * handle click and drag when creating box
+    * Show popup success message with button to close window when done
+    * touch interactions/small screen UI
     * vector tiles(?)
     * preview bbox in common formats
     * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
-    * handle click and drag when creating box
-    * touch interactions/small screen UI
-    * Show popup success message with button to close window when done
 * Add a verbose flag
-* geojsonl -- input/output
-* osm file input
-    * https://github.com/paulmach/osm
 * kml input
 * output formats
     * lines
     * overpass ql
     * option to open browser for url formats
 * match input and output formats as closely as possible
-* --place input
-    * https://photon.komoot.io
-* units on width and heightw
 * option to specify decimal precision/format
 * handle projections
     * https://github.com/twpayne/go-proj
@@ -99,6 +97,7 @@ Output formats:
     * Map tiler api
     * call out to proj
     * implement basic projections
+* units on width, height, buffer options
 * clean input error messaging
 * add http api
 * Text description of Bbox - get closest major city to all four corners and center, and the dedup to describe
