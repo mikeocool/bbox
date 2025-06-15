@@ -34,6 +34,11 @@ type TemplateContext struct {
 // StartDrawServer starts a web server for drawing bounding boxes.
 // It returns the received bounding box data as a Bbox struct.
 func StartDrawServer(bbox Bbox) (Bbox, error) {
+	// Ensure the box appears to be Valid Wgs84 coords
+	if !IsValidWgs84(bbox) {
+		return Bbox{}, fmt.Errorf("Box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode.")
+	}
+
 	// Find the first available port starting from 5000
 	port := findAvailablePort(defaultPort)
 	if port == 0 {
