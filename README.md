@@ -90,6 +90,7 @@ Output formats:
 * osm file input
     * https://github.com/paulmach/osm
 * align input and output options across commands
+* add github actions for testing
 * cleanup draw UI
     * handle click and drag when creating box
     * Show popup success message with button to close window when done
