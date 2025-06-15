@@ -53,7 +53,12 @@ cat whatevs.geojson | bbox --output wkt
 ```
 
 ### Create a bounding box from gis files
-`bbox --file whatevs.shp`
+```
+bbox --file whatevs.shp
+bbox --file whatevs.geojson
+bbox --file whatevs.geojsonl
+bbox --file whatevs.osm
+```
 
 ### specify a bbox on the cli -- but then edit it in the browser
 `bbox --center 1.0 2.0 --width 10 --height 10 --draw`
