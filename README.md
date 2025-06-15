@@ -15,7 +15,7 @@ bats integration_tests
 ```
 
 CLI examples:
-```
+
 # Basics
 
 ### Draw a bounding box in the browser
@@ -55,22 +55,22 @@ cat whatevs.geojson | bbox --output wkt
 ### Create a bounding box from gis files
 `bbox --file whatevs.shp`
 
-# specify a bbox on the cli -- but then edit it in the browser
+### specify a bbox on the cli -- but then edit it in the browser
 `bbox --center 1.0 2.0 --width 10 --height 10 --draw`
 
-# center - get the center of the box
+### center - get the center of the box
 `bbox center -- 1.0 1.0 2.0 2.0`
 
-# slice - Slice the bounding box into smaller boxes
+### slice - Slice the bounding box into smaller boxes
 `bbox slice --center 1.0 2.0 --width 10 --height 10 --rows 5 --columns 10`
 
-# Tile (TODO)
-bbox tile --center 1.0 2.0 --width 10 --height 10
-# TODO way to limit the tiles
+### Tile (TODO)
+`bbox tile --center 1.0 2.0 --width 10 --height 10`
+TODO way to limit the tiles
 
-# API (TODO)
-bbox serve-api
-```
+### API (TODO)
+`bbox serve-api`
+
 
 Output formats:
 -o comma
