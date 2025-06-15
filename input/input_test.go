@@ -1,6 +1,7 @@
 package input
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -241,6 +242,45 @@ func TestInputParams_GetBbox(t *testing.T) {
 			params:      InputParams{},
 			expectError: true,
 			errorMsg:    "no usable builder for the provided parameters",
+		},
+
+		// buffer
+		{
+			name: "BoundsBuilder - Left, Right and Width (invalid)",
+			params: InputParams{
+				Buffer: 2.0,
+			},
+			expectError: true,
+			errorMsg:    "Cannot specify buffer without a bounding box",
+		},
+		{
+			name: "Buffered bounds",
+			params: InputParams{
+				Buffer: 2.0,
+				Left:   floatPtr(1.0),
+				Right:  floatPtr(5.0),
+				Bottom: floatPtr(2.0),
+				Top:    floatPtr(8.0),
+			},
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   -1.0,
+				Right:  7.0,
+				Bottom: 0.0,
+				Top:    10.0,
+			},
+		},
+		{
+			name: "Invalid buffer",
+			params: InputParams{
+				Buffer: -2.0,
+				Left:   floatPtr(1.0),
+				Right:  floatPtr(2.0),
+				Bottom: floatPtr(1.0),
+				Top:    floatPtr(2.0),
+			},
+			expectError: true,
+			errorMsg:    fmt.Sprintf("cannot shrink box with width %f by %f", 1.0, -2.0),
 		},
 	}
 

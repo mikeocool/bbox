@@ -76,6 +76,9 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&inputParams.Height, "height", "", "Height of bounding box")
 	RootCmd.PersistentFlags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.PersistentFlags().StringSliceVarP(&inputParams.File, "file", "f", []string{}, "Path to file to load")
+
+	RootCmd.PersistentFlags().Float64Var(&inputParams.Buffer, "buffer", 0, "Grow the box by the specified amount, or shrink it if the value is negative.")
+
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 
 	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")

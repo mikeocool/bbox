@@ -21,6 +21,7 @@ type InputParams struct {
 	Raw    []byte
 	File   []string
 	Place  string
+	Buffer float64
 }
 
 func (params *InputParams) HasWidth() bool  { return params.Width != "" }
@@ -44,6 +45,12 @@ func (params *InputParams) GetBbox() (core.Bbox, error) {
 			return buildBbox(builders[i], params)
 		}
 	}
+
+	// dont allow the buffer parameter if there is no GetBbox
+	if params.Buffer != 0 {
+		return core.Bbox{}, fmt.Errorf("Cannot specify buffer without a bounding box")
+	}
+
 	return core.Bbox{}, NoUsableBuilderError{}
 }
 
@@ -67,7 +74,8 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 
 	setFields := params.getSetFields()
 	for _, field := range setFields {
-		if !usedFieldsSet[field] {
+		// buffer is a global used field TODO make this better
+		if !usedFieldsSet[field] && field != "Buffer" {
 			return core.Bbox{}, fmt.Errorf("Unexpected argument: %s with %s", field, builder.Name)
 		}
 	}
@@ -75,7 +83,19 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 	if err := builder.ValidateParams(params); err != nil {
 		return core.Bbox{}, err
 	}
-	return builder.Build(params)
+	bbox, err := builder.Build(params)
+	if err != nil {
+		return core.Bbox{}, err
+	}
+
+	if params.Buffer != 0 {
+		bbox, err = bbox.Buffer(params.Buffer)
+		if err != nil {
+			return core.Bbox{}, err
+		}
+	}
+
+	return bbox, nil
 }
 
 type InputValidationError struct {
