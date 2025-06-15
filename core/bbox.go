@@ -62,6 +62,16 @@ func (b Bbox) IsZero() bool {
 	return b.Left == 0 && b.Bottom == 0 && b.Right == 0 && b.Top == 0
 }
 
+// Width returns the width of the bounding box.
+func (b Bbox) Width() float64 {
+	return b.Right - b.Left
+}
+
+// Height returns the height of the bounding box.
+func (b Bbox) Height() float64 {
+	return b.Top - b.Bottom
+}
+
 func (b Bbox) Union(other Bbox) Bbox {
 	return Bbox{
 		Left:   math.Min(b.Left, other.Left),
@@ -69,6 +79,32 @@ func (b Bbox) Union(other Bbox) Bbox {
 		Right:  math.Max(b.Right, other.Right),
 		Top:    math.Max(b.Top, other.Top),
 	}
+}
+
+// Buffer returns a new Bbox that is expanded (or shrunk if radius is negative)
+// by the specified radius in all directions.
+// If the radius is negative and would result in an invalid bounding box (Right <= Left or Top <= Bottom),
+// an error is returned.
+func (b Bbox) Buffer(radius float64) (Bbox, error) {
+	width := b.Width()
+	height := b.Height()
+
+	// Check if negative radius would create an invalid bbox
+	if radius < 0 {
+		if -radius*2 >= width {
+			return Bbox{}, fmt.Errorf("cannot shrink box with width %f by %f", width, radius)
+		}
+		if -radius*2 >= height {
+			return Bbox{}, fmt.Errorf("cannot shrink box with height %f by %f", height, radius)
+		}
+	}
+
+	return Bbox{
+		Left:   b.Left - radius,
+		Bottom: b.Bottom - radius,
+		Right:  b.Right + radius,
+		Top:    b.Top + radius,
+	}, nil
 }
 
 // Slice divides the bounding box into a grid of columns and rows,

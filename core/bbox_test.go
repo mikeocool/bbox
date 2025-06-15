@@ -134,8 +134,8 @@ func TestBboxSlice(t *testing.T) {
 			columns: 2,
 			rows:    2,
 			expected: []Bbox{
-				{Left: -1.0, Bottom: 1.0, Right: 1.0, Top: 4.0}, // top-left
-				{Left: 1.0, Bottom: 1.0, Right: 3.0, Top: 4.0},  // top-right
+				{Left: -1.0, Bottom: 1.0, Right: 1.0, Top: 4.0},  // top-left
+				{Left: 1.0, Bottom: 1.0, Right: 3.0, Top: 4.0},   // top-right
 				{Left: -1.0, Bottom: -2.0, Right: 1.0, Top: 1.0}, // bottom-left
 				{Left: 1.0, Bottom: -2.0, Right: 3.0, Top: 1.0},  // bottom-right
 			},
@@ -215,7 +215,7 @@ func TestBboxSliceEdgeCases(t *testing.T) {
 	t.Run("Very small bbox", func(t *testing.T) {
 		smallBbox := Bbox{Left: 0.0, Bottom: 0.0, Right: 0.001, Top: 0.001}
 		result := smallBbox.Slice(2, 2)
-	
+
 		if len(result) != 4 {
 			t.Errorf("Expected 4 boxes, got %d", len(result))
 		}
@@ -356,8 +356,8 @@ func TestBboxPolygon(t *testing.T) {
 			name: "Decimal coordinates",
 			bbox: Bbox{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
 			expected: [][2]float64{
-				{10.25, 20.75},  // bottom-left
-				{30.125, 20.75}, // bottom-right
+				{10.25, 20.75},   // bottom-left
+				{30.125, 20.75},  // bottom-right
 				{30.125, 40.875}, // top-right
 				{10.25, 40.875},  // top-left
 				{10.25, 20.75},   // bottom-left (closed)
@@ -414,7 +414,7 @@ func TestBboxPolygonProperties(t *testing.T) {
 		if len(coords) < 4 {
 			t.Fatal("Not enough coordinates to check order")
 		}
-		
+
 		// Check the order: bottom-left -> bottom-right -> top-right -> top-left
 		bottomLeft := coords[0]
 		bottomRight := coords[1]
@@ -439,6 +439,143 @@ func TestBboxPolygonProperties(t *testing.T) {
 		// Top-left should have minimum x and maximum y
 		if topLeft[0] != bbox.Left || topLeft[1] != bbox.Top {
 			t.Errorf("Top-left coordinate incorrect: expected [%f, %f], got %v", bbox.Left, bbox.Top, topLeft)
+		}
+	})
+}
+
+func TestBboxBuffer(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        Bbox
+		radius      float64
+		expected    Bbox
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "Positive buffer",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			radius:      1.0,
+			expected:    Bbox{Left: 0.0, Bottom: 1.0, Right: 4.0, Top: 5.0},
+			expectError: false,
+		},
+		{
+			name:        "Zero buffer",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			radius:      0.0,
+			expected:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expectError: false,
+		},
+		{
+			name:        "Negative buffer",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 5.0, Top: 6.0},
+			radius:      -0.5,
+			expected:    Bbox{Left: 1.5, Bottom: 2.5, Right: 4.5, Top: 5.5},
+			expectError: false,
+		},
+		{
+			name:        "Error: Negative buffer too large for width",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 6.0},
+			radius:      -1.0,
+			expectError: true,
+			errorMsg:    fmt.Sprintf("cannot shrink box with width %f by %f", 2.0, -1.0),
+		},
+		{
+			name:        "Error: Negative buffer too large for height",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 5.0, Top: 3.0},
+			radius:      -0.6,
+			expectError: true,
+			errorMsg:    fmt.Sprintf("cannot shrink box with height %f by %f", 1.0, -0.6),
+		},
+		{
+			name:        "Error: Negative buffer too large for both dimensions",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 2.0, Top: 3.0},
+			radius:      -0.5,
+			expectError: true,
+			errorMsg:    fmt.Sprintf("cannot shrink box with width %f by %f", 1.0, -0.5),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.bbox.Buffer(tc.radius)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// If expecting an error, verify the error message
+			if tc.expectError && err != nil {
+				if err.Error() != tc.errorMsg {
+					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
+				}
+			}
+
+			// If not expecting an error, verify the result
+			if !tc.expectError {
+				if result.Left != tc.expected.Left || result.Bottom != tc.expected.Bottom ||
+					result.Right != tc.expected.Right || result.Top != tc.expected.Top {
+					t.Errorf("Expected %+v, got %+v", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestBboxBufferProperties(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 5.0, Top: 6.0}
+
+	t.Run("Buffer maintains proportions", func(t *testing.T) {
+		radius := 2.0
+		result, err := bbox.Buffer(radius)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		originalWidth := bbox.Width()
+		originalHeight := bbox.Height()
+		newWidth := result.Width()
+		newHeight := result.Height()
+
+		expectedWidth := originalWidth + 2*radius
+		expectedHeight := originalHeight + 2*radius
+
+		if newWidth != expectedWidth {
+			t.Errorf("Expected width %f, got %f", expectedWidth, newWidth)
+		}
+		if newHeight != expectedHeight {
+			t.Errorf("Expected height %f, got %f", expectedHeight, newHeight)
+		}
+	})
+
+	t.Run("Center remains the same", func(t *testing.T) {
+		radius := 3.0
+		result, err := bbox.Buffer(radius)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		originalCenter := bbox.Center()
+		newCenter := result.Center()
+
+		if originalCenter != newCenter {
+			t.Errorf("Expected center to remain %v, got %v", originalCenter, newCenter)
+		}
+	})
+
+	t.Run("Buffer with zero radius is identity", func(t *testing.T) {
+		result, err := bbox.Buffer(0.0)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		if result.Left != bbox.Left || result.Bottom != bbox.Bottom ||
+			result.Right != bbox.Right || result.Top != bbox.Top {
+			t.Errorf("Expected unchanged bbox %+v, got %+v", bbox, result)
 		}
 	})
 }
