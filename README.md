@@ -90,6 +90,7 @@ Output formats:
 
 # TODO
 * geojsonl -- input/output
+* geoparquet input
 * osm file input
     * https://github.com/paulmach/osm
 * align input and output options across commands
