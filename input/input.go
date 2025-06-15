@@ -13,17 +13,18 @@ import (
 )
 
 type InputParams struct {
-	Left   *float64
-	Bottom *float64
-	Right  *float64
-	Top    *float64
-	Center []float64 // a pair of floats representing the center coordinates
-	Width  string
-	Height string
-	Raw    []byte
-	File   []string
-	Place  string
-	Buffer float64
+	Left        *float64
+	Bottom      *float64
+	Right       *float64
+	Top         *float64
+	Center      []float64 // a pair of floats representing the center coordinates
+	Width       string
+	Height      string
+	Raw         []byte
+	File        []string
+	Place       string
+	GeocoderURL string
+	Buffer      float64
 }
 
 func (params *InputParams) HasWidth() bool  { return params.Width != "" }
@@ -191,12 +192,23 @@ var PlaceBuilder = BboxBuilder{
 		return params.Place != ""
 	},
 	ValidateParams: func(params *InputParams) error {
+		// Validate that geocoder-url contains %s placeholder
+		if params.GeocoderURL != "" && !strings.Contains(params.GeocoderURL, "%s") {
+			return InputValidationError{Field: "geocoder-url", Message: "must contain %s placeholder for place name"}
+		}
 		return nil
 	},
-	UsedFields: []string{"Place", "Width", "Height"},
+	UsedFields: []string{"Place", "GeocoderURL", "Width", "Height"},
 	Build: func(params *InputParams) (core.Bbox, error) {
+		var result *geocoding.GeocodeResult
+		var err error
+		
 		// Geocode the place
-		result, err := geocoding.GeocodePlace(geocoding.GeocoderPhotonKamoot, params.Place)
+		if params.GeocoderURL != "" {
+			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place)
+		} else {
+			result, err = geocoding.GeocodePlace(geocoding.GeocoderPhotonKamoot, params.Place)
+		}
 		if err != nil {
 			return core.Bbox{}, err
 		}

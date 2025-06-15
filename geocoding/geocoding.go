@@ -34,6 +34,7 @@ type photonResponse struct {
 type photonFeature struct {
 	Geometry   photonGeometry         `json:"geometry"`
 	Properties map[string]interface{} `json:"properties"`
+	Bbox       []float64              `json:"bbox,omitempty"` // Nominatim returns bbox at feature level
 }
 
 type photonGeometry struct {
@@ -42,26 +43,27 @@ type photonGeometry struct {
 }
 
 func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
-	return GeocodePlaceWithClient(geocoder, query, http.DefaultClient)
-}
-
-// GeocodePlaceWithClient allows dependency injection for testing
-func GeocodePlaceWithClient(geocoder Geocoder, query string, client HTTPClient) (*GeocodeResult, error) {
+	var url string
 	switch geocoder {
 	case GeocoderPhotonKamoot:
-		return geocodePhotonKamoot(query, client)
+		url = "https://photon.komoot.io/api?q=%s&limit=1"
 	default:
 		return nil, fmt.Errorf("unsupported geocoder: %s", geocoder)
 	}
+	return GeocodePlaceWithClient(url, query, http.DefaultClient)
 }
 
-func geocodePhotonKamoot(query string, client HTTPClient) (*GeocodeResult, error) {
-	// Build the URL with query parameter
-	baseURL := "https://photon.komoot.io/api"
-	params := url.Values{}
-	params.Add("q", query)
-	params.Add("limit", "1")
-	requestURL := baseURL + "?" + params.Encode()
+func GeocodePlaceWithURL(customURL, query string) (*GeocodeResult, error) {
+	return GeocodePlaceWithClient(customURL, query, http.DefaultClient)
+}
+
+// GeocodePlaceWithClient allows dependency injection for testing
+func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient) (*GeocodeResult, error) {
+	if geocoderURL == "" {
+		return nil, fmt.Errorf("geocoder URL is required")
+	}
+	
+	requestURL := fmt.Sprintf(geocoderURL, url.QueryEscape(query))
 
 	// Make the HTTP request
 	resp, err := client.Get(requestURL)
@@ -123,7 +125,7 @@ func geocodePhotonKamoot(query string, client HTTPClient) (*GeocodeResult, error
 	}
 	fullName := strings.Join(nameParts, ", ")
 
-	// Check for extent property
+	// Check for extent property in properties (Photon format)
 	var extent *core.Bbox
 	if extentVal, hasExtent := feature.Properties["extent"]; hasExtent {
 		if extentArray, ok := extentVal.([]interface{}); ok && len(extentArray) == 4 {
@@ -147,6 +149,16 @@ func geocodePhotonKamoot(query string, client HTTPClient) (*GeocodeResult, error
 					Top:    extentFloats[3],
 				}
 			}
+		}
+	}
+
+	// If no extent in properties, check for bbox at feature level (Nominatim format)
+	if extent == nil && len(feature.Bbox) == 4 {
+		extent = &core.Bbox{
+			Left:   feature.Bbox[0],
+			Bottom: feature.Bbox[1],
+			Right:  feature.Bbox[2],
+			Top:    feature.Bbox[3],
 		}
 	}
 

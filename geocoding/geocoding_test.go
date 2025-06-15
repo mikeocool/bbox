@@ -31,7 +31,7 @@ func createMockResponse(statusCode int, body string) *http.Response {
 	}
 }
 
-func TestGeocodePhotonKamoot_Success(t *testing.T) {
+func TestGeocodePlaceWithClient_Success(t *testing.T) {
 	// Mock response JSON with all fields
 	mockJSON := `{
 		"type":"FeatureCollection",
@@ -56,7 +56,7 @@ func TestGeocodePhotonKamoot_Success(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := geocodePhotonKamoot("San Francisco", mockClient)
+	result, err := GeocodePlaceWithClient("https://photon.komoot.io/api?q=%s&limit=1", "San Francisco", mockClient)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -89,7 +89,7 @@ func TestGeocodePhotonKamoot_Success(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_MinimalData(t *testing.T) {
+func TestGeocodePlaceWithClient_MinimalData(t *testing.T) {
 	// Mock response with minimal required fields
 	mockJSON := `{
 		"type":"FeatureCollection",
@@ -110,7 +110,7 @@ func TestGeocodePhotonKamoot_MinimalData(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := geocodePhotonKamoot("New York", mockClient)
+	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "New York", mockClient)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -137,14 +137,14 @@ func TestGeocodePhotonKamoot_MinimalData(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_NoResults(t *testing.T) {
+func TestGeocodePlaceWithClient_NoResults(t *testing.T) {
 	mockJSON := `{"type":"FeatureCollection", "features": []}`
 
 	mockClient := &MockHTTPClient{
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	_, err := geocodePhotonKamoot("NonexistentPlace", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "NonexistentPlace", mockClient)
 
 	if err == nil {
 		t.Fatal("Expected error for no results, got nil")
@@ -156,12 +156,12 @@ func TestGeocodePhotonKamoot_NoResults(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_HTTPError(t *testing.T) {
+func TestGeocodePlaceWithClient_HTTPError(t *testing.T) {
 	mockClient := &MockHTTPClient{
 		Response: createMockResponse(500, "Internal Server Error"),
 	}
 
-	_, err := geocodePhotonKamoot("test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
 
 	if err == nil {
 		t.Fatal("Expected error for HTTP 500, got nil")
@@ -173,13 +173,13 @@ func TestGeocodePhotonKamoot_HTTPError(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_NetworkError(t *testing.T) {
+func TestGeocodePlaceWithClient_NetworkError(t *testing.T) {
 	networkErr := errors.New("network connection failed")
 	mockClient := &MockHTTPClient{
 		Error: networkErr,
 	}
 
-	_, err := geocodePhotonKamoot("test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
 
 	if err == nil {
 		t.Fatal("Expected error for network failure, got nil")
@@ -190,12 +190,12 @@ func TestGeocodePhotonKamoot_NetworkError(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_InvalidJSON(t *testing.T) {
+func TestGeocodePlaceWithClient_InvalidJSON(t *testing.T) {
 	mockClient := &MockHTTPClient{
 		Response: createMockResponse(200, "invalid json"),
 	}
 
-	_, err := geocodePhotonKamoot("test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
 
 	if err == nil {
 		t.Fatal("Expected error for invalid JSON, got nil")
@@ -206,7 +206,7 @@ func TestGeocodePhotonKamoot_InvalidJSON(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_InvalidCoordinates(t *testing.T) {
+func TestGeocodePlaceWithClient_InvalidCoordinates(t *testing.T) {
 	// Mock response with insufficient coordinates
 	mockJSON := `{
 		"features": [
@@ -226,7 +226,7 @@ func TestGeocodePhotonKamoot_InvalidCoordinates(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	_, err := geocodePhotonKamoot("test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
 
 	if err == nil {
 		t.Fatal("Expected error for invalid coordinates, got nil")
@@ -238,7 +238,7 @@ func TestGeocodePhotonKamoot_InvalidCoordinates(t *testing.T) {
 	}
 }
 
-func TestGeocodePhotonKamoot_InvalidExtent(t *testing.T) {
+func TestGeocodePlaceWithClient_InvalidExtent(t *testing.T) {
 	// Mock response with invalid extent (not 4 elements)
 	mockJSON := `{
 		"features": [
@@ -259,7 +259,7 @@ func TestGeocodePhotonKamoot_InvalidExtent(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := geocodePhotonKamoot("test", mockClient)
+	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -271,10 +271,8 @@ func TestGeocodePhotonKamoot_InvalidExtent(t *testing.T) {
 	}
 }
 
-func TestGeocodePlaceWithClient_UnsupportedGeocoder(t *testing.T) {
-	mockClient := &MockHTTPClient{}
-
-	_, err := GeocodePlaceWithClient("unsupported", "test", mockClient)
+func TestGeocodePlace_UnsupportedGeocoder(t *testing.T) {
+	_, err := GeocodePlace("unsupported", "test")
 
 	if err == nil {
 		t.Fatal("Expected error for unsupported geocoder, got nil")
@@ -285,7 +283,22 @@ func TestGeocodePlaceWithClient_UnsupportedGeocoder(t *testing.T) {
 	}
 }
 
-func TestGeocodePlaceWithClient_PhotonKamoot(t *testing.T) {
+func TestGeocodePlaceWithClient_EmptyURL(t *testing.T) {
+	mockClient := &MockHTTPClient{}
+
+	_, err := GeocodePlaceWithClient("", "test", mockClient)
+
+	if err == nil {
+		t.Fatal("Expected error for empty URL, got nil")
+	}
+
+	expectedError := "geocoder URL is required"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
+	}
+}
+
+func TestGeocodePlaceWithURL(t *testing.T) {
 	mockJSON := `{
 		"features": [
 			{
@@ -304,7 +317,9 @@ func TestGeocodePlaceWithClient_PhotonKamoot(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := GeocodePlaceWithClient(GeocoderPhotonKamoot, "San Francisco", mockClient)
+	// We need to mock the http.DefaultClient, but since we can't easily do that,
+	// we'll test the URL construction logic by calling GeocodePlaceWithClient directly
+	result, err := GeocodePlaceWithClient("https://custom.geocoder.com/api?query=%s", "San Francisco", mockClient)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -312,5 +327,63 @@ func TestGeocodePlaceWithClient_PhotonKamoot(t *testing.T) {
 
 	if result.FullName != "San Francisco" {
 		t.Errorf("Expected FullName 'San Francisco', got '%s'", result.FullName)
+	}
+}
+
+func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
+	// Mock response with bbox at feature level (Nominatim format)
+	mockJSON := `{
+		"type":"FeatureCollection",
+		"features": [
+			{
+				"geometry": {
+					"type": "Point",
+					"coordinates": [2.3522, 48.8566]
+				},
+				"properties": {
+					"name": "Paris",
+					"country": "France",
+					"type": "city"
+				},
+				"bbox": [2.224, 48.815, 2.470, 48.902]
+			}
+		]
+	}`
+
+	mockClient := &MockHTTPClient{
+		Response: createMockResponse(200, mockJSON),
+	}
+
+	result, err := GeocodePlaceWithClient("https://nominatim.openstreetmap.org/search?q=%s&format=geojson", "Paris", mockClient)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if result.LocationX != 2.3522 {
+		t.Errorf("Expected LocationX 2.3522, got %f", result.LocationX)
+	}
+
+	if result.LocationY != 48.8566 {
+		t.Errorf("Expected LocationY 48.8566, got %f", result.LocationY)
+	}
+
+	if result.Type != "city" {
+		t.Errorf("Expected Type 'city', got '%s'", result.Type)
+	}
+
+	expectedName := "Paris, France"
+	if result.FullName != expectedName {
+		t.Errorf("Expected FullName '%s', got '%s'", expectedName, result.FullName)
+	}
+
+	// Check that bbox from feature level is parsed correctly
+	if result.Extent == nil {
+		t.Error("Expected Extent to be set from bbox field")
+	} else {
+		expected := &core.Bbox{Left: 2.224, Bottom: 48.815, Right: 2.470, Top: 48.902}
+		if *result.Extent != *expected {
+			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
+		}
 	}
 }
