@@ -89,6 +89,7 @@ Output formats:
 ```
 
 # TODO
+* make geocoder url configurable, option for custom auth/headers, add nominatim
 * geojsonl -- input/output
 * geoparquet input
 * osm file input
@@ -111,6 +112,7 @@ Output formats:
 * output formats
     * lines
     * overpass ql
+    * r/sf format
     * option to open browser for url formats
 * match input and output formats as closely as possible
 * option to specify decimal precision/format
