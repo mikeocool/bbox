@@ -94,6 +94,10 @@ Output formats:
     * https://github.com/paulmach/osm
 * align input and output options across commands
 * add github actions for testing
+* basic projection handling
+    * read the projection if we can
+    * for projections that are close WGS84, allow --drow but show a warning
+    * for those that aren't show error
 * cleanup draw UI
     * handle click and drag when creating box
     * Show popup success message with button to close window when done
