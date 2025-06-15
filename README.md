@@ -17,44 +17,58 @@ bats integration_tests
 CLI examples:
 ```
 # Basics
+
+### Draw a bounding box in the browser
 bbox --draw
-bbox --draw --output comma
 
-bbox --center 1.0 2.0 --width 10 --height 10
+### Draw a bounding box and output it in the terminal as GeoJSON
+`bbox --draw --output geojson --geojson-indent 4`
 
+### Create a bounding box from a center point
+`bbox --center 1.0 2.0 --width 10 --height 10`
+
+### Create a bounding box from a combination of sides and dimensions
+```
 bbox --left 1.0 --bottom 1.0 --right 2.0 --top 2.0
 bbox --left 1.0 --bottom 1.0 --width 2.0 --height 2.0
 bbox --left 1.0 --bottom 1.0 --width 2.0 --height 2.0
+```
 
-bbox --left 1.0 --bottom 2.0 --width 2.0mi --height 2.0mi
+### Use distance unit in the dimensions (TODO)
+`bbox --left 1.0 --bottom 2.0 --width 2.0mi --height 2.0mi`
 units: mi,ft,km,m
 
-bbox --place "Boston, MA" --width 10 --height 10
+### Create a boundng box from a geocoded place name
+`bbox --place "Boston, MA"`
 
+### Accept input in a variery of formats
+```
 bbox --output wkt -- 1.0 1.0 2.0 2.0
 bbox "POLYGON((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0))" --output comma
+```
 
-cat whatevs.txt | bbox --output wkt
+### Accept input from stdin
+```
+cat whatevs.geojson | bbox --output wkt
+```
 
-bbox --file whatevs.shp
+### Create a bounding box from gis files
+`bbox --file whatevs.shp`
 
-# specify a bbox on the cli -- but then open the browser and let you edit it
-bbox --center 1.0 2.0 --width 10 --height 10 --draw
+# specify a bbox on the cli -- but then edit it in the browser
+`bbox --center 1.0 2.0 --width 10 --height 10 --draw`
 
-# Verbose (better name? -- summary?)
-bbox verbose --center 1.0 2.0 --width 10 --height 10
+# center - get the center of the box
+`bbox center -- 1.0 1.0 2.0 2.0`
 
-bbox center
-bbox area
+# slice - Slice the bounding box into smaller boxes
+`bbox slice --center 1.0 2.0 --width 10 --height 10 --rows 5 --columns 10`
 
-# Slice
-bbox slice --center 1.0 2.0 --width 10 --height 10 --rows 5 --columns 10
-
-# Tile
+# Tile (TODO)
 bbox tile --center 1.0 2.0 --width 10 --height 10
 # TODO way to limit the tiles
 
-# API
+# API (TODO)
 bbox serve-api
 ```
 
