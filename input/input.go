@@ -23,6 +23,7 @@ type InputParams struct {
 	Raw         []byte
 	File        []string
 	Place       string
+	Geocoder    string
 	GeocoderURL string
 	Buffer      float64
 }
@@ -196,9 +197,13 @@ var PlaceBuilder = BboxBuilder{
 		if params.GeocoderURL != "" && !strings.Contains(params.GeocoderURL, "%s") {
 			return InputValidationError{Field: "geocoder-url", Message: "must contain %s placeholder for place name"}
 		}
+		// Validate that only one of geocoder or geocoder-url is specified
+		if params.Geocoder != "" && params.GeocoderURL != "" {
+			return InputValidationError{Field: "geocoder", Message: "cannot specify both --geocoder and --geocoder-url"}
+		}
 		return nil
 	},
-	UsedFields: []string{"Place", "GeocoderURL", "Width", "Height"},
+	UsedFields: []string{"Place", "Geocoder", "GeocoderURL", "Width", "Height"},
 	Build: func(params *InputParams) (core.Bbox, error) {
 		var result *geocoding.GeocodeResult
 		var err error
@@ -207,7 +212,7 @@ var PlaceBuilder = BboxBuilder{
 		if params.GeocoderURL != "" {
 			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place)
 		} else {
-			result, err = geocoding.GeocodePlace(geocoding.GeocoderPhotonKamoot, params.Place)
+			result, err = geocoding.GeocodePlace(geocoding.Geocoder(params.Geocoder), params.Place)
 		}
 		if err != nil {
 			return core.Bbox{}, err

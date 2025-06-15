@@ -12,7 +12,7 @@ import (
 
 type Geocoder string
 
-const GeocoderPhotonKamoot Geocoder = "photon_kamoot"
+const GeocoderPhotonDefault Geocoder = "photon"
 
 type GeocodeResult struct {
 	Type      string
@@ -45,7 +45,7 @@ type resultGeometry struct {
 func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
 	var url string
 	switch geocoder {
-	case GeocoderPhotonKamoot:
+	case GeocoderPhotonDefault:
 		url = "https://photon.komoot.io/api?q=%s&limit=1"
 	default:
 		return nil, fmt.Errorf("unsupported geocoder: %s", geocoder)
