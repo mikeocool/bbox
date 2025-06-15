@@ -12,7 +12,10 @@ import (
 
 type Geocoder string
 
-const GeocoderPhotonDefault Geocoder = "photon"
+const (
+	GeocoderPhotonDefault    Geocoder = "photon"
+	GeocoderNominatimDefault Geocoder = "nominatim"
+)
 
 type GeocodeResult struct {
 	Type      string
@@ -47,6 +50,8 @@ func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
 	switch geocoder {
 	case GeocoderPhotonDefault:
 		url = "https://photon.komoot.io/api?q=%s&limit=1"
+	case GeocoderNominatimDefault:
+		url = "https://nominatim.openstreetmap.org/search?q=%s&format=geojson&limit=1"
 	default:
 		return nil, fmt.Errorf("unsupported geocoder: %s", geocoder)
 	}
