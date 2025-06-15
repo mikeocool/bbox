@@ -27,17 +27,17 @@ type HTTPClient interface {
 	Get(url string) (*http.Response, error)
 }
 
-type photonResponse struct {
-	Features []photonFeature `json:"features"`
+type resultResponse struct {
+	Features []resultFeature `json:"features"`
 }
 
-type photonFeature struct {
-	Geometry   photonGeometry         `json:"geometry"`
+type resultFeature struct {
+	Geometry   resultGeometry         `json:"geometry"`
 	Properties map[string]interface{} `json:"properties"`
 	Bbox       []float64              `json:"bbox,omitempty"` // Nominatim returns bbox at feature level
 }
 
-type photonGeometry struct {
+type resultGeometry struct {
 	Type        string    `json:"type"`
 	Coordinates []float64 `json:"coordinates"`
 }
@@ -78,17 +78,17 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient) (*Geoc
 	}
 
 	// Parse the JSON response
-	var photonResp photonResponse
-	if err := json.NewDecoder(resp.Body).Decode(&photonResp); err != nil {
+	var geocodeResp resultResponse
+	if err := json.NewDecoder(resp.Body).Decode(&geocodeResp); err != nil {
 		return nil, fmt.Errorf("failed to parse geocoding response: %w", err)
 	}
 
 	// Check if we got any results
-	if len(photonResp.Features) == 0 {
+	if len(geocodeResp.Features) == 0 {
 		return nil, fmt.Errorf("Could not find place matching: \"%s\"", query)
 	}
 
-	feature := photonResp.Features[0]
+	feature := geocodeResp.Features[0]
 
 	// Get the center coordinates
 	if len(feature.Geometry.Coordinates) < 2 {
