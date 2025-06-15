@@ -1,6 +1,6 @@
 ```
 go build
-./bbox draw
+./bbox --draw
 ```
 
 Unit Tests
@@ -14,9 +14,7 @@ Integration Tests
 bats integration_tests
 ```
 
-CLI examples:
-
-# Basics
+# Usage
 
 ### Draw a bounding box in the browser
 bbox --draw
@@ -60,7 +58,7 @@ bbox --file whatevs.geojsonl
 bbox --file whatevs.osm
 ```
 
-### specify a bbox on the cli -- but then edit it in the browser
+### specify a bbox on the cli -- then edit it in the browser
 `bbox --center 1.0 2.0 --width 10 --height 10 --draw`
 
 ### center - get the center of the box
