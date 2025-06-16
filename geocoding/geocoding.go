@@ -45,6 +45,33 @@ type resultGeometry struct {
 	Coordinates []float64 `json:"coordinates"`
 }
 
+// parseBboxFromInterface parses a bbox from an interface{} array of 4 float64 values
+func parseBboxFromInterface(val interface{}) *core.Bbox {
+	if bboxArray, ok := val.([]interface{}); ok && len(bboxArray) == 4 {
+		// Convert bbox values to float64
+		var bboxFloats [4]float64
+		allValid := true
+		for i, val := range bboxArray {
+			if floatVal, ok := val.(float64); ok {
+				bboxFloats[i] = floatVal
+			} else {
+				allValid = false
+				break
+			}
+		}
+
+		if allValid {
+			return &core.Bbox{
+				Left:   bboxFloats[0],
+				Bottom: bboxFloats[1],
+				Right:  bboxFloats[2],
+				Top:    bboxFloats[3],
+			}
+		}
+	}
+	return nil
+}
+
 func GeocodePlace(geocoder Geocoder, query string, headers []string) (*GeocodeResult, error) {
 	var url string
 	switch geocoder {
@@ -95,6 +122,13 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 
 	// Check for non-200 response
 	if resp.StatusCode != 200 {
+		// Read up to 500 characters of the response body for error details
+		bodyBytes := make([]byte, 500)
+		n, _ := resp.Body.Read(bodyBytes)
+		bodyPreview := string(bodyBytes[:n])
+		if n > 0 {
+			return nil, fmt.Errorf("geocoding request failed with status %d: %s", resp.StatusCode, bodyPreview)
+		}
 		return nil, fmt.Errorf("geocoding request failed with status %d", resp.StatusCode)
 	}
 
@@ -146,34 +180,22 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 	}
 	fullName := strings.Join(nameParts, ", ")
 
-	// Check for extent property in properties (Photon format)
+	// Check for bbox/extent in properties first, then at feature level
 	var extent *core.Bbox
-	if extentVal, hasExtent := feature.Properties["extent"]; hasExtent {
-		if extentArray, ok := extentVal.([]interface{}); ok && len(extentArray) == 4 {
-			// Convert extent values to float64
-			var extentFloats [4]float64
-			allValid := true
-			for i, val := range extentArray {
-				if floatVal, ok := val.(float64); ok {
-					extentFloats[i] = floatVal
-				} else {
-					allValid = false
-					break
-				}
-			}
-
-			if allValid {
-				extent = &core.Bbox{
-					Left:   extentFloats[0],
-					Bottom: extentFloats[1],
-					Right:  extentFloats[2],
-					Top:    extentFloats[3],
-				}
-			}
+	
+	// Check for bbox in properties first
+	if bboxVal, hasBbox := feature.Properties["bbox"]; hasBbox {
+		extent = parseBboxFromInterface(bboxVal)
+	}
+	
+	// If no bbox in properties, check for extent property (Photon format)
+	if extent == nil {
+		if extentVal, hasExtent := feature.Properties["extent"]; hasExtent {
+			extent = parseBboxFromInterface(extentVal)
 		}
 	}
 
-	// If no extent in properties, check for bbox at feature level (Nominatim format)
+	// If no bbox/extent in properties, check for bbox at feature level (Nominatim format)
 	if extent == nil && len(feature.Bbox) == 4 {
 		extent = &core.Bbox{
 			Left:   feature.Bbox[0],

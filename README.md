@@ -39,6 +39,13 @@ units: mi,ft,km,m
 ### Create a boundng box from a geocoded place name
 `bbox --place "Boston, MA"`
 
+### Use custom geocoding services like Mapbox
+```bash
+# Using Mapbox Geocoding API v6 with access token
+bbox --place "San Francisco, CA" \
+  --geocoder-url "https://api.mapbox.com/search/geocode/v6/forward?q=%s&access_token=YOUR_MAPBOX_ACCESS_TOKEN"
+```
+
 ### Accept input in a variery of formats
 ```
 bbox --output wkt -- 1.0 1.0 2.0 2.0
@@ -89,7 +96,6 @@ Output formats:
 ```
 
 # TODO
-* make geocoder url configurable, option for custom auth/headers, add nominatim
 * geojsonl -- input/output
 * json format -- just a list of the 4 coords
 * geoparquet input

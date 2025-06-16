@@ -213,7 +213,11 @@ var PlaceBuilder = BboxBuilder{
 		if params.GeocoderURL != "" {
 			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place, params.GeocoderHeaders)
 		} else {
-			result, err = geocoding.GeocodePlace(geocoding.Geocoder(params.Geocoder), params.Place, params.GeocoderHeaders)
+			geocoder := geocoding.Geocoder(params.Geocoder)
+			if params.Geocoder == "" {
+				geocoder = geocoding.GeocoderPhotonDefault
+			}
+			result, err = geocoding.GeocodePlace(geocoder, params.Place, params.GeocoderHeaders)
 		}
 		if err != nil {
 			return core.Bbox{}, err

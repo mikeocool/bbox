@@ -169,9 +169,38 @@ func TestGeocodePlaceWithClient_HTTPError(t *testing.T) {
 		t.Fatal("Expected error for HTTP 500, got nil")
 	}
 
-	expectedError := "geocoding request failed with status 500"
+	expectedError := "geocoding request failed with status 500: Internal Server Error"
 	if err.Error() != expectedError {
 		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
+	}
+}
+
+func TestGeocodePlaceWithClient_HTTPErrorWithLongBody(t *testing.T) {
+	// Create a response body longer than 500 characters
+	longBody := strings.Repeat("Error details: server overloaded. ", 20) // Creates ~660 character string
+	mockClient := &MockHTTPClient{
+		Response: createMockResponse(503, longBody),
+	}
+
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
+
+	if err == nil {
+		t.Fatal("Expected error for HTTP 503, got nil")
+	}
+
+	// Should contain the status code and truncated body (up to 500 chars)
+	if !strings.Contains(err.Error(), "geocoding request failed with status 503") {
+		t.Errorf("Expected error to contain status code, got '%s'", err.Error())
+	}
+	
+	// The error message should be truncated to around 500 characters of body content
+	if len(err.Error()) > 600 { // Some buffer for the status message part
+		t.Errorf("Expected error message to be truncated, but got %d characters: %s", len(err.Error()), err.Error())
+	}
+	
+	// Should contain some of the error details but not all
+	if !strings.Contains(err.Error(), "Error details: server overloaded") {
+		t.Errorf("Expected error to contain body preview, got '%s'", err.Error())
 	}
 }
 
@@ -384,6 +413,46 @@ func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
 		t.Error("Expected Extent to be set from bbox field")
 	} else {
 		expected := &core.Bbox{Left: 2.224, Bottom: 48.815, Right: 2.470, Top: 48.902}
+		if *result.Extent != *expected {
+			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
+		}
+	}
+}
+
+func TestGeocodePlaceWithClient_BboxInProperties(t *testing.T) {
+	// Mock response with bbox in properties (should take precedence over feature-level bbox)
+	mockJSON := `{
+		"type":"FeatureCollection",
+		"features": [
+			{
+				"geometry": {
+					"type": "Point",
+					"coordinates": [2.3522, 48.8566]
+				},
+				"properties": {
+					"name": "Paris",
+					"bbox": [2.200, 48.800, 2.500, 48.900]
+				},
+				"bbox": [2.224, 48.815, 2.470, 48.902]
+			}
+		]
+	}`
+
+	mockClient := &MockHTTPClient{
+		Response: createMockResponse(200, mockJSON),
+	}
+
+	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "Paris", mockClient, nil)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Should use bbox from properties, not feature level
+	if result.Extent == nil {
+		t.Error("Expected Extent to be set from bbox in properties")
+	} else {
+		expected := &core.Bbox{Left: 2.200, Bottom: 48.800, Right: 2.500, Top: 48.900}
 		if *result.Extent != *expected {
 			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
 		}
