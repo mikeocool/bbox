@@ -27,7 +27,6 @@ type GeocodeResult struct {
 
 // HTTPClient interface allows for dependency injection and testing
 type HTTPClient interface {
-	Get(url string) (*http.Response, error)
 	Do(req *http.Request) (*http.Response, error)
 }
 

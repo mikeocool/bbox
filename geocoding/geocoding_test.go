@@ -12,18 +12,13 @@ import (
 
 // MockHTTPClient implements HTTPClient for testing
 type MockHTTPClient struct {
-	Response *http.Response
-	Error    error
-}
-
-func (m *MockHTTPClient) Get(url string) (*http.Response, error) {
-	if m.Error != nil {
-		return nil, m.Error
-	}
-	return m.Response, nil
+	Response        *http.Response
+	Error           error
+	CapturedRequest *http.Request
 }
 
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	m.CapturedRequest = req
 	if m.Error != nil {
 		return nil, m.Error
 	}
@@ -395,27 +390,6 @@ func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
 	}
 }
 
-type MockHTTPClientWithCapture struct {
-	Response        *http.Response
-	Error           error
-	CapturedRequest *http.Request
-}
-
-func (m *MockHTTPClientWithCapture) Get(url string) (*http.Response, error) {
-	if m.Error != nil {
-		return nil, m.Error
-	}
-	return m.Response, nil
-}
-
-func (m *MockHTTPClientWithCapture) Do(req *http.Request) (*http.Response, error) {
-	m.CapturedRequest = req
-	if m.Error != nil {
-		return nil, m.Error
-	}
-	return m.Response, nil
-}
-
 func TestGeocodePlaceWithClient_CustomHeaders(t *testing.T) {
 	mockJSON := `{
 		"features": [
@@ -431,7 +405,7 @@ func TestGeocodePlaceWithClient_CustomHeaders(t *testing.T) {
 		]
 	}`
 
-	mockClient := &MockHTTPClientWithCapture{
+	mockClient := &MockHTTPClient{
 		Response: createMockResponse(200, mockJSON),
 	}
 
