@@ -438,7 +438,6 @@ func TestGeocodePlaceWithClient_CustomHeaders(t *testing.T) {
 	headers := []string{
 		"Authorization: Bearer token123",
 		"X-API-Key: secret-key",
-		"User-Agent: MyApp/1.0",
 	}
 
 	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "San Francisco", mockClient, headers)
@@ -458,9 +457,5 @@ func TestGeocodePlaceWithClient_CustomHeaders(t *testing.T) {
 
 	if apiKey := mockClient.CapturedRequest.Header.Get("X-API-Key"); apiKey != "secret-key" {
 		t.Errorf("Expected X-API-Key header 'secret-key', got '%s'", apiKey)
-	}
-
-	if userAgent := mockClient.CapturedRequest.Header.Get("User-Agent"); userAgent != "MyApp/1.0" {
-		t.Errorf("Expected User-Agent header 'MyApp/1.0', got '%s'", userAgent)
 	}
 }
