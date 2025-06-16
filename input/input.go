@@ -13,19 +13,20 @@ import (
 )
 
 type InputParams struct {
-	Left        *float64
-	Bottom      *float64
-	Right       *float64
-	Top         *float64
-	Center      []float64 // a pair of floats representing the center coordinates
-	Width       string
-	Height      string
-	Raw         []byte
-	File        []string
-	Place       string
-	Geocoder    string
-	GeocoderURL string
-	Buffer      float64
+	Left            *float64
+	Bottom          *float64
+	Right           *float64
+	Top             *float64
+	Center          []float64 // a pair of floats representing the center coordinates
+	Width           string
+	Height          string
+	Raw             []byte
+	File            []string
+	Place           string
+	Geocoder        string
+	GeocoderURL     string
+	GeocoderHeaders []string
+	Buffer          float64
 }
 
 func (params *InputParams) HasWidth() bool  { return params.Width != "" }
@@ -203,16 +204,16 @@ var PlaceBuilder = BboxBuilder{
 		}
 		return nil
 	},
-	UsedFields: []string{"Place", "Geocoder", "GeocoderURL", "Width", "Height"},
+	UsedFields: []string{"Place", "Geocoder", "GeocoderURL", "GeocoderHeaders", "Width", "Height"},
 	Build: func(params *InputParams) (core.Bbox, error) {
 		var result *geocoding.GeocodeResult
 		var err error
 		
 		// Geocode the place
 		if params.GeocoderURL != "" {
-			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place)
+			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place, params.GeocoderHeaders)
 		} else {
-			result, err = geocoding.GeocodePlace(geocoding.Geocoder(params.Geocoder), params.Place)
+			result, err = geocoding.GeocodePlace(geocoding.Geocoder(params.Geocoder), params.Place, params.GeocoderHeaders)
 		}
 		if err != nil {
 			return core.Bbox{}, err

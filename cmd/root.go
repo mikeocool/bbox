@@ -77,6 +77,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&inputParams.Place, "place", "", "Place name for bounding box")
 	RootCmd.PersistentFlags().StringVar(&inputParams.Geocoder, "geocoder", "photon", "Geocoder service to use (requires --place)")
 	RootCmd.PersistentFlags().StringVar(&inputParams.GeocoderURL, "geocoder-url", "", "Custom geocoder URL with %s placeholder for place name (requires --place)")
+	RootCmd.PersistentFlags().StringSliceVar(&inputParams.GeocoderHeaders, "geocoder-header", []string{}, "HTTP headers for geocoder requests in 'Name: Value' format (can be used multiple times)")
 	RootCmd.PersistentFlags().StringSliceVarP(&inputParams.File, "file", "f", []string{}, "Path to file to load")
 
 	RootCmd.PersistentFlags().Float64Var(&inputParams.Buffer, "buffer", 0, "Grow the box by the specified amount, or shrink it if the value is negative.")

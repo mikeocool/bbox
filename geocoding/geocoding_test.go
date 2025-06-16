@@ -23,6 +23,13 @@ func (m *MockHTTPClient) Get(url string) (*http.Response, error) {
 	return m.Response, nil
 }
 
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	if m.Error != nil {
+		return nil, m.Error
+	}
+	return m.Response, nil
+}
+
 // Helper function to create a mock HTTP response
 func createMockResponse(statusCode int, body string) *http.Response {
 	return &http.Response{
@@ -56,7 +63,7 @@ func TestGeocodePlaceWithClient_Success(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := GeocodePlaceWithClient("https://photon.komoot.io/api?q=%s&limit=1", "San Francisco", mockClient)
+	result, err := GeocodePlaceWithClient("https://photon.komoot.io/api?q=%s&limit=1", "San Francisco", mockClient, nil)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -110,7 +117,7 @@ func TestGeocodePlaceWithClient_MinimalData(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "New York", mockClient)
+	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "New York", mockClient, nil)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -144,7 +151,7 @@ func TestGeocodePlaceWithClient_NoResults(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "NonexistentPlace", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "NonexistentPlace", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for no results, got nil")
@@ -161,7 +168,7 @@ func TestGeocodePlaceWithClient_HTTPError(t *testing.T) {
 		Response: createMockResponse(500, "Internal Server Error"),
 	}
 
-	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for HTTP 500, got nil")
@@ -179,7 +186,7 @@ func TestGeocodePlaceWithClient_NetworkError(t *testing.T) {
 		Error: networkErr,
 	}
 
-	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for network failure, got nil")
@@ -195,7 +202,7 @@ func TestGeocodePlaceWithClient_InvalidJSON(t *testing.T) {
 		Response: createMockResponse(200, "invalid json"),
 	}
 
-	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for invalid JSON, got nil")
@@ -226,7 +233,7 @@ func TestGeocodePlaceWithClient_InvalidCoordinates(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for invalid coordinates, got nil")
@@ -259,7 +266,7 @@ func TestGeocodePlaceWithClient_InvalidExtent(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient)
+	result, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "test", mockClient, nil)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -272,7 +279,7 @@ func TestGeocodePlaceWithClient_InvalidExtent(t *testing.T) {
 }
 
 func TestGeocodePlace_UnsupportedGeocoder(t *testing.T) {
-	_, err := GeocodePlace("unsupported", "test")
+	_, err := GeocodePlace("unsupported", "test", nil)
 
 	if err == nil {
 		t.Fatal("Expected error for unsupported geocoder, got nil")
@@ -286,7 +293,7 @@ func TestGeocodePlace_UnsupportedGeocoder(t *testing.T) {
 func TestGeocodePlaceWithClient_EmptyURL(t *testing.T) {
 	mockClient := &MockHTTPClient{}
 
-	_, err := GeocodePlaceWithClient("", "test", mockClient)
+	_, err := GeocodePlaceWithClient("", "test", mockClient, nil)
 
 	if err == nil {
 		t.Fatal("Expected error for empty URL, got nil")
@@ -319,7 +326,7 @@ func TestGeocodePlaceWithURL(t *testing.T) {
 
 	// We need to mock the http.DefaultClient, but since we can't easily do that,
 	// we'll test the URL construction logic by calling GeocodePlaceWithClient directly
-	result, err := GeocodePlaceWithClient("https://custom.geocoder.com/api?query=%s", "San Francisco", mockClient)
+	result, err := GeocodePlaceWithClient("https://custom.geocoder.com/api?query=%s", "San Francisco", mockClient, nil)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -354,7 +361,7 @@ func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
 		Response: createMockResponse(200, mockJSON),
 	}
 
-	result, err := GeocodePlaceWithClient("https://nominatim.openstreetmap.org/search?q=%s&format=geojson", "Paris", mockClient)
+	result, err := GeocodePlaceWithClient("https://nominatim.openstreetmap.org/search?q=%s&format=geojson", "Paris", mockClient, nil)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -385,5 +392,75 @@ func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
 		if *result.Extent != *expected {
 			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
 		}
+	}
+}
+
+type MockHTTPClientWithCapture struct {
+	Response        *http.Response
+	Error           error
+	CapturedRequest *http.Request
+}
+
+func (m *MockHTTPClientWithCapture) Get(url string) (*http.Response, error) {
+	if m.Error != nil {
+		return nil, m.Error
+	}
+	return m.Response, nil
+}
+
+func (m *MockHTTPClientWithCapture) Do(req *http.Request) (*http.Response, error) {
+	m.CapturedRequest = req
+	if m.Error != nil {
+		return nil, m.Error
+	}
+	return m.Response, nil
+}
+
+func TestGeocodePlaceWithClient_CustomHeaders(t *testing.T) {
+	mockJSON := `{
+		"features": [
+			{
+				"geometry": {
+					"type": "Point",
+					"coordinates": [-122.4194, 37.7749]
+				},
+				"properties": {
+					"name": "San Francisco"
+				}
+			}
+		]
+	}`
+
+	mockClient := &MockHTTPClientWithCapture{
+		Response: createMockResponse(200, mockJSON),
+	}
+
+	headers := []string{
+		"Authorization: Bearer token123",
+		"X-API-Key: secret-key",
+		"User-Agent: MyApp/1.0",
+	}
+
+	_, err := GeocodePlaceWithClient("https://test.com/api?q=%s", "San Francisco", mockClient, headers)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// Verify headers were set
+	if mockClient.CapturedRequest == nil {
+		t.Fatal("Expected request to be captured")
+	}
+
+	if auth := mockClient.CapturedRequest.Header.Get("Authorization"); auth != "Bearer token123" {
+		t.Errorf("Expected Authorization header 'Bearer token123', got '%s'", auth)
+	}
+
+	if apiKey := mockClient.CapturedRequest.Header.Get("X-API-Key"); apiKey != "secret-key" {
+		t.Errorf("Expected X-API-Key header 'secret-key', got '%s'", apiKey)
+	}
+
+	if userAgent := mockClient.CapturedRequest.Header.Get("User-Agent"); userAgent != "MyApp/1.0" {
+		t.Errorf("Expected User-Agent header 'MyApp/1.0', got '%s'", userAgent)
 	}
 }

@@ -28,6 +28,7 @@ type GeocodeResult struct {
 // HTTPClient interface allows for dependency injection and testing
 type HTTPClient interface {
 	Get(url string) (*http.Response, error)
+	Do(req *http.Request) (*http.Response, error)
 }
 
 type resultResponse struct {
@@ -45,7 +46,7 @@ type resultGeometry struct {
 	Coordinates []float64 `json:"coordinates"`
 }
 
-func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
+func GeocodePlace(geocoder Geocoder, query string, headers []string) (*GeocodeResult, error) {
 	var url string
 	switch geocoder {
 	case GeocoderPhotonDefault:
@@ -55,23 +56,39 @@ func GeocodePlace(geocoder Geocoder, query string) (*GeocodeResult, error) {
 	default:
 		return nil, fmt.Errorf("unsupported geocoder: %s", geocoder)
 	}
-	return GeocodePlaceWithClient(url, query, http.DefaultClient)
+	return GeocodePlaceWithClient(url, query, http.DefaultClient, headers)
 }
 
-func GeocodePlaceWithURL(customURL, query string) (*GeocodeResult, error) {
-	return GeocodePlaceWithClient(customURL, query, http.DefaultClient)
+func GeocodePlaceWithURL(customURL, query string, headers []string) (*GeocodeResult, error) {
+	return GeocodePlaceWithClient(customURL, query, http.DefaultClient, headers)
 }
 
 // GeocodePlaceWithClient allows dependency injection for testing
-func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient) (*GeocodeResult, error) {
+func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, headers []string) (*GeocodeResult, error) {
 	if geocoderURL == "" {
 		return nil, fmt.Errorf("geocoder URL is required")
 	}
 	
 	requestURL := fmt.Sprintf(geocoderURL, url.QueryEscape(query))
 
+	// Create HTTP request
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add custom headers
+	for _, header := range headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 2 {
+			name := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			req.Header.Set(name, value)
+		}
+	}
+
 	// Make the HTTP request
-	resp, err := client.Get(requestURL)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request geocoding: %w", err)
 	}
