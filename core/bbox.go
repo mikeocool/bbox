@@ -26,6 +26,10 @@ func (b Bbox) Validate() error {
 	return nil
 }
 
+func (b Bbox) Equals(other Bbox) bool {
+	return b.Left == other.Left && b.Bottom == other.Bottom && b.Right == other.Right && b.Top == other.Top
+}
+
 // Polygon returns the corner points of the bounding box as a closed polygon.
 // The points are returned in counter-clockwise order starting from the bottom-left corner,
 // with the first point repeated at the end to close the polygon.

@@ -1,0 +1,313 @@
+package input
+
+import (
+	"encoding/hex"
+	"math"
+	"testing"
+)
+
+func TestParseWKBBounds(t *testing.T) {
+	tests := []struct {
+		name     string
+		wkbHex   string
+		wantMinX float64
+		wantMinY float64
+		wantMaxX float64
+		wantMaxY float64
+		wantErr  bool
+	}{
+		{
+			name:     "Point",
+			wkbHex:   "0101000000000000000000F03F0000000000000040", // POINT(1 2)
+			wantMinX: 1.0,
+			wantMinY: 2.0,
+			wantMaxX: 1.0,
+			wantMaxY: 2.0,
+			wantErr:  false,
+		},
+		{
+			name:     "LineString",
+			wkbHex:   "010200000002000000000000000000F03F00000000000000400000000000000840000000000000F03F", // LINESTRING(1 2, 3 1)
+			wantMinX: 1.0,
+			wantMinY: 1.0,
+			wantMaxX: 3.0,
+			wantMaxY: 2.0,
+			wantErr:  false,
+		},
+		{
+			name:     "Polygon",
+			wkbHex:   "01030000000100000005000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000", // POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
+			wantMinX: 0.0,
+			wantMinY: 0.0,
+			wantMaxX: 1.0,
+			wantMaxY: 1.0,
+			wantErr:  false,
+		},
+		{
+			name:     "MultiPoint",
+			wkbHex:   "0104000000020000000101000000000000000000F03F000000000000004001010000000000000000000840000000000000104000", // MULTIPOINT((1 2), (3 4))
+			wantMinX: 1.0,
+			wantMinY: 2.0,
+			wantMaxX: 3.0,
+			wantMaxY: 4.0,
+			wantErr:  false,
+		},
+		{
+			name:     "Empty WKB",
+			wkbHex:   "",
+			wantMinX: 0,
+			wantMinY: 0,
+			wantMaxX: 0,
+			wantMaxY: 0,
+			wantErr:  true,
+		},
+		{
+			name:     "Too short WKB",
+			wkbHex:   "0101",
+			wantMinX: 0,
+			wantMinY: 0,
+			wantMaxX: 0,
+			wantMaxY: 0,
+			wantErr:  true,
+		},
+		{
+			name:     "Big endian Point",
+			wkbHex:   "00000000013FF00000000000004000000000000000", // POINT(1 2) in big endian
+			wantMinX: 1.0,
+			wantMinY: 2.0,
+			wantMaxX: 1.0,
+			wantMaxY: 2.0,
+			wantErr:  false,
+		},
+		{
+			name:     "Polygon with hole",
+			wkbHex:   "010300000002000000050000000000000000000000000000000000000000000000000000000000000000001440000000000000144000000000000014400000000000001440000000000000000000000000000000000000000000000000050000000000000000000040000000000000004000000000000000400000000000001040000000000000104000000000000010400000000000001040000000000000004000000000000000400000000000000040", // POLYGON with outer ring (0 0, 0 5, 5 5, 5 0, 0 0) and hole (2 2, 2 4, 4 4, 4 2, 2 2)
+			wantMinX: 0.0,
+			wantMinY: 0.0,
+			wantMaxX: 5.0,
+			wantMaxY: 5.0,
+			wantErr:  false,
+		},
+		{
+			name:     "Invalid geometry type",
+			wkbHex:   "01FF000000", // Invalid type 255
+			wantMinX: 0,
+			wantMinY: 0,
+			wantMaxX: 0,
+			wantMaxY: 0,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wkb, err := hex.DecodeString(tt.wkbHex)
+			if err != nil && !tt.wantErr {
+				t.Fatalf("Failed to decode test hex: %v", err)
+			}
+
+			minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseWKBBounds() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				const epsilon = 1e-10
+				if math.Abs(minX-tt.wantMinX) > epsilon {
+					t.Errorf("ParseWKBBounds() minX = %v, want %v", minX, tt.wantMinX)
+				}
+				if math.Abs(minY-tt.wantMinY) > epsilon {
+					t.Errorf("ParseWKBBounds() minY = %v, want %v", minY, tt.wantMinY)
+				}
+				if math.Abs(maxX-tt.wantMaxX) > epsilon {
+					t.Errorf("ParseWKBBounds() maxX = %v, want %v", maxX, tt.wantMaxX)
+				}
+				if math.Abs(maxY-tt.wantMaxY) > epsilon {
+					t.Errorf("ParseWKBBounds() maxY = %v, want %v", maxY, tt.wantMaxY)
+				}
+			}
+		})
+	}
+}
+
+func TestParseWKBBoundsMultiLineString(t *testing.T) {
+	// MULTILINESTRING((0 0, 1 1), (2 2, 3 3))
+	wkbHex := "01050000000200000001020000000200000000000000000000000000000000000000000000000000F03F000000000000F03F010200000002000000000000000000000040000000000000004000000000000008400000000000000840"
+	wkb, err := hex.DecodeString(wkbHex)
+	if err != nil {
+		t.Fatalf("Failed to decode hex: %v", err)
+	}
+
+	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	if err != nil {
+		t.Fatalf("ParseWKBBounds() unexpected error: %v", err)
+	}
+
+	const epsilon = 1e-10
+	if math.Abs(minX-0.0) > epsilon || math.Abs(minY-0.0) > epsilon ||
+		math.Abs(maxX-3.0) > epsilon || math.Abs(maxY-3.0) > epsilon {
+		t.Errorf("ParseWKBBounds() = (%v, %v, %v, %v), want (0, 0, 3, 3)",
+			minX, minY, maxX, maxY)
+	}
+}
+
+func TestParseWKBBoundsMultiPolygon(t *testing.T) {
+	// MULTIPOLYGON(((0 0, 0 1, 1 1, 1 0, 0 0)), ((2 2, 2 3, 3 3, 3 2, 2 2)))
+	wkbHex := "01060000000200000001030000000100000005000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000010300000001000000050000000000000000000040000000000000004000000000000000400000000000000840000000000000084000000000000008400000000000000840000000000000004000000000000000400000000000000040"
+	wkb, err := hex.DecodeString(wkbHex)
+	if err != nil {
+		t.Fatalf("Failed to decode hex: %v", err)
+	}
+
+	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	if err != nil {
+		t.Fatalf("ParseWKBBounds() unexpected error: %v", err)
+	}
+
+	const epsilon = 1e-10
+	if math.Abs(minX-0.0) > epsilon || math.Abs(minY-0.0) > epsilon ||
+		math.Abs(maxX-3.0) > epsilon || math.Abs(maxY-3.0) > epsilon {
+		t.Errorf("ParseWKBBounds() = (%v, %v, %v, %v), want (0, 0, 3, 3)",
+			minX, minY, maxX, maxY)
+	}
+}
+
+func TestParseWKBBoundsGeometryCollection(t *testing.T) {
+	// GEOMETRYCOLLECTION(POINT(1 1), LINESTRING(0 0, 2 2))
+	wkbHex := "01070000000200000001010000000000000000000F3F000000000000F03F0102000000020000000000000000000000000000000000000000000000000000400000000000000040"
+	wkb, err := hex.DecodeString(wkbHex)
+	if err != nil {
+		t.Fatalf("Failed to decode hex: %v", err)
+	}
+
+	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	if err != nil {
+		t.Fatalf("ParseWKBBounds() unexpected error: %v", err)
+	}
+
+	const epsilon = 1e-10
+	if math.Abs(minX-0.0) > epsilon || math.Abs(minY-0.0) > epsilon ||
+		math.Abs(maxX-2.0) > epsilon || math.Abs(maxY-2.0) > epsilon {
+		t.Errorf("ParseWKBBounds() = (%v, %v, %v, %v), want (0, 0, 2, 2)",
+			minX, minY, maxX, maxY)
+	}
+}
+
+func TestParseWKBBoundsWithSRID(t *testing.T) {
+	// Point with SRID flag set (geometry type will be 0x20000001)
+	wkbHex := "0101000020E6100000000000000000F03F0000000000000040" // SRID=4326, POINT(1 2)
+	wkb, err := hex.DecodeString(wkbHex)
+	if err != nil {
+		t.Fatalf("Failed to decode hex: %v", err)
+	}
+
+	// Manually skip the first 5 bytes (byte order + type with SRID flag) and SRID value (4 bytes)
+	// to test our parser handles SRID correctly
+	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	if err != nil {
+		t.Fatalf("ParseWKBBounds() unexpected error: %v", err)
+	}
+
+	const epsilon = 1e-10
+	if math.Abs(minX-1.0) > epsilon || math.Abs(minY-2.0) > epsilon ||
+		math.Abs(maxX-1.0) > epsilon || math.Abs(maxY-2.0) > epsilon {
+		t.Errorf("ParseWKBBounds() = (%v, %v, %v, %v), want (1, 2, 1, 2)",
+			minX, minY, maxX, maxY)
+	}
+}
+
+func TestParseHexWKB(t *testing.T) {
+	tests := []struct {
+		name    string
+		hexStr  string
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "Valid hex string",
+			hexStr:  "0101000000",
+			want:    []byte{0x01, 0x01, 0x00, 0x00, 0x00},
+			wantErr: false,
+		},
+		{
+			name:    "Empty string",
+			hexStr:  "",
+			want:    []byte{},
+			wantErr: false,
+		},
+		{
+			name:    "Uppercase hex",
+			hexStr:  "DEADBEEF",
+			want:    []byte{0xDE, 0xAD, 0xBE, 0xEF},
+			wantErr: false,
+		},
+		{
+			name:    "Mixed case hex",
+			hexStr:  "DeAdBeEf",
+			want:    []byte{0xDE, 0xAD, 0xBE, 0xEF},
+			wantErr: false,
+		},
+		{
+			name:    "Odd length hex string",
+			hexStr:  "01010",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid hex characters",
+			hexStr:  "01GH",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Invalid hex characters mixed",
+			hexStr:  "01XY23",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Non-hex string",
+			hexStr:  "hello",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Special characters",
+			hexStr:  "01@#",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Hex with spaces (invalid)",
+			hexStr:  "DE AD BE EF",
+			wantErr: true,
+		},
+		{
+			name:    "Hex with newlines (invalid)",
+			hexStr:  "DEAD\nBEEF",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseHexWKB(tt.hexStr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseHexWKB() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if len(got) != len(tt.want) {
+					t.Errorf("parseHexWKB() length = %v, want %v", len(got), len(tt.want))
+					return
+				}
+				for i := range got {
+					if got[i] != tt.want[i] {
+						t.Errorf("parseHexWKB()[%d] = %v, want %v", i, got[i], tt.want[i])
+					}
+				}
+			}
+		})
+	}
+}

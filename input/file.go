@@ -21,6 +21,8 @@ func LoadFile(filename string) (core.Bbox, error) {
 		return LoadShapefile(filename)
 	case ".geojson", ".json":
 		return LoadGeojsonFile(filename)
+	case ".parquet":
+		return LoadGeoparquetFile(filename)
 	default:
 		return ParseFileData(filename)
 	}
@@ -69,6 +71,11 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 		} else {
 			fmt.Printf("Error parsing shapefile: %s", err)
 		}
+	}
+
+	// Note: GeoParquet files require random access and cannot be read from a stream
+	if SniffGeoparquet(detectionBuf) {
+		return core.Bbox{}, fmt.Errorf("GeoParquet files must be read from disk, not from stdin or streams")
 	}
 
 	return core.Bbox{}, ErrUnrecognizedDataFormat
