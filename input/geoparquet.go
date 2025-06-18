@@ -1,17 +1,14 @@
 package input
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
+	"strings"
 
-	"github.com/apache/arrow/go/v15/arrow"
-	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/memory"
-	"github.com/apache/arrow/go/v15/parquet/file"
-	"github.com/apache/arrow/go/v15/parquet/pqarrow"
 	"github.com/mikeocool/bbox/core"
+	"github.com/parquet-go/parquet-go"
 )
 
 const (
@@ -46,229 +43,215 @@ func SniffGeoparquet(data []byte) bool {
 
 // LoadGeoparquetFile loads a GeoParquet file and returns its bounding box
 func LoadGeoparquetFile(filename string) (core.Bbox, error) {
-	// Open parquet file
-	reader, err := file.OpenParquetFile(filename, false)
+	if filename == "" {
+		return core.Bbox{}, fmt.Errorf("empty filename")
+	}
+
+	// Check if file exists and is not a directory
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to access file: %w", err)
+	}
+	if fileInfo.IsDir() {
+		return core.Bbox{}, fmt.Errorf("path is a directory, not a file")
+	}
+
+	// Open the parquet file
+	f, err := os.Open(filename)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	file, err := parquet.OpenFile(f, fileInfo.Size())
 	if err != nil {
 		return core.Bbox{}, fmt.Errorf("failed to open parquet file: %w", err)
 	}
-	defer reader.Close()
 
-	// Find geometry column from metadata
-	geomColumn, err := findGeometryColumn(reader)
-	if err != nil {
-		return core.Bbox{}, err
-	}
+	// Try to find geometry column name
+	geoColumn, encoding := findGeoColumn(file)
 
-	// Read file in chunks and accumulate bounds
-	return readGeoparquetChunked(reader, geomColumn)
-}
-
-// findGeometryColumn reads the GeoParquet metadata to find the geometry column
-func findGeometryColumn(reader *file.Reader) (string, error) {
-	// Get file metadata
-	metadata := reader.MetaData()
-	if metadata == nil {
-		return "", fmt.Errorf("no metadata found in parquet file")
-	}
-
-	// Look for geo metadata in key-value pairs
-	keyValueMeta := metadata.KeyValueMetadata()
-	if keyValueMeta == nil {
-		return "", fmt.Errorf("no key-value metadata found")
-	}
-
-	// Find the "geo" key
-	geoJSON := ""
-	keys := keyValueMeta.Keys()
-	values := keyValueMeta.Values()
-	for i := range len(keys) {
-		if keys[i] == "geo" {
-			geoJSON = values[i]
-			break
+	// If no metadata found, look for common geo column names
+	if geoColumn == "" {
+		geoColumn = findCommonGeoColumn(file.Schema())
+		if geoColumn != "" {
+			encoding = "wkb" // Default assumption for binary columns
 		}
 	}
 
-	if geoJSON == "" {
-		return "", fmt.Errorf("no 'geo' metadata found - this may not be a GeoParquet file")
+	if geoColumn == "" {
+		return core.Bbox{}, fmt.Errorf("no geometry column found in parquet file")
 	}
 
-	// Parse the geo metadata
-	var geoMeta GeoParquetMetadata
-	if err := json.Unmarshal([]byte(geoJSON), &geoMeta); err != nil {
-		return "", fmt.Errorf("failed to parse geo metadata: %w", err)
-	}
-
-	// Use primary column if specified
-	if geoMeta.PrimaryColumn != "" {
-		return geoMeta.PrimaryColumn, nil
-	}
-
-	// Otherwise, use the first geometry column
-	for colName := range geoMeta.Columns {
-		return colName, nil
-	}
-
-	// TODO fallback to looking for binary colums with common geonames
-
-	return "", fmt.Errorf("no geometry column found in geo metadata")
+	// Read geometry data and calculate bounds
+	return calculateBoundsFromParquet(file, geoColumn, encoding)
 }
 
-// readGeoparquetChunked reads the parquet file in chunks to handle large files
-func readGeoparquetChunked(reader *file.Reader, geomColumn string) (core.Bbox, error) {
-	minX, minY := math.Inf(1), math.Inf(1)
-	maxX, maxY := math.Inf(-1), math.Inf(-1)
-	hasValidGeometry := false
-
-	// Create arrow file reader
-	pool := memory.NewGoAllocator()
-	arrowReader, err := pqarrow.NewFileReader(reader, pqarrow.ArrowReadProperties{}, pool)
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to create arrow reader: %w", err)
+// findGeoColumn looks for GeoParquet metadata and returns the primary geometry column
+func findGeoColumn(file *parquet.File) (column string, encoding string) {
+	// Check file metadata for geo metadata
+	metadata := file.Metadata()
+	if metadata == nil || metadata.KeyValueMetadata == nil {
+		return "", ""
 	}
 
-	// Get schema to find column index
-	schema, err := arrowReader.Schema()
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to get schema: %w", err)
-	}
-
-	// Find geometry column index
-	geomColIndex := -1
-	for i, field := range schema.Fields() {
-		if field.Name == geomColumn {
-			geomColIndex = i
-			break
-		}
-	}
-
-	if geomColIndex == -1 {
-		return core.Bbox{}, fmt.Errorf("geometry column '%s' not found in schema", geomColumn)
-	}
-
-	// Process each row group
-	numRowGroups := reader.NumRowGroups()
-	for rgIdx := range numRowGroups {
-		// Read row group
-		rgReader := arrowReader.RowGroup(rgIdx)
-
-		// Read the geometry column for this row group
-		colReader := rgReader.Column(geomColIndex)
-		chunkedCol, err := colReader.Read(context.Background())
-		if err != nil {
+	for _, kv := range metadata.KeyValueMetadata {
+		if kv.Key == "" || kv.Value == "" {
 			continue
 		}
-		defer chunkedCol.Release()
 
-		// Process the chunked column
-		if chunkedCol.Len() > 0 {
-			if err := processBinaryColumn(chunkedCol, &minX, &minY, &maxX, &maxY, &hasValidGeometry); err != nil {
-				// Log error but continue processing
-				fmt.Printf("Warning: error processing chunk: %v\n", err)
+		// Look for "geo" key in metadata
+		if kv.Key == "geo" {
+			var geoMeta GeoParquetMetadata
+			if err := json.Unmarshal([]byte(kv.Value), &geoMeta); err == nil {
+				// Return primary column if specified
+				if geoMeta.PrimaryColumn != "" {
+					if col, exists := geoMeta.Columns[geoMeta.PrimaryColumn]; exists {
+						return geoMeta.PrimaryColumn, col.Encoding
+					}
+				}
+				// Otherwise return first geometry column found
+				for name, col := range geoMeta.Columns {
+					return name, col.Encoding
+				}
 			}
 		}
 	}
 
-	if !hasValidGeometry {
-		return core.Bbox{}, fmt.Errorf("no valid geometries found")
-	}
-
-	return core.Bbox{
-		Left:   minX,
-		Bottom: minY,
-		Right:  maxX,
-		Top:    maxY,
-	}, nil
+	return "", ""
 }
 
-// processBinaryColumn processes a binary column containing WKB geometries
-func processBinaryColumn(col *arrow.Chunked, minX, minY, maxX, maxY *float64, hasValidGeometry *bool) error {
-	for chunkIdx := range col.Len() {
-		chunk := col.Chunk(chunkIdx)
+// findCommonGeoColumn searches for columns with common geometry names
+func findCommonGeoColumn(schema *parquet.Schema) string {
+	commonNames := []string{
+		"geometry", "geom", "wkb_geometry", "shape", "the_geom", "geom_wkb",
+		"GEOMETRY", "GEOM", "WKB_GEOMETRY", "SHAPE", "THE_GEOM", "GEOM_WKB",
+	}
 
-		// Handle different binary array types
-		switch arr := chunk.(type) {
-		case *array.Binary:
-			processBinaryArray(arr, minX, minY, maxX, maxY, hasValidGeometry)
-		case *array.LargeBinary:
-			processLargeBinaryArray(arr, minX, minY, maxX, maxY, hasValidGeometry)
-		case *array.String:
-			// Sometimes geometry might be stored as string-encoded WKB
-			processStringArray(arr, minX, minY, maxX, maxY, hasValidGeometry)
-		default:
-			return fmt.Errorf("unsupported array type for geometry column: %T", arr)
+	// Get all column names from schema
+	for _, field := range schema.Fields() {
+		fieldName := field.Name()
+		for _, commonName := range commonNames {
+			if strings.EqualFold(fieldName, commonName) {
+				return fieldName
+			}
+		}
+	}
+
+	return ""
+}
+
+// calculateBoundsFromParquet reads the geometry column and calculates overall bounds
+func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding string) (core.Bbox, error) {
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+
+	rowGroups := file.RowGroups()
+	geometryFound := false
+
+	// Process each row group
+	for _, rg := range rowGroups {
+		// Find the column chunk for our geometry column
+		columnChunk := findColumnChunk(rg, geoColumn)
+		if columnChunk == nil {
+			continue
+		}
+
+		// Read pages from the column chunk
+		pages := columnChunk.Pages()
+		defer pages.Close()
+
+		// Create a buffer for reading values
+		values := make([]parquet.Value, defaultChunkSize)
+
+		for {
+			page, err := pages.ReadPage()
+
+			if err != nil && err.Error() != "EOF" {
+				return core.Bbox{}, fmt.Errorf("error reading values: %w", err)
+			}
+
+			if page == nil {
+				break
+			}
+
+			vr := page.Values()
+			n, err := vr.ReadValues(values)
+			if n == 0 {
+				break
+			}
+
+			// Process each value
+			for i := range n {
+				if values[i].IsNull() {
+					continue
+				}
+
+				var wkbData []byte
+
+				// Handle different data types
+				// parquet.Value stores binary/string data as ByteArray
+				bytes := values[i].ByteArray()
+				if bytes == nil {
+					continue
+				}
+
+				// First try to parse as hex-encoded WKB (common for string columns)
+				parsed, err := ParseHexWKB(string(bytes))
+				if err == nil {
+					wkbData = parsed
+				} else {
+					// If not hex, use as raw WKB bytes
+					wkbData = bytes
+				}
+
+				if len(wkbData) == 0 {
+					continue
+				}
+
+				// Parse WKB bounds
+				geomMinX, geomMinY, geomMaxX, geomMaxY, err := ParseWKBBounds(wkbData)
+				if err != nil {
+					// Skip invalid geometries
+					continue
+				}
+
+				geometryFound = true
+
+				// Update overall bounds
+				if geomMinX < minX {
+					minX = geomMinX
+				}
+				if geomMinY < minY {
+					minY = geomMinY
+				}
+				if geomMaxX > maxX {
+					maxX = geomMaxX
+				}
+				if geomMaxY > maxY {
+					maxY = geomMaxY
+				}
+			}
+		}
+	}
+
+	if !geometryFound {
+		return core.Bbox{}, fmt.Errorf("no valid geometries found in column %s", geoColumn)
+	}
+
+	// Create and return the bounding box
+	bbox := core.Bbox{Left: minX, Bottom: minY, Right: maxX, Top: maxY}
+
+	return bbox, nil
+}
+
+// findColumnChunk finds the column chunk for a given column name
+func findColumnChunk(rg parquet.RowGroup, columnName string) parquet.ColumnChunk {
+	schema := rg.Schema()
+	for i, field := range schema.Fields() {
+		if field.Name() == columnName {
+			return rg.ColumnChunks()[i]
 		}
 	}
 	return nil
-}
-
-func processBinaryArray(arr *array.Binary, minX, minY, maxX, maxY *float64, hasValidGeometry *bool) {
-	for i := 0; i < arr.Len(); i++ {
-		if arr.IsNull(i) {
-			continue
-		}
-
-		wkb := arr.Value(i)
-		x1, y1, x2, y2, err := ParseWKBBounds(wkb)
-		if err != nil {
-			continue
-		}
-
-		updateParquetBounds(minX, minY, maxX, maxY, x1, y1, x2, y2)
-		*hasValidGeometry = true
-	}
-}
-
-func processLargeBinaryArray(arr *array.LargeBinary, minX, minY, maxX, maxY *float64, hasValidGeometry *bool) {
-	for i := 0; i < arr.Len(); i++ {
-		if arr.IsNull(i) {
-			continue
-		}
-
-		wkb := arr.Value(i)
-		x1, y1, x2, y2, err := ParseWKBBounds(wkb)
-		if err != nil {
-			continue
-		}
-
-		updateParquetBounds(minX, minY, maxX, maxY, x1, y1, x2, y2)
-		*hasValidGeometry = true
-	}
-}
-
-func processStringArray(arr *array.String, minX, minY, maxX, maxY *float64, hasValidGeometry *bool) {
-	for i := 0; i < arr.Len(); i++ {
-		if arr.IsNull(i) {
-			continue
-		}
-
-		// Try to parse as hex-encoded WKB
-		hexStr := arr.Value(i)
-		wkb, err := ParseHexWKB(hexStr)
-		if err != nil {
-			continue
-		}
-
-		x1, y1, x2, y2, err := ParseWKBBounds(wkb)
-		if err != nil {
-			continue
-		}
-
-		updateParquetBounds(minX, minY, maxX, maxY, x1, y1, x2, y2)
-		*hasValidGeometry = true
-	}
-}
-
-func updateParquetBounds(minX, minY, maxX, maxY *float64, x1, y1, x2, y2 float64) {
-	if x1 < *minX {
-		*minX = x1
-	}
-	if y1 < *minY {
-		*minY = y1
-	}
-	if x2 > *maxX {
-		*maxX = x2
-	}
-	if y2 > *maxY {
-		*maxY = y2
-	}
 }
