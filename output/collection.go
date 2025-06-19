@@ -14,11 +14,11 @@ func TemplatedFormatCollection(settings OutputSettings, boxes []core.Bbox) (stri
 
 // JoinedFormatCollection formats a collection of bboxes using the provided formatter function
 // and joins the results with newlines
-func JoinedFormatCollection(formatter func(OutputSettings, core.Bbox) (string, error), boxes []core.Bbox) (string, error) {
+func JoinedFormatCollection(formatter func(OutputSettings, core.Bbox) (string, error), boxes []core.Bbox, settings OutputSettings) (string, error) {
 	out := make([]string, len(boxes))
 	for i, box := range boxes {
 		// TODO pass through settings?
-		val, err := formatter(OutputSettings{}, box)
+		val, err := formatter(settings, box)
 		if err != nil {
 			return "", err
 		}
@@ -28,18 +28,18 @@ func JoinedFormatCollection(formatter func(OutputSettings, core.Bbox) (string, e
 }
 
 // SpaceFormatCollection formats a collection of bboxes as space-separated coordinates.
-func SpaceFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
-	return JoinedFormatCollection(SpaceFormat, boxes)
+func SpaceFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return JoinedFormatCollection(SpaceFormat, boxes, settings)
 }
 
 // CommaFormatCollection formats a collection of bboxes as comma-separated coordinates.
-func CommaFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
-	return JoinedFormatCollection(CommaFormat, boxes)
+func CommaFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return JoinedFormatCollection(CommaFormat, boxes, settings)
 }
 
 // TabFormatCollection formats a collection of bboxes as tab-separated coordinates.
-func TabFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
-	return JoinedFormatCollection(TabFormat, boxes)
+func TabFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return JoinedFormatCollection(TabFormat, boxes, settings)
 }
 
 // GeojsonFormatCollection formats a collection of bboxes as a GeoJSON FeatureCollection or GeometryCollection.
@@ -59,7 +59,7 @@ func GeojsonlFormatCollection(settings OutputSettings, boxes []core.Bbox) (strin
 		return "", fmt.Errorf("GeoJSONL format does not support indentation")
 	}
 
-	return JoinedFormatCollection(GeojsonFormat, boxes)
+	return JoinedFormatCollection(GeojsonFormat, boxes, settings)
 }
 
 // WktFormatCollection formats a collection of bboxes as a WKT GEOMETRYCOLLECTION.

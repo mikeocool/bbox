@@ -330,6 +330,20 @@ func TestGeojsonlFormatCollection(t *testing.T) {
 			expected:    "",
 			expectError: true,
 		},
+		{
+			name:        "Multiple bboxes - coordinates type",
+			settings:    OutputSettings{GeojsonIndent: 0, GeojsonType: "coordinates"},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}, {Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0}},
+			expected:    "[[[1,2],[3,2],[3,4],[1,4],[1,2]]]\n[[[5,6],[7,6],[7,8],[5,8],[5,6]]]",
+			expectError: false,
+		},
+		{
+			name:        "Multiple bboxes - feature type",
+			settings:    OutputSettings{GeojsonIndent: 0, GeojsonType: "feature"},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}, {Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0}},
+			expected:    "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}}\n{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[5,6],[7,6],[7,8],[5,8],[5,6]]]}}",
+			expectError: false,
+		},
 	}
 
 	for _, tc := range tests {

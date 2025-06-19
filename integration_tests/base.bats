@@ -109,3 +109,9 @@ setup() {
     assert_output "10 17 20 20"
     assert_success
 }
+
+@test "slice union geojsonl" {
+    run /bin/bash -c "./bbox slice 10 17 20 20 --columns 5 --rows 6 --output geojsonl | ./bbox"
+    assert_output "10 17 20 20"
+    assert_success
+}
