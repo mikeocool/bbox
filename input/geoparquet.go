@@ -14,7 +14,6 @@ import (
 const (
 	defaultChunkSize   = 10000
 	parquetMagicHeader = "PAR1"
-	parquetMagicFooter = "PAR1"
 )
 
 // GeoParquetMetadata represents the geo metadata stored in the parquet file

@@ -84,6 +84,12 @@ func TestLoadGeoparquetFile(t *testing.T) {
 			expected: core.Bbox{Left: 5, Bottom: 5, Right: 45, Top: 45},
 			wantErr:  false,
 		},
+		{
+			name:     "Valid multipolygon file",
+			filename: "../integration_tests/data/geo_without_metadata.parquet",
+			expected: core.Bbox{Left: -119.37513560589187, Bottom: 26.571757187953462, Right: -80.3729072788281, Top: 45.43181870015789},
+			wantErr:  false,
+		},
 		// {
 		// 	name:     "Valid point file",
 		// 	filename: "../integration_tests/data/point-encoding_native.parquet",
