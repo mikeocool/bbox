@@ -10,8 +10,8 @@ import (
 
 	"github.com/mikeocool/bbox/core"
 	"github.com/paulmach/osm"
-	"github.com/paulmach/osm/osmxml"
 	"github.com/paulmach/osm/osmpbf"
+	"github.com/paulmach/osm/osmxml"
 )
 
 // SniffOSM checks if the data looks like an OSM XML file
@@ -25,22 +25,8 @@ func SniffOSM(data []byte) bool {
 	return strings.Contains(dataStr, "<?xml") && strings.Contains(dataStr, "<osm")
 }
 
-
 // LoadOSMFile loads an OSM file (XML or PBF) and returns its bounding box
 func LoadOSMFile(filename string) (core.Bbox, error) {
-	if filename == "" {
-		return core.Bbox{}, fmt.Errorf("empty filename")
-	}
-
-	// Check if file exists and is not a directory
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to access file: %w", err)
-	}
-	if fileInfo.IsDir() {
-		return core.Bbox{}, fmt.Errorf("path is a directory, not a file")
-	}
-
 	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
@@ -49,12 +35,7 @@ func LoadOSMFile(filename string) (core.Bbox, error) {
 	defer file.Close()
 
 	// Create OSM scanner based on file extension
-	var scanner interface {
-		Scan() bool
-		Object() osm.Object
-		Err() error
-		Close() error
-	}
+	var scanner osm.Scanner
 
 	ext := strings.ToLower(filepath.Ext(filename))
 	if ext == ".pbf" {
