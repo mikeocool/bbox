@@ -523,3 +523,31 @@ func TestParseDataComplexGeoJSON(t *testing.T) {
 		}
 	})
 }
+
+func TestParseData_OSMXml(t *testing.T) {
+	// Test that ParseData can now handle OSM XML via SniffOsmXml detection
+	osmContent := `<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="test">
+  <node id="1" lat="50.0" lon="8.0"/>
+  <node id="2" lat="52.0" lon="10.0"/>
+  <node id="3" lat="51.0" lon="9.0"/>
+</osm>`
+
+	reader := strings.NewReader(osmContent)
+	expected := core.Bbox{
+		Left:   8.0,  // min longitude
+		Bottom: 50.0, // min latitude
+		Right:  10.0, // max longitude
+		Top:    52.0, // max latitude
+	}
+
+	box, err := ParseData(reader)
+	if err != nil {
+		t.Errorf("ParseData() unexpected error with OSM XML: %v", err)
+		return
+	}
+
+	if !box.Equals(expected) {
+		t.Errorf("ParseData() with OSM XML = %v, want %v", box, expected)
+	}
+}

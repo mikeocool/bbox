@@ -15,8 +15,8 @@ import (
 	"github.com/paulmach/osm/osmxml"
 )
 
-// SniffOSM checks if the data looks like an OSM XML file
-func SniffOSM(data []byte) bool {
+// SniffOsmXml checks if the data looks like an OSM XML file
+func SniffOsmXml(data []byte) bool {
 	if len(data) < 10 {
 		return false
 	}

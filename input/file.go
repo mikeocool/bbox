@@ -66,8 +66,8 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 		}
 	}
 
-	if SniffOSM(detectionBuf) {
-		return core.Bbox{}, fmt.Errorf("OSM files must be read from disk, not from stdin or streams")
+	if SniffOsmXml(detectionBuf) {
+		return ParseOsmXML(fullReader)
 	}
 
 	if SniffShapefile(detectionBuf) {

@@ -9,7 +9,7 @@ import (
 	"github.com/mikeocool/bbox/core"
 )
 
-func TestSniffOSM(t *testing.T) {
+func TestSniffOsmXml(t *testing.T) {
 	tests := []struct {
 		name string
 		data []byte
@@ -72,9 +72,9 @@ func TestSniffOSM(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := SniffOSM(tt.data)
+			got := SniffOsmXml(tt.data)
 			if got != tt.want {
-				t.Errorf("SniffOSM() = %v, want %v", got, tt.want)
+				t.Errorf("SniffOsmXml() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -321,7 +321,7 @@ func TestLoadOSMFile_PrecisionTest(t *testing.T) {
 	}
 }
 
-func TestSniffOSM_RealPBFFile(t *testing.T) {
+func TestSniffOsmXml_RealPBFFile(t *testing.T) {
 	// Test with real Monaco PBF file
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
 
@@ -338,10 +338,9 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 		t.Fatalf("Failed to read PBF file header: %v", err)
 	}
 
-	// Note: SniffOSM() is designed for XML detection, so it should return false for PBF
-	// TOOD THIS IS WRONG
-	if SniffOSM(header[:n]) {
-		t.Error("SniffOSM() should return false for PBF files (it's XML-specific)")
+	// Note: SniffOsmXml() is designed for XML detection, so it should return false for PBF
+	if SniffOsmXml(header[:n]) {
+		t.Error("SniffOsmXml() should return false for PBF files (it's XML-specific)")
 	}
 }
 
@@ -367,7 +366,7 @@ func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 	}
 }
 
-func TestSniffOSM_RealXMLFile(t *testing.T) {
+func TestSniffOsmXml_RealXMLFile(t *testing.T) {
 	// Test with real Munich OSM XML file
 	xmlFile := "../integration_tests/data/map.osm"
 
@@ -385,8 +384,8 @@ func TestSniffOSM_RealXMLFile(t *testing.T) {
 	}
 
 	// Test content-based sniffing
-	if !SniffOSM(header[:n]) {
-		t.Error("SniffOSM() should detect OSM XML files")
+	if !SniffOsmXml(header[:n]) {
+		t.Error("SniffOsmXml() should detect OSM XML files")
 	}
 
 }
