@@ -6,15 +6,20 @@ toolchain go1.23.8
 
 require (
 	github.com/parquet-go/parquet-go v0.25.1
+	github.com/paulmach/osm v0.8.0
 	github.com/spf13/cobra v1.9.1
 )
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/datadog/czlib v0.0.0-20160811164712-4bc9a24e37f2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/paulmach/orb v0.1.3 // indirect
+	github.com/paulmach/protoscan v0.2.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	golang.org/x/sys v0.21.0 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 )

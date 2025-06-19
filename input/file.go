@@ -23,6 +23,8 @@ func LoadFile(filename string) (core.Bbox, error) {
 		return LoadGeojsonFile(filename)
 	case ".parquet":
 		return LoadGeoparquetFile(filename)
+	case ".osm", ".pbf":
+		return LoadOSMFile(filename)
 	default:
 		return ParseFileData(filename)
 	}
@@ -62,6 +64,10 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 			// sucessfully parsed geojson but found not features
 			return core.Bbox{}, err
 		}
+	}
+
+	if SniffOSM(detectionBuf) {
+		return core.Bbox{}, fmt.Errorf("OSM files must be read from disk, not from stdin or streams")
 	}
 
 	if SniffShapefile(detectionBuf) {
