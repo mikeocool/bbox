@@ -367,6 +367,50 @@ func TestGeojsonFormatPointStructure(t *testing.T) {
 	})
 }
 
+func TestGeojsonlFormatPoint(t *testing.T) {
+	tests := []struct {
+		name        string
+		point       [2]float64
+		settings    OutputSettings
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Mixed sign coordinates",
+			point:       [2]float64{-10.5, 20.25},
+			settings:    OutputSettings{},
+			expected:    `{"type":"Point","coordinates":[-10.5,20.25]}`,
+			expectError: false,
+		},
+		{
+			name:        "Mixed sign coordinates",
+			point:       [2]float64{-10.5, 20.25},
+			settings:    OutputSettings{GeojsonIndent: 4},
+			expected:    `{"type":"Point","coordinates":[-10.5,20.25]}`,
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := GeojsonlFormatPoint(tc.settings, tc.point)
+
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+				return
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if !tc.expectError && out != tc.expected {
+				t.Errorf("Unexpected output: %q, expected %q", out, tc.expected)
+			}
+		})
+	}
+}
+
 func TestGetPointFormatter(t *testing.T) {
 	tests := []struct {
 		name       string

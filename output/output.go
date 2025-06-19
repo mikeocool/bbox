@@ -50,6 +50,7 @@ const (
 	FormatSpace      = "space"
 	FormatTab        = "tab"
 	FormatGeoJson    = "geojson"
+	FormatGeoJsonl   = "geojsonl"
 	FormatWkt        = "wkt"
 	FormatWkbhex     = "wkbhex"
 	FormatDublinCore = "dcsv"

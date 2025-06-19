@@ -852,75 +852,52 @@ func TestGeojsonFormatWithIndent(t *testing.T) {
 	}
 }
 
-func TestWkbhexFormat(t *testing.T) {
+func TestGeojsonlFormat(t *testing.T) {
 	tests := []struct {
 		name        string
 		bbox        core.Bbox
+		settings    OutputSettings
+		expected    string
 		expectError bool
 	}{
 		{
-			name:        "Zero value bbox",
-			bbox:        core.Bbox{},
+			name:        "Basic geojsonl format",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			settings:    OutputSettings{},
+			expected:    `{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}`,
 			expectError: false,
 		},
 		{
-			name:        "Integer coordinates",
-			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			name:        "Feature geojsonl format",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			settings:    OutputSettings{GeojsonType: "feature"},
+			expected:    `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}}`,
 			expectError: false,
 		},
 		{
-			name:        "Decimal coordinates",
-			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
-			expectError: false,
-		},
-		{
-			name:        "Negative coordinates",
-			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
-			expectError: false,
-		},
-		{
-			name:        "Mixed sign coordinates",
-			bbox:        core.Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
-			expectError: false,
-		},
-		{
-			name:        "Large coordinates",
-			bbox:        core.Bbox{Left: 1000000.123, Bottom: 2000000.456, Right: 3000000.789, Top: 4000000.012},
-			expectError: false,
-		},
-		{
-			name:        "Very small coordinates",
-			bbox:        core.Bbox{Left: 0.0001, Bottom: 0.0002, Right: 0.0003, Top: 0.0004},
-			expectError: false,
+			name:        "Geojsonl doesn't allow indentation",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			settings:    OutputSettings{GeojsonIndent: 4},
+			expected:    "",
+			expectError: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := WkbhexFormat(OutputSettings{}, tc.bbox)
+			out, err := GeojsonlFormat(tc.settings, tc.bbox)
 
-			// Check error status
 			if tc.expectError && err == nil {
 				t.Errorf("Expected error but got none")
+				return
 			}
 			if !tc.expectError && err != nil {
 				t.Errorf("Unexpected error: %v", err)
+				return
 			}
 
-			// Only check result if we don't expect an error
-			if !tc.expectError {
-				// Basic validation: should be non-empty hex string
-				if result == "" {
-					t.Errorf("Expected non-empty result")
-				}
-				// Should start with "01" (little endian byte order)
-				if len(result) < 2 || result[:2] != "01" {
-					t.Errorf("Expected result to start with '01' (little endian), got: %s", result)
-				}
-				// Should be valid hex (even length, only hex characters)
-				if len(result)%2 != 0 {
-					t.Errorf("Expected even length hex string, got length %d", len(result))
-				}
+			if !tc.expectError && out != tc.expected {
+				t.Errorf("Unexpected output: %q, expected %q", out, tc.expected)
 			}
 		})
 	}

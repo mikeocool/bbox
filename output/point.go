@@ -56,6 +56,14 @@ func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, err
 	return geojson.Format(geom, geojsonType, settings.GeojsonIndent)
 }
 
+func GeojsonlFormatPoint(settings OutputSettings, coords [2]float64) (string, error) {
+	if settings.GeojsonIndent != 0 {
+		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+	}
+
+	return GeojsonFormatPoint(settings, coords)
+}
+
 // pointOutputFormatters maps format type constants to their corresponding format functions
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
 	FormatGoTpl:   TemplatedFormatPoint,

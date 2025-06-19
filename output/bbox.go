@@ -53,6 +53,14 @@ func GeojsonFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 	return geojson.Format(geom, geojsonType, settings.GeojsonIndent)
 }
 
+func GeojsonlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
+	if settings.GeojsonIndent != 0 {
+		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+	}
+
+	return GeojsonFormat(settings, bbox)
+}
+
 // WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.
 // The returned string will be in the format "POLYGON((x1 y1, x2 y2, x3 y3, x4 y4, x1 y1))".
 func WktFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
@@ -135,6 +143,7 @@ var bboxOutputFormatters = map[string]func(OutputSettings, core.Bbox) (string, e
 	FormatSpace:      SpaceFormat,
 	FormatTab:        TabFormat,
 	FormatGeoJson:    GeojsonFormat,
+	FormatGeoJsonl:   GeojsonlFormat,
 	FormatWkt:        WktFormat,
 	FormatWkbhex:     WkbhexFormat,
 	FormatDublinCore: DublinCoreFormat,
