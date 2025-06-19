@@ -15,10 +15,10 @@ type Bbox struct {
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
 func (b Bbox) Validate() error {
-	if b.Right <= b.Left {
+	if b.Right < b.Left {
 		return fmt.Errorf("invalid bbox: Right (%f) must be greater than Left (%f)", b.Right, b.Left)
 	}
-	if b.Top <= b.Bottom {
+	if b.Top < b.Bottom {
 		return fmt.Errorf("invalid bbox: Top (%f) must be greater than Bottom (%f)", b.Top, b.Bottom)
 	}
 
@@ -82,6 +82,16 @@ func (b Bbox) Union(other Bbox) Bbox {
 		Bottom: math.Min(b.Bottom, other.Bottom),
 		Right:  math.Max(b.Right, other.Right),
 		Top:    math.Max(b.Top, other.Top),
+	}
+}
+
+// extend the bbox to include the given point
+func (b Bbox) Extend(x, y float64) Bbox {
+	return Bbox{
+		Left:   math.Min(b.Left, x),
+		Bottom: math.Min(b.Bottom, y),
+		Right:  math.Max(b.Right, x),
+		Top:    math.Max(b.Top, y),
 	}
 }
 

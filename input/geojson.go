@@ -58,6 +58,39 @@ func SniffGeojson(data []byte) bool {
 	return true
 }
 
+func ParseGeojson(r io.Reader) (core.Bbox, error) {
+	decoder := json.NewDecoder(r)
+	bbox := core.Bbox{
+		Left:   math.Inf(1),
+		Bottom: math.Inf(1),
+		Right:  math.Inf(-1),
+		Top:    math.Inf(-1),
+	}
+
+	for {
+		var raw json.RawMessage
+		err := decoder.Decode(&raw)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return core.Bbox{}, err
+		}
+
+		dbbox, err := GeojsonDocBbox(raw)
+		if err != nil {
+			return core.Bbox{}, err
+		}
+		bbox = bbox.Union(dbbox)
+	}
+
+	if bbox.Validate() != nil {
+		return core.Bbox{}, errors.New("no geojson found")
+	}
+
+	return bbox, nil
+}
+
 // ParseGeojson parses various GeoJSON formats and returns the bounding box of all features.
 // Supported formats:
 // - FeatureCollection containing one or more features
@@ -66,13 +99,17 @@ func SniffGeojson(data []byte) bool {
 // - Single Polygon
 // - 3D coordinate array (polygon with rings): [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
-func ParseGeojson(r io.Reader) (core.Bbox, error) {
-	var bbox core.Bbox
+// func ParseGeojson(r io.Reader) (core.Bbox, error) {
+// 	input, err := io.ReadAll(r)
+// 	if err != nil {
+// 		return core.Bbox{}, fmt.Errorf("failed to read GeoJSON data: %w", err)
+// 	}
 
-	input, err := io.ReadAll(r)
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to read GeoJSON data: %w", err)
-	}
+// 	return GeojsonDocBbox(input)
+// }
+
+func GeojsonDocBbox(input []byte) (core.Bbox, error) {
+	var bbox core.Bbox
 
 	// Try parsing as FeatureCollection
 	var featureCollection geojson.FeatureCollection
@@ -281,11 +318,11 @@ func parseRaw3DCoordinates(input []byte) ([][][2]float64, error) {
 	if err := json.Unmarshal(input, &rawCoords); err != nil {
 		return nil, err
 	}
-	
+
 	if len(rawCoords) == 0 {
 		return nil, fmt.Errorf("empty coordinate array")
 	}
-	
+
 	// Validate that each coordinate has at least 2 dimensions
 	for _, ring := range rawCoords {
 		for _, coord := range ring {
@@ -294,13 +331,13 @@ func parseRaw3DCoordinates(input []byte) ([][][2]float64, error) {
 			}
 		}
 	}
-	
+
 	// Now unmarshal into the typed structure
 	var coordinates [][][2]float64
 	if err := json.Unmarshal(input, &coordinates); err != nil {
 		return nil, err
 	}
-	
+
 	return coordinates, nil
 }
 
@@ -311,24 +348,24 @@ func parseRaw2DCoordinates(input []byte) ([][2]float64, error) {
 	if err := json.Unmarshal(input, &rawCoords); err != nil {
 		return nil, err
 	}
-	
+
 	if len(rawCoords) == 0 {
 		return nil, fmt.Errorf("empty coordinate array")
 	}
-	
+
 	// Validate that each coordinate has at least 2 dimensions
 	for _, coord := range rawCoords {
 		if len(coord) < 2 {
 			return nil, fmt.Errorf("coordinate has insufficient dimensions: %v", coord)
 		}
 	}
-	
+
 	// Now unmarshal into the typed structure
 	var coordinates [][2]float64
 	if err := json.Unmarshal(input, &coordinates); err != nil {
 		return nil, err
 	}
-	
+
 	return coordinates, nil
 }
 
