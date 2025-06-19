@@ -79,83 +79,6 @@ func TestSniffOSM(t *testing.T) {
 	}
 }
 
-func TestSniffOSMByExtension(t *testing.T) {
-	tests := []struct {
-		name     string
-		filename string
-		want     bool
-	}{
-		{
-			name:     "OSM XML extension",
-			filename: "data.osm",
-			want:     true,
-		},
-		{
-			name:     "PBF extension",
-			filename: "data.pbf",
-			want:     true,
-		},
-		{
-			name:     "OSM with path",
-			filename: "/path/to/data.osm",
-			want:     true,
-		},
-		{
-			name:     "PBF with path",
-			filename: "/path/to/data.pbf",
-			want:     true,
-		},
-		{
-			name:     "Case insensitive OSM",
-			filename: "data.OSM",
-			want:     true,
-		},
-		{
-			name:     "Case insensitive PBF",
-			filename: "data.PBF",
-			want:     true,
-		},
-		{
-			name:     "Mixed case",
-			filename: "data.Osm",
-			want:     true,
-		},
-		{
-			name:     "Wrong extension",
-			filename: "data.xml",
-			want:     false,
-		},
-		{
-			name:     "No extension",
-			filename: "data",
-			want:     false,
-		},
-		{
-			name:     "Empty filename",
-			filename: "",
-			want:     false,
-		},
-		{
-			name:     "Multiple dots",
-			filename: "data.backup.osm",
-			want:     true,
-		},
-		{
-			name:     "Hidden file",
-			filename: ".osm",
-			want:     true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := SniffOSMByExtension(tt.filename)
-			if got != tt.want {
-				t.Errorf("SniffOSMByExtension() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestLoadOSMFile(t *testing.T) {
 	tests := []struct {
@@ -421,10 +344,6 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 		t.Fatalf("Failed to read PBF file header: %v", err)
 	}
 
-	// Test extension-based sniffing
-	if !SniffOSMByExtension(pbfFile) {
-		t.Error("SniffOSMByExtension() should detect .pbf files")
-	}
 
 	// Note: SniffOSM() is designed for XML detection, so it should return false for PBF
 	if SniffOSM(header[:n]) {
@@ -505,10 +424,6 @@ func TestSniffOSM_RealXMLFile(t *testing.T) {
 		t.Error("SniffOSM() should detect OSM XML files")
 	}
 
-	// Test extension-based sniffing
-	if !SniffOSMByExtension(xmlFile) {
-		t.Error("SniffOSMByExtension() should detect .osm files")
-	}
 }
 
 func TestLoadOSMFile_RealXMLFile(t *testing.T) {

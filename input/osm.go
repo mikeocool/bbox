@@ -25,11 +25,6 @@ func SniffOSM(data []byte) bool {
 	return strings.Contains(dataStr, "<?xml") && strings.Contains(dataStr, "<osm")
 }
 
-// SniffOSMByExtension checks if the filename has OSM file extensions
-func SniffOSMByExtension(filename string) bool {
-	ext := strings.ToLower(filepath.Ext(filename))
-	return ext == ".osm" || ext == ".pbf"
-}
 
 // LoadOSMFile loads an OSM file (XML or PBF) and returns its bounding box
 func LoadOSMFile(filename string) (core.Bbox, error) {
