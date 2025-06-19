@@ -91,8 +91,12 @@ func TestLoadGeoparquetFile(t *testing.T) {
 		// 	wantErr:  false,
 		// },
 		// TODO parquet file with geom col, but no metadata
-		// TODO parquet file with no geo data
-
+		{
+			name:     "file without geocolumn",
+			filename: "../integration_tests/data/nongeo.parquet",
+			expected: core.Bbox{},
+			wantErr:  true,
+		},
 		{
 			name:     "Non-existent file",
 			filename: "nonexistent.parquet",
