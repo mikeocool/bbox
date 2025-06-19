@@ -19,7 +19,7 @@ func LoadFile(filename string) (core.Bbox, error) {
 	// TODO support shapefiles from zip
 	case ".shp":
 		return LoadShapefile(filename)
-	case ".geojson", ".json":
+	case ".geojson", ".json", ".geojsonl", ".jsonl":
 		return LoadGeojsonFile(filename)
 	case ".parquet":
 		return LoadGeoparquetFile(filename)
