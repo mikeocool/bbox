@@ -54,6 +54,7 @@ func GeojsonFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 }
 
 func GeojsonlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
+	// for a single bbox, Geojsonl is the same geojson, we just dont allow indentation
 	if settings.GeojsonIndent != 0 {
 		return "", fmt.Errorf("GeoJSONL format does not support indentation")
 	}

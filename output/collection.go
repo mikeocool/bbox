@@ -54,6 +54,14 @@ func GeojsonFormatCollection(settings OutputSettings, boxes []core.Bbox) (string
 	return geojson.Format(geoms, geojsonType, settings.GeojsonIndent)
 }
 
+func GeojsonlFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	if settings.GeojsonIndent != 0 {
+		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+	}
+
+	return JoinedFormatCollection(GeojsonFormat, boxes)
+}
+
 // WktFormatCollection formats a collection of bboxes as a WKT GEOMETRYCOLLECTION.
 func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
 	polys := make([]string, len(boxes))
@@ -67,12 +75,13 @@ func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 
 // collectionOutputFormatters maps format type constants to their corresponding format functions
 var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (string, error){
-	FormatGoTpl:   TemplatedFormatCollection,
-	FormatComma:   CommaFormatCollection,
-	FormatSpace:   SpaceFormatCollection,
-	FormatTab:     TabFormatCollection,
-	FormatWkt:     WktFormatCollection,
-	FormatGeoJson: GeojsonFormatCollection,
+	FormatGoTpl:    TemplatedFormatCollection,
+	FormatComma:    CommaFormatCollection,
+	FormatSpace:    SpaceFormatCollection,
+	FormatTab:      TabFormatCollection,
+	FormatWkt:      WktFormatCollection,
+	FormatGeoJson:  GeojsonFormatCollection,
+	FormatGeoJsonl: GeojsonlFormatCollection,
 }
 
 // GetCollectionFormatter returns the format function for the given format type.

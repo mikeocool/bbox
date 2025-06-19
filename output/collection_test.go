@@ -289,3 +289,131 @@ func TestTemplatedFormatCollection(t *testing.T) {
 		})
 	}
 }
+
+func TestGeojsonlFormatCollection(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Empty collection",
+			settings:    OutputSettings{GeojsonIndent: 0},
+			boxes:       []core.Bbox{},
+			expected:    "",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox",
+			settings:    OutputSettings{GeojsonIndent: 0},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "{\"type\":\"Polygon\",\"coordinates\":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes with decimal coordinates",
+			settings: OutputSettings{GeojsonIndent: 0},
+			boxes: []core.Bbox{
+				{Left: 1.5, Bottom: 2.5, Right: 3.5, Top: 4.5},
+				{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+				{Left: -1.0, Bottom: -2.0, Right: -0.5, Top: -1.5},
+			},
+			expected:    "{\"type\":\"Polygon\",\"coordinates\":[[[1.5,2.5],[3.5,2.5],[3.5,4.5],[1.5,4.5],[1.5,2.5]]]}\n{\"type\":\"Polygon\",\"coordinates\":[[[10.25,20.75],[30.125,20.75],[30.125,40.875],[10.25,40.875],[10.25,20.75]]]}\n{\"type\":\"Polygon\",\"coordinates\":[[[-1,-2],[-0.5,-2],[-0.5,-1.5],[-1,-1.5],[-1,-2]]]}",
+			expectError: false,
+		},
+		{
+			name:        "Error when indentation is requested",
+			settings:    OutputSettings{GeojsonIndent: 2},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := GeojsonlFormatCollection(tc.settings, tc.boxes)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError && err == nil {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+
+			// Check specific error message for indentation error
+			if tc.expectError && tc.settings.GeojsonIndent != 0 && err != nil {
+				expectedErrMsg := "GeoJSONL format does not support indentation"
+				if err.Error() != expectedErrMsg {
+					t.Errorf("Expected error message %q but got %q", expectedErrMsg, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestFormatCollectionGeojsonl(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Single bbox via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatGeoJsonl, GeojsonIndent: 0},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "{\"type\":\"Polygon\",\"coordinates\":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes via FormatCollection",
+			settings: OutputSettings{FormatType: FormatGeoJsonl, GeojsonIndent: 0},
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
+			},
+			expected:    "{\"type\":\"Polygon\",\"coordinates\":[[[1,2],[3,2],[3,4],[1,4],[1,2]]]}\n{\"type\":\"Polygon\",\"coordinates\":[[[5,6],[7,6],[7,8],[5,8],[5,6]]]}",
+			expectError: false,
+		},
+		{
+			name:        "Error with indentation via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatGeoJsonl, GeojsonIndent: 2},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := FormatCollection(tc.boxes, tc.settings)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError && err == nil {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
