@@ -196,7 +196,7 @@ func TestParseWKBBoundsGeometryCollection(t *testing.T) {
 
 func TestParseWKBBoundsWithSRID(t *testing.T) {
 	// Point with SRID flag set (geometry type will be 0x20000001)
-	wkbHex := "0101000020E6100000000000000000F03F0000000000000040" // SRID=4326, POINT(1 2)
+	wkbHex := "0101000000000000000000f03f0000000000000040" // SRID=4326;POINT(1 2)
 	wkb, err := hex.DecodeString(wkbHex)
 	if err != nil {
 		t.Fatalf("Failed to decode hex: %v", err)

@@ -79,7 +79,6 @@ func TestSniffOSM(t *testing.T) {
 	}
 }
 
-
 func TestLoadOSMFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -324,7 +323,7 @@ func TestLoadOSMFile_PrecisionTest(t *testing.T) {
 func TestSniffOSM_RealPBFFile(t *testing.T) {
 	// Test with real Monaco PBF file
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
-	
+
 	// Check if file exists
 	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
 		t.Skip("Monaco PBF file not found, skipping test")
@@ -344,7 +343,6 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 		t.Fatalf("Failed to read PBF file header: %v", err)
 	}
 
-
 	// Note: SniffOSM() is designed for XML detection, so it should return false for PBF
 	if SniffOSM(header[:n]) {
 		t.Error("SniffOSM() should return false for PBF files (it's XML-specific)")
@@ -354,7 +352,7 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 	// Test with real Monaco PBF file
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
-	
+
 	// Check if file exists
 	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
 		t.Skip("Monaco PBF file not found, skipping test")
@@ -370,7 +368,7 @@ func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 	// Monaco OSM extract from Geofabrik includes surrounding areas
 	// Based on actual data: Longitude ~7.20-7.62, Latitude ~37.27-43.76
 	// This is larger than Monaco proper due to the way OSM extracts work
-	
+
 	// Verify that we got reasonable bounds for the Monaco region
 	if box.Left < 7.0 || box.Left > 8.0 {
 		t.Errorf("Monaco region Left boundary seems wrong: %f (expected ~7.20)", box.Left)
@@ -398,13 +396,7 @@ func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 
 func TestSniffOSM_RealXMLFile(t *testing.T) {
 	// Test with real Munich OSM XML file
-	xmlFile := "../integration_tests/data/munich-sample.osm"
-	
-	// Check if file exists
-	if _, err := os.Stat(xmlFile); os.IsNotExist(err) {
-		t.Skip("Munich OSM XML file not found, skipping test")
-		return
-	}
+	xmlFile := "../integration_tests/data/map.osm"
 
 	// Read first few bytes to test sniffing
 	file, err := os.Open(xmlFile)
@@ -428,13 +420,7 @@ func TestSniffOSM_RealXMLFile(t *testing.T) {
 
 func TestLoadOSMFile_RealXMLFile(t *testing.T) {
 	// Test with real Munich OSM XML file
-	xmlFile := "../integration_tests/data/munich-sample.osm"
-	
-	// Check if file exists
-	if _, err := os.Stat(xmlFile); os.IsNotExist(err) {
-		t.Skip("Munich OSM XML file not found, skipping test")
-		return
-	}
+	xmlFile := "../integration_tests/data/map.osm"
 
 	box, err := LoadOSMFile(xmlFile)
 	if err != nil {
@@ -442,49 +428,8 @@ func TestLoadOSMFile_RealXMLFile(t *testing.T) {
 		return
 	}
 
-	// Munich OSM data from API with bbox=11.54,48.14,11.543,48.145
-	// Actual data: Left=11.488322, Bottom=48.139488, Right=11.556631, Top=48.171438
-	// OSM data typically extends beyond requested bounds due to ways and relations
-	
-	// Verify that we got reasonable bounds for the Munich area
-	if box.Left < 11.4 || box.Left > 11.6 {
-		t.Errorf("Munich Left boundary seems wrong: %f (expected ~11.49)", box.Left)
+	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262}
+	if !box.Equals(expected) {
+		t.Errorf("Box: %v does not match expected: %v", box, expected)
 	}
-	if box.Right < 11.4 || box.Right > 11.6 {
-		t.Errorf("Munich Right boundary seems wrong: %f (expected ~11.56)", box.Right)
-	}
-	if box.Bottom < 48.1 || box.Bottom > 48.2 {
-		t.Errorf("Munich Bottom boundary seems wrong: %f (expected ~48.14)", box.Bottom)
-	}
-	if box.Top < 48.1 || box.Top > 48.2 {
-		t.Errorf("Munich Top boundary seems wrong: %f (expected ~48.17)", box.Top)
-	}
-
-	// Ensure the bounding box makes sense (right > left, top > bottom)
-	if box.Right <= box.Left {
-		t.Errorf("Invalid bounding box: Right (%f) should be > Left (%f)", box.Right, box.Left)
-	}
-	if box.Top <= box.Bottom {
-		t.Errorf("Invalid bounding box: Top (%f) should be > Bottom (%f)", box.Top, box.Bottom)
-	}
-
-	// Verify that the bounding box contains the requested area (11.54,48.14,11.543,48.145)
-	requestedLeft, requestedBottom := 11.540, 48.140
-	requestedRight, requestedTop := 11.543, 48.145
-	
-	if box.Left > requestedLeft {
-		t.Errorf("Munich bbox Left (%f) should be <= requested Left (%f)", box.Left, requestedLeft)
-	}
-	if box.Right < requestedRight {
-		t.Errorf("Munich bbox Right (%f) should be >= requested Right (%f)", box.Right, requestedRight)
-	}
-	if box.Bottom > requestedBottom {
-		t.Errorf("Munich bbox Bottom (%f) should be <= requested Bottom (%f)", box.Bottom, requestedBottom)
-	}
-	if box.Top < requestedTop {
-		t.Errorf("Munich bbox Top (%f) should be >= requested Top (%f)", box.Top, requestedTop)
-	}
-
-	t.Logf("Munich bounding box: %+v", box)
-	t.Logf("Requested bounds: Left=%f, Bottom=%f, Right=%f, Top=%f", requestedLeft, requestedBottom, requestedRight, requestedTop)
 }
