@@ -46,7 +46,7 @@ setup() {
 
 @test "stdin geojsonl file" {
     run /bin/bash -c "cat $DIR/data/campsites.geojsonl | ./bbox"
-    assert_output "-91.341759857475424 47.997554133858252 -91.147944441173721 48.013553783013343"
+    assert_output "-91.34175985747542 47.99755413385825 -91.1474123626266 48.01355378301334"
     assert_success
 }
 
@@ -65,6 +65,12 @@ setup() {
 @test "load geojson" {
     run ./bbox --file $DIR/data/campsites.geojson
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}
+
+@test "load geojsonl" {
+    run ./bbox --file $DIR/data/campsites.geojsonl
+    assert_output "-91.34175985747542 47.99755413385825 -91.1474123626266 48.01355378301334"
     assert_success
 }
 
