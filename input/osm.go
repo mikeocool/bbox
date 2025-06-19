@@ -3,6 +3,7 @@ package input
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -25,27 +26,22 @@ func SniffOSM(data []byte) bool {
 	return strings.Contains(dataStr, "<?xml") && strings.Contains(dataStr, "<osm")
 }
 
-// LoadOSMFile loads an OSM file (XML or PBF) and returns its bounding box
-func LoadOSMFile(filename string) (core.Bbox, error) {
-	// Open the file
-	file, err := os.Open(filename)
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Create OSM scanner based on file extension
-	var scanner osm.Scanner
-
-	ext := strings.ToLower(filepath.Ext(filename))
-	if ext == ".pbf" {
-		scanner = osmpbf.New(context.Background(), file, 3)
-	} else {
-		// Default to XML scanner for .osm files or when extension is unclear
-		scanner = osmxml.New(context.Background(), file)
-	}
+// ParseOsmXML parses OSM XML data from a reader and returns its bounding box
+func ParseOsmXML(r io.Reader) (core.Bbox, error) {
+	scanner := osmxml.New(context.Background(), r)
 	defer scanner.Close()
+	return calculateBoundsFromScanner(scanner)
+}
 
+// ParseOsmPbf parses OSM PBF data from a reader and returns its bounding box
+func ParseOsmPbf(r io.Reader) (core.Bbox, error) {
+	scanner := osmpbf.New(context.Background(), r, 3)
+	defer scanner.Close()
+	return calculateBoundsFromScanner(scanner)
+}
+
+// calculateBoundsFromScanner iterates through an OSM scanner and calculates the bounding box
+func calculateBoundsFromScanner(scanner osm.Scanner) (core.Bbox, error) {
 	minLat, minLon := math.Inf(1), math.Inf(1)
 	maxLat, maxLon := math.Inf(-1), math.Inf(-1)
 	nodeFound := false
@@ -93,6 +89,38 @@ func LoadOSMFile(filename string) (core.Bbox, error) {
 	}
 
 	return bbox, nil
+}
+
+// LoadOSMFile loads an OSM file (XML or PBF) and returns its bounding box
+func LoadOSMFile(filename string) (core.Bbox, error) {
+	if filename == "" {
+		return core.Bbox{}, fmt.Errorf("empty filename")
+	}
+
+	// Check if file exists and is not a directory
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to access file: %w", err)
+	}
+	if fileInfo.IsDir() {
+		return core.Bbox{}, fmt.Errorf("path is a directory, not a file")
+	}
+
+	// Open the file
+	file, err := os.Open(filename)
+	if err != nil {
+		return core.Bbox{}, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	// Call appropriate parser based on file extension
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == ".pbf" {
+		return ParseOsmPbf(file)
+	} else {
+		// Default to XML parser for .osm files or when extension is unclear
+		return ParseOsmXML(file)
+	}
 }
 
 // min returns the minimum of two integers

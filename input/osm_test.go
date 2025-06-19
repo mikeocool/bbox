@@ -3,6 +3,7 @@ package input
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
@@ -324,12 +325,6 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 	// Test with real Monaco PBF file
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
 
-	// Check if file exists
-	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
-		t.Skip("Monaco PBF file not found, skipping test")
-		return
-	}
-
 	// Read first few bytes to test sniffing
 	file, err := os.Open(pbfFile)
 	if err != nil {
@@ -344,6 +339,7 @@ func TestSniffOSM_RealPBFFile(t *testing.T) {
 	}
 
 	// Note: SniffOSM() is designed for XML detection, so it should return false for PBF
+	// TOOD THIS IS WRONG
 	if SniffOSM(header[:n]) {
 		t.Error("SniffOSM() should return false for PBF files (it's XML-specific)")
 	}
@@ -353,45 +349,22 @@ func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 	// Test with real Monaco PBF file
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
 
-	// Check if file exists
-	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
-		t.Skip("Monaco PBF file not found, skipping test")
-		return
-	}
-
 	box, err := LoadOSMFile(pbfFile)
 	if err != nil {
 		t.Errorf("LoadOSMFile() failed on real PBF file: %v", err)
 		return
 	}
 
-	// Monaco OSM extract from Geofabrik includes surrounding areas
-	// Based on actual data: Longitude ~7.20-7.62, Latitude ~37.27-43.76
-	// This is larger than Monaco proper due to the way OSM extracts work
-
-	// Verify that we got reasonable bounds for the Monaco region
-	if box.Left < 7.0 || box.Left > 8.0 {
-		t.Errorf("Monaco region Left boundary seems wrong: %f (expected ~7.20)", box.Left)
-	}
-	if box.Right < 7.0 || box.Right > 8.0 {
-		t.Errorf("Monaco region Right boundary seems wrong: %f (expected ~7.62)", box.Right)
-	}
-	if box.Bottom < 35.0 || box.Bottom > 45.0 {
-		t.Errorf("Monaco region Bottom boundary seems wrong: %f (expected ~37.27)", box.Bottom)
-	}
-	if box.Top < 35.0 || box.Top > 45.0 {
-		t.Errorf("Monaco region Top boundary seems wrong: %f (expected ~43.76)", box.Top)
+	expected := core.Bbox{
+		Left:   7.2081882,
+		Bottom: 37.268984,
+		Right:  7.615891100000001,
+		Top:    43.7594835,
 	}
 
-	// Ensure the bounding box makes sense (right > left, top > bottom)
-	if box.Right <= box.Left {
-		t.Errorf("Invalid bounding box: Right (%f) should be > Left (%f)", box.Right, box.Left)
+	if !box.Equals(expected) {
+		t.Errorf("LoadOSMFile() expected: %v returned: %+v", expected, box)
 	}
-	if box.Top <= box.Bottom {
-		t.Errorf("Invalid bounding box: Top (%f) should be > Bottom (%f)", box.Top, box.Bottom)
-	}
-
-	t.Logf("Monaco bounding box: %+v", box)
 }
 
 func TestSniffOSM_RealXMLFile(t *testing.T) {
@@ -431,5 +404,103 @@ func TestLoadOSMFile_RealXMLFile(t *testing.T) {
 	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262}
 	if !box.Equals(expected) {
 		t.Errorf("Box: %v does not match expected: %v", box, expected)
+	}
+}
+
+func TestParseOsmXML(t *testing.T) {
+	// Test with simple OSM XML data
+	osmContent := `<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="test">
+  <node id="1" lat="50.0" lon="8.0"/>
+  <node id="2" lat="52.0" lon="10.0"/>
+  <node id="3" lat="51.0" lon="9.0"/>
+  <way id="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+  </way>
+</osm>`
+
+	reader := strings.NewReader(osmContent)
+	expected := core.Bbox{
+		Left:   8.0,  // min longitude
+		Bottom: 50.0, // min latitude
+		Right:  10.0, // max longitude
+		Top:    52.0, // max latitude
+	}
+
+	box, err := ParseOsmXML(reader)
+	if err != nil {
+		t.Errorf("ParseOsmXML() unexpected error: %v", err)
+		return
+	}
+
+	if !box.Equals(expected) {
+		t.Errorf("ParseOsmXML() = %v, want %v", box, expected)
+	}
+}
+
+func TestParseOsmXML_NoNodes(t *testing.T) {
+	// Test with OSM XML containing no nodes
+	osmContent := `<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6">
+  <relation id="1">
+    <member type="way" ref="1" role="outer"/>
+  </relation>
+</osm>`
+
+	reader := strings.NewReader(osmContent)
+	_, err := ParseOsmXML(reader)
+	if err == nil {
+		t.Error("ParseOsmXML() expected error for XML with no nodes, got nil")
+	}
+}
+
+func TestParseOsmPbf_RealFile(t *testing.T) {
+	// Test with real Monaco PBF file
+	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
+
+	file, err := os.Open(pbfFile)
+	if err != nil {
+		t.Fatalf("Failed to open PBF file: %v", err)
+	}
+	defer file.Close()
+
+	box, err := ParseOsmPbf(file)
+	if err != nil {
+		t.Errorf("ParseOsmPbf() failed on real PBF file: %v", err)
+		return
+	}
+
+	expected := core.Bbox{
+		Left:   7.2081882,
+		Bottom: 37.268984,
+		Right:  7.615891100000001,
+		Top:    43.7594835,
+	}
+	if !box.Equals(expected) {
+		t.Errorf("Box: %v does not match expected: %v", box, expected)
+	}
+}
+
+func TestParseOsmXML_RealFile(t *testing.T) {
+	// Test with real Munich OSM XML file
+	xmlFile := "../integration_tests/data/map.osm"
+
+	file, err := os.Open(xmlFile)
+	if err != nil {
+		t.Fatalf("Failed to open OSM XML file: %v", err)
+	}
+	defer file.Close()
+
+	box, err := ParseOsmXML(file)
+	if err != nil {
+		t.Errorf("ParseOsmXML() failed on real XML file: %v", err)
+		return
+	}
+
+	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262}
+	if !box.Equals(expected) {
+		t.Errorf("ParseOsmXML() = %v, want %v", box, expected)
 	}
 }
