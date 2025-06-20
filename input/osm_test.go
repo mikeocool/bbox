@@ -80,6 +80,109 @@ func TestSniffOsmXml(t *testing.T) {
 	}
 }
 
+func TestSniffOsmPbf(t *testing.T) {
+	tests := []struct {
+		name string
+		data []byte
+		want bool
+	}{
+		{
+			name: "Too short data",
+			data: []byte{0x00, 0x01, 0x02},
+			want: false,
+		},
+		{
+			name: "Empty data",
+			data: []byte{},
+			want: false,
+		},
+		{
+			name: "Invalid blob header size - too small",
+			data: []byte{0x00, 0x00, 0x00, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10},
+			want: false,
+		},
+		{
+			name: "Contains OSMHeader string",
+			data: []byte{0x00, 0x00, 0x00, 0x15, 'x', 'x', 'x', 'O', 'S', 'M', 'H', 'e', 'a', 'd', 'e', 'r', 'x', 'x', 'x', 'x', 'x', '1', '2', '3', '4'},
+			want: true,
+		},
+		{
+			name: "Contains OSMData string", 
+			data: []byte{0x00, 0x00, 0x00, 0x13, 'y', 'y', 'O', 'S', 'M', 'D', 'a', 't', 'a', 'y', 'y', 'y', 'y', 'y', 'y', '1', '2', '3', '4'},
+			want: true,
+		},
+		{
+			name: "Binary data that isn't PBF",
+			data: append([]byte{0x50, 0x41, 0x52, 0x31}, make([]byte, 20)...), // Parquet magic
+			want: false,
+		},
+		{
+			name: "XML data (should be false)",
+			data: []byte("<?xml version=\"1.0\"?><osm>"),
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SniffOsmPbf(tt.data)
+			if got != tt.want {
+				t.Errorf("SniffOsmPbf() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSniffOsmPbf_RealFiles(t *testing.T) {
+	// Test with real Monaco PBF file - should return true
+	t.Run("Real PBF file", func(t *testing.T) {
+		pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
+		
+		// Check if file exists
+		if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
+			t.Skip("Monaco PBF file not found, skipping test")
+			return
+		}
+
+		file, err := os.Open(pbfFile)
+		if err != nil {
+			t.Fatalf("Failed to open PBF file: %v", err)
+		}
+		defer file.Close()
+
+		header := make([]byte, 100)
+		n, err := file.Read(header)
+		if err != nil {
+			t.Fatalf("Failed to read PBF file header: %v", err)
+		}
+
+		if !SniffOsmPbf(header[:n]) {
+			t.Error("SniffOsmPbf() should detect real OSM PBF files")
+		}
+	})
+
+	// Test with real OSM XML file - should return false
+	t.Run("Real XML file", func(t *testing.T) {
+		xmlFile := "../integration_tests/data/map.osm"
+		
+		file, err := os.Open(xmlFile)
+		if err != nil {
+			t.Fatalf("Failed to open OSM XML file: %v", err)
+		}
+		defer file.Close()
+
+		header := make([]byte, 100)
+		n, err := file.Read(header)
+		if err != nil {
+			t.Fatalf("Failed to read OSM XML file header: %v", err)
+		}
+
+		if SniffOsmPbf(header[:n]) {
+			t.Error("SniffOsmPbf() should return false for OSM XML files")
+		}
+	})
+}
+
 func TestLoadOSMFile(t *testing.T) {
 	tests := []struct {
 		name     string

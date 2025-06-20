@@ -70,6 +70,10 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 		return ParseOsmXML(fullReader)
 	}
 
+	if SniffOsmPbf(detectionBuf) {
+		return ParseOsmPbf(fullReader)
+	}
+
 	if SniffShapefile(detectionBuf) {
 		box, err := ParseShapefile(fullReader)
 		if err == nil {

@@ -551,3 +551,39 @@ func TestParseData_OSMXml(t *testing.T) {
 		t.Errorf("ParseData() with OSM XML = %v, want %v", box, expected)
 	}
 }
+
+func TestParseData_OSMPbf(t *testing.T) {
+	// Test that ParseData can now handle OSM PBF via SniffOsmPbf detection
+	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
+	
+	// Check if file exists
+	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
+		t.Skip("Monaco PBF file not found, skipping test")
+		return
+	}
+
+	file, err := os.Open(pbfFile)
+	if err != nil {
+		t.Fatalf("Failed to open PBF file: %v", err)
+	}
+	defer file.Close()
+
+	box, err := ParseData(file)
+	if err != nil {
+		t.Errorf("ParseData() unexpected error with OSM PBF: %v", err)
+		return
+	}
+
+	// Monaco OSM extract from Geofabrik includes surrounding areas
+	// Based on actual data: Longitude ~7.20-7.62, Latitude ~37.27-43.76
+	expected := core.Bbox{
+		Left:   7.2081882,
+		Bottom: 37.268984,
+		Right:  7.615891100000001,
+		Top:    43.7594835,
+	}
+
+	if !box.Equals(expected) {
+		t.Errorf("ParseData() with OSM PBF = %v, want %v", box, expected)
+	}
+}

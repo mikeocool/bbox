@@ -26,6 +26,36 @@ func SniffOsmXml(data []byte) bool {
 	return strings.Contains(dataStr, "<?xml") && strings.Contains(dataStr, "<osm")
 }
 
+// SniffOsmPbf checks if the data looks like an OSM PBF file
+func SniffOsmPbf(data []byte) bool {
+	if len(data) < 20 {
+		return false
+	}
+
+	// PBF files start with a blob header containing:
+	// - 4 bytes: blob header size (big-endian)
+	// - blob header containing type field
+	// Look for typical PBF patterns in the first few bytes
+
+	// Check if it starts with reasonable blob header size (typically 13-20 bytes)
+	blobHeaderSize := (uint32(data[0]) << 24) | (uint32(data[1]) << 16) | (uint32(data[2]) << 8) | uint32(data[3])
+	if blobHeaderSize < 9 || blobHeaderSize > 64*1024 {
+		return false
+	}
+
+	// Check if we have enough data to examine the blob header
+	if len(data) < int(4+blobHeaderSize) {
+		return false
+	}
+
+	// Look for "OSMHeader" or "OSMData" type strings in the blob header
+	// These are protobuf encoded, but we can search for the string patterns
+	blobHeader := data[4 : 4+blobHeaderSize]
+	blobHeaderStr := string(blobHeader)
+	
+	return strings.Contains(blobHeaderStr, "OSMHeader") || strings.Contains(blobHeaderStr, "OSMData")
+}
+
 // ParseOsmXML parses OSM XML data from a reader and returns its bounding box
 func ParseOsmXML(r io.Reader) (core.Bbox, error) {
 	scanner := osmxml.New(context.Background(), r)
