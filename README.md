@@ -96,7 +96,7 @@ Output formats:
 ```
 
 # TODO
-* align input and output options across commands
+* wkbhex collection output is broken
 * add github actions for testing
 * basic projection handling
     * read the projection if we can

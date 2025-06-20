@@ -1,6 +1,9 @@
 package output
 
 import (
+	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -92,17 +95,60 @@ func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 	return val, nil
 }
 
+// WkbhexFormatCollection formats a collection of bboxes as a WKB GEOMETRYCOLLECTION encoded as hexadecimal.
+func WkbhexFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
+	// Create buffer for WKB data
+	buf := new(bytes.Buffer)
+
+	// Write byte order (little endian)
+	binary.Write(buf, binary.LittleEndian, uint8(1))
+
+	// Write geometry type (GeometryCollection = 7)
+	binary.Write(buf, binary.LittleEndian, uint32(7))
+
+	// Write number of geometries
+	binary.Write(buf, binary.LittleEndian, uint32(len(boxes)))
+
+	// Write each polygon geometry
+	for _, box := range boxes {
+		coords := box.Polygon()
+
+		// Write byte order for this geometry (little endian)
+		binary.Write(buf, binary.LittleEndian, uint8(1))
+
+		// Write geometry type (polygon = 3)
+		binary.Write(buf, binary.LittleEndian, uint32(3))
+
+		// Write number of rings (always 1 for a simple polygon)
+		binary.Write(buf, binary.LittleEndian, uint32(1))
+
+		// Write number of points in the ring
+		binary.Write(buf, binary.LittleEndian, uint32(len(coords)))
+
+		// Write each coordinate pair
+		for _, coord := range coords {
+			binary.Write(buf, binary.LittleEndian, coord[0])
+			binary.Write(buf, binary.LittleEndian, coord[1])
+		}
+	}
+
+	// Convert to hex string
+	return strings.ToUpper(hex.EncodeToString(buf.Bytes())), nil
+}
+
 // collectionOutputFormatters maps format type constants to their corresponding format functions
 var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (string, error){
 	FormatGoTpl:    TemplatedFormatCollection,
 	FormatComma:    CommaFormatCollection,
 	FormatSpace:    SpaceFormatCollection,
 	FormatTab:      TabFormatCollection,
-	FormatWkt:      WktFormatCollection,
 	FormatJson:     JsonFormatCollection,
 	FormatJsonl:    JsonlFormatCollection,
 	FormatGeoJson:  GeojsonFormatCollection,
 	FormatGeoJsonl: GeojsonlFormatCollection,
+	FormatWkt:      WktFormatCollection,
+	FormatWkbhex:   WkbhexFormatCollection,
+	// dublin core
 }
 
 // GetCollectionFormatter returns the format function for the given format type.

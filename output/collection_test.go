@@ -568,3 +568,192 @@ func TestJsonlFormatCollection(t *testing.T) {
 		})
 	}
 }
+
+func TestWkbhexFormatCollection(t *testing.T) {
+	tests := []struct {
+		name     string
+		boxes    []core.Bbox
+		settings OutputSettings
+		expected string
+	}{
+		{
+			name:     "empty collection",
+			boxes:    []core.Bbox{},
+			settings: OutputSettings{},
+			expected: "010700000000000000",
+		},
+		{
+			name: "single bbox",
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			},
+			settings: OutputSettings{},
+			expected: "01070000000100000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+		},
+		{
+			name: "two bboxes",
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
+			},
+			settings: OutputSettings{},
+			expected: "01070000000200000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F000000000000004001030000000100000005000000000000000000144000000000000018400000000000001C4000000000000018400000000000001C4000000000000020400000000000001440000000000000204000000000000014400000000000001840",
+		},
+		{
+			name: "three bboxes with decimal coordinates",
+			boxes: []core.Bbox{
+				{Left: 1.5, Bottom: 2.5, Right: 3.5, Top: 4.5},
+				{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+				{Left: -1.0, Bottom: -2.0, Right: -0.5, Top: -1.5},
+			},
+			settings: OutputSettings{},
+			expected: "01070000000300000001030000000100000005000000000000000000F83F00000000000004400000000000000C4000000000000004400000000000000C400000000000001240000000000000F83F0000000000001240000000000000F83F00000000000004400103000000010000000500000000000000008024400000000000C034400000000000203E400000000000C034400000000000203E4000000000007044400000000000802440000000000070444000000000008024400000000000C0344001030000000100000005000000000000000000F0BF00000000000000C0000000000000E0BF00000000000000C0000000000000E0BF000000000000F8BF000000000000F0BF000000000000F8BF000000000000F0BF00000000000000C0",
+		},
+		{
+			name: "bbox with zero coordinates",
+			boxes: []core.Bbox{
+				{Left: 0.0, Bottom: 0.0, Right: 1.0, Top: 1.0},
+			},
+			settings: OutputSettings{},
+			expected: "0107000000010000000103000000010000000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000",
+		},
+		{
+			name: "bbox with negative coordinates",
+			boxes: []core.Bbox{
+				{Left: -10.0, Bottom: -20.0, Right: -5.0, Top: -15.0},
+			},
+			settings: OutputSettings{},
+			expected: "0107000000010000000103000000010000000500000000000000000024C000000000000034C000000000000014C000000000000034C000000000000014C00000000000002EC000000000000024C00000000000002EC000000000000024C000000000000034C0",
+		},
+		{
+			name: "bbox with very large coordinates",
+			boxes: []core.Bbox{
+				{Left: 1000000.0, Bottom: 2000000.0, Right: 3000000.0, Top: 4000000.0},
+			},
+			settings: OutputSettings{},
+			expected: "010700000001000000010300000001000000050000000000000080842E410000000080843E410000000060E346410000000080843E410000000060E346410000000080844E410000000080842E410000000080844E410000000080842E410000000080843E41",
+		},
+		{
+			name: "bbox with very small coordinates",
+			boxes: []core.Bbox{
+				{Left: 0.000001, Bottom: 0.000002, Right: 0.000003, Top: 0.000004},
+			},
+			settings: OutputSettings{},
+			expected: "010700000001000000010300000001000000050000008DEDB5A0F7C6B03E8DEDB5A0F7C6C03E54E41071732AC93E8DEDB5A0F7C6C03E54E41071732AC93E8DEDB5A0F7C6D03E8DEDB5A0F7C6B03E8DEDB5A0F7C6D03E8DEDB5A0F7C6B03E8DEDB5A0F7C6C03E",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := WkbhexFormatCollection(tt.settings, tt.boxes)
+			if err != nil {
+				t.Errorf("WkbhexFormatCollection() error = %v", err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("WkbhexFormatCollection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestWkbhexFormatCollectionSettings(t *testing.T) {
+	// Test that the function works with different OutputSettings
+	boxes := []core.Bbox{
+		{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+	}
+
+	settings := OutputSettings{
+		FormatType:    FormatWkbhex,
+		GeojsonIndent: 2, // This should be ignored for WKB format
+	}
+
+	result, err := WkbhexFormatCollection(settings, boxes)
+	if err != nil {
+		t.Errorf("WkbhexFormatCollection() error = %v", err)
+		return
+	}
+
+	expected := "01070000000100000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040"
+	if result != expected {
+		t.Errorf("WkbhexFormatCollection() = %v, want %v", result, expected)
+	}
+}
+
+func TestGetCollectionFormatterWkbhex(t *testing.T) {
+	// Test that the WkbhexFormatCollection function is properly registered
+	formatter, err := GetCollectionFormatter(FormatWkbhex)
+	if err != nil {
+		t.Errorf("GetCollectionFormatter(FormatWkbhex) error = %v", err)
+		return
+	}
+	if formatter == nil {
+		t.Errorf("GetCollectionFormatter(FormatWkbhex) returned nil formatter")
+		return
+	}
+
+	// Test that it actually works with a simple case
+	boxes := []core.Bbox{
+		{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+	}
+	settings := OutputSettings{}
+
+	result, err := formatter(settings, boxes)
+	if err != nil {
+		t.Errorf("formatter(settings, boxes) error = %v", err)
+		return
+	}
+
+	expected := "01070000000100000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040"
+	if result != expected {
+		t.Errorf("formatter(settings, boxes) = %v, want %v", result, expected)
+	}
+}
+
+func TestFormatCollectionWkbhex(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Single bbox via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatWkbhex},
+			boxes:       []core.Bbox{{Left: 1, Bottom: 2, Right: 3, Top: 4}},
+			expected:    "01070000000100000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes via FormatCollection",
+			settings: OutputSettings{FormatType: FormatWkbhex},
+			boxes: []core.Bbox{
+				{Left: 1, Bottom: 2, Right: 3, Top: 4},
+				{Left: 5, Bottom: 6, Right: 7, Top: 8},
+			},
+			expected:    "01070000000200000001030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F000000000000004001030000000100000005000000000000000000144000000000000018400000000000001C4000000000000018400000000000001C4000000000000020400000000000001440000000000000204000000000000014400000000000001840",
+			expectError: false,
+		},
+		{
+			name:        "Empty collection via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatWkbhex},
+			boxes:       []core.Bbox{},
+			expected:    "010700000000000000",
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := FormatCollection(tt.boxes, tt.settings)
+			if (err != nil) != tt.expectError {
+				t.Errorf("FormatCollection() error = %v, expectError %v", err, tt.expectError)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("FormatCollection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
