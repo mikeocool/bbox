@@ -42,7 +42,7 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 			return core.Bbox{}, err
 		}
 
-		// TODO ensure # of vals remains consistent
+		// ensure # of vals remains consistent
 		var lineBbox core.Bbox
 		if expectedLineVals != 0 && len(lineVals) != expectedLineVals {
 			return core.Bbox{}, fmt.Errorf("invalid input")
@@ -65,6 +65,10 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 			}
 		} else {
 			return core.Bbox{}, fmt.Errorf("invalid input")
+		}
+
+		if err := lineBbox.Validate(); err != nil {
+			return core.Bbox{}, err
 		}
 
 		if rbbox == nil {

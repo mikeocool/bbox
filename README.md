@@ -96,6 +96,10 @@ Output formats:
 ```
 
 # TODO
+* for Bbox generated from bounds input, validate after creating
+* auto-recognize file paths (and URLs?) and load as files
+* fix collection wkbhex
+* wkbhex input
 * align input and output options across commands
 * add github actions for testing
 * basic projection handling
