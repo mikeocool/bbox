@@ -585,6 +585,67 @@ func TestCommaFormat(t *testing.T) {
 	}
 }
 
+func TestJsonFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Zero value bbox",
+			bbox:        core.Bbox{},
+			expected:    "[0,0,0,0]",
+			expectError: false,
+		},
+		{
+			name:        "Integer coordinates",
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4},
+			expected:    "[1,2,3,4]",
+			expectError: false,
+		},
+		{
+			name:        "Decimal coordinates",
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125},
+			expected:    "[10.5,20.25,30.75,40.125]",
+			expectError: false,
+		},
+		{
+			name:        "Negative coordinates",
+			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: -5, Top: -15},
+			expected:    "[-10,-20,-5,-15]",
+			expectError: false,
+		},
+		{
+			name:        "Mixed sign coordinates",
+			bbox:        core.Bbox{Left: -10.5, Bottom: 20.25, Right: -5.75, Top: 15.125},
+			expected:    "[-10.5,20.25,-5.75,15.125]",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := JsonFormat(OutputSettings{}, tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
 func TestGeojsonFormat(t *testing.T) {
 	tests := []struct {
 		name     string

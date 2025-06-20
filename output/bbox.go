@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -60,6 +61,14 @@ func GeojsonlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 	}
 
 	return GeojsonFormat(settings, bbox)
+}
+
+func JsonFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
+	data, err := json.Marshal(bbox.Bounds())
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // WktFormat formats a Bbox as a WKT (Well-Known Text) Polygon geometry.
@@ -147,6 +156,8 @@ var bboxOutputFormatters = map[string]func(OutputSettings, core.Bbox) (string, e
 	FormatTab:        TabFormat,
 	FormatGeoJson:    GeojsonFormat,
 	FormatGeoJsonl:   GeojsonlFormat,
+	FormatJson:       JsonFormat,
+	FormatJsonl:      JsonFormat,
 	FormatWkt:        WktFormat,
 	FormatWkbhex:     WkbhexFormat,
 	FormatDublinCore: DublinCoreFormat,

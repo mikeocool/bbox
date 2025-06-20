@@ -1,6 +1,7 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -42,6 +43,24 @@ func TabFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 	return JoinedFormatCollection(TabFormat, boxes, settings)
 }
 
+func JsonFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
+	bounds := make([][]float64, len(boxes))
+	for i, box := range boxes {
+		bounds[i] = box.Bounds()
+	}
+
+	data, err := json.Marshal(bounds)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+func JsonlFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return JoinedFormatCollection(JsonFormat, boxes, settings)
+}
+
 // GeojsonFormatCollection formats a collection of bboxes as a GeoJSON FeatureCollection or GeometryCollection.
 func GeojsonFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
 	geojsonType := strings.ToLower(settings.GeojsonType)
@@ -80,6 +99,8 @@ var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (s
 	FormatSpace:    SpaceFormatCollection,
 	FormatTab:      TabFormatCollection,
 	FormatWkt:      WktFormatCollection,
+	FormatJson:     JsonFormatCollection,
+	FormatJsonl:    JsonlFormatCollection,
 	FormatGeoJson:  GeojsonFormatCollection,
 	FormatGeoJsonl: GeojsonlFormatCollection,
 }

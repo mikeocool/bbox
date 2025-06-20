@@ -293,6 +293,57 @@ func TestWktFormatPoint(t *testing.T) {
 	}
 }
 
+func TestJsonFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "[0,0]",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "[1,2]",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "[10.5,20.25]",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "[-10,-20]",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "[-10.5,20.25]",
+		},
+		{
+			name:     "Large coordinates",
+			point:    [2]float64{1000000.123, 2000000.456},
+			expected: "[1000000.123,2000000.456]",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := JsonFormatPoint(OutputSettings{}, tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
 func TestGeojsonFormatPoint(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -96,7 +96,6 @@ Output formats:
 ```
 
 # TODO
-* json format -- just a list of the 4 coords
 * align input and output options across commands
 * add github actions for testing
 * basic projection handling

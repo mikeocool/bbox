@@ -1,6 +1,7 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -44,6 +45,14 @@ func WktFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("POINT (%g %g)", point[0], point[1]), nil
 }
 
+func JsonFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
+	data, err := json.Marshal(point)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 // GeojsonFormatPoint formats a point as a GeoJSON Point geometry.
 // The returned string will be a complete GeoJSON Point representing the coordinates.
 func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, error) {
@@ -71,6 +80,8 @@ var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string,
 	FormatSpace:   SpaceFormatPoint,
 	FormatTab:     TabFormatPoint,
 	FormatWkt:     WktFormatPoint,
+	FormatJson:    JsonFormatPoint,
+	FormatJsonl:   JsonFormatPoint,
 	FormatGeoJson: GeojsonFormatPoint,
 	// TODO url?
 }

@@ -431,3 +431,140 @@ func TestFormatCollectionGeojsonl(t *testing.T) {
 		})
 	}
 }
+
+func TestJsonFormatCollection(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Single bbox via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatJson},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "[[1,2,3,4]]",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes via FormatCollection",
+			settings: OutputSettings{FormatType: FormatJson},
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
+			},
+			expected:    "[[1,2,3,4],[5,6,7,8]]",
+			expectError: false,
+		},
+		{
+			name:        "Empty collection via FormatCollection",
+			settings:    OutputSettings{FormatType: FormatJson},
+			boxes:       []core.Bbox{},
+			expected:    "[]",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := JsonFormatCollection(tc.settings, tc.boxes)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError && err == nil {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestJsonlFormatCollection(t *testing.T) {
+	tests := []struct {
+		name        string
+		settings    OutputSettings
+		boxes       []core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Empty collection",
+			settings:    OutputSettings{},
+			boxes:       []core.Bbox{},
+			expected:    "",
+			expectError: false,
+		},
+		{
+			name:        "Single bbox",
+			settings:    OutputSettings{},
+			boxes:       []core.Bbox{{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}},
+			expected:    "[1,2,3,4]",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes",
+			settings: OutputSettings{},
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0},
+			},
+			expected:    "[1,2,3,4]\n[5,6,7,8]",
+			expectError: false,
+		},
+		{
+			name:     "Multiple bboxes with decimal coordinates",
+			settings: OutputSettings{},
+			boxes: []core.Bbox{
+				{Left: 1.5, Bottom: 2.5, Right: 3.5, Top: 4.5},
+				{Left: 10.25, Bottom: 20.75, Right: 30.125, Top: 40.875},
+				{Left: -1.0, Bottom: -2.0, Right: -0.5, Top: -1.5},
+			},
+			expected:    "[1.5,2.5,3.5,4.5]\n[10.25,20.75,30.125,40.875]\n[-1,-2,-0.5,-1.5]",
+			expectError: false,
+		},
+		{
+			name:        "Zero coordinates",
+			settings:    OutputSettings{},
+			boxes:       []core.Bbox{{Left: 0, Bottom: 0, Right: 0, Top: 0}},
+			expected:    "[0,0,0,0]",
+			expectError: false,
+		},
+		{
+			name:        "Negative coordinates",
+			settings:    OutputSettings{},
+			boxes:       []core.Bbox{{Left: -10, Bottom: -20, Right: -5, Top: -15}},
+			expected:    "[-10,-20,-5,-15]",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := JsonlFormatCollection(tc.settings, tc.boxes)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError && err == nil {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
