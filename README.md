@@ -97,8 +97,6 @@ Output formats:
 
 # TODO
 * json format -- just a list of the 4 coords
-* osm file input
-    * https://github.com/paulmach/osm
 * align input and output options across commands
 * add github actions for testing
 * basic projection handling
