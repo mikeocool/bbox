@@ -52,7 +52,7 @@ func SniffOsmPbf(data []byte) bool {
 	// These are protobuf encoded, but we can search for the string patterns
 	blobHeader := data[4 : 4+blobHeaderSize]
 	blobHeaderStr := string(blobHeader)
-	
+
 	return strings.Contains(blobHeaderStr, "OSMHeader") || strings.Contains(blobHeaderStr, "OSMData")
 }
 
@@ -151,12 +151,4 @@ func LoadOSMFile(filename string) (core.Bbox, error) {
 		// Default to XML parser for .osm files or when extension is unclear
 		return ParseOsmXML(file)
 	}
-}
-
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
