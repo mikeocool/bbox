@@ -120,6 +120,8 @@ func UrlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 	switch strings.ToLower(urlType) {
 	case "openstreetmap.org", "openstreetmap.com", "osm":
 		return FormatWithTemplate("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
+	case "osm-api":
+		return FormatWithTemplate("https://www.openstreetmap.org/api/0.6/map?bbox={{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
 	case "geojson.io":
 		return GeojsonIoUrl(bbox)
 	default:
