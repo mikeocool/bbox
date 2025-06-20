@@ -149,6 +149,11 @@ func GeojsonDocBbox(input []byte) (core.Bbox, error) {
 		return calculateBboxFromCoordinates([][][2]float64{coords})
 	}
 
+	// Parsing bbox as plain json list (i.e. [1,2,3,4])
+	if bbox, err := parseJsonBounds(input); err == nil {
+		return bbox, nil
+	}
+
 	return bbox, ErrCouldNotParseGeoJSON
 }
 
@@ -367,6 +372,24 @@ func parseRaw2DCoordinates(input []byte) ([][2]float64, error) {
 	}
 
 	return coordinates, nil
+}
+
+func parseJsonBounds(input []byte) (core.Bbox, error) {
+	var bounds []float64
+	if err := json.Unmarshal(input, &bounds); err != nil {
+		return core.Bbox{}, err
+	}
+
+	if len(bounds) != 4 {
+		return core.Bbox{}, fmt.Errorf("invalid bbox length: %d", len(bounds))
+	}
+
+	return core.Bbox{
+		Left:   bounds[0],
+		Bottom: bounds[1],
+		Right:  bounds[2],
+		Top:    bounds[3],
+	}, nil
 }
 
 // updateBounds updates the min/max bounds with the given coordinate

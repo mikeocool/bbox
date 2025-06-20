@@ -145,6 +145,17 @@ func TestParseGeojson(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:  "Bounds array",
+			input: `[0,0,1,1]`,
+			want: core.Bbox{
+				Left:   0,
+				Bottom: 0,
+				Right:  1,
+				Top:    1,
+			},
+			wantErr: false,
+		},
+		{
 			name:  "Raw 2D coordinates with negative values",
 			input: `[[-10,-5],[-10,5],[10,5],[10,-5],[-10,-5]]`,
 			want: core.Bbox{
@@ -293,6 +304,17 @@ func TestParseGeojson(t *testing.T) {
 			{"type": "Feature","geometry": {"type": "Invalid","coordinates": [[[-10,-6],[-10,5],[10,5],[10,-6],[-10,-6]]]}}
 			`,
 			wantErr: true,
+		},
+		{
+			name:  "geojsonl with bounds array",
+			input: "[-10,-5,10,5]\n[-10,-6,10,5]",
+			want: core.Bbox{
+				Left:   -10,
+				Bottom: -6,
+				Right:  10,
+				Top:    5,
+			},
+			wantErr: false,
 		},
 		{
 			name:    "Invalid JSON",
@@ -769,6 +791,11 @@ func TestSniffGeojson(t *testing.T) {
 		{
 			name: "Coordinate array with null bytes",
 			data: []byte("[[0,0\x00],[1,1]]"),
+			want: true,
+		},
+		{
+			name: "Bounds array",
+			data: []byte("[[0,0,1,1]]"),
 			want: true,
 		},
 		{
