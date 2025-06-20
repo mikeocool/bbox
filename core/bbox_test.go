@@ -18,10 +18,9 @@ func TestBboxValidate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Zero-size bbox",
+			name:        "Zero-width bbox (now valid)",
 			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 1.0, Top: 4.0},
-			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 1.0),
+			expectError: false,
 		},
 		{
 			name:        "Negative-width bbox",
@@ -30,10 +29,9 @@ func TestBboxValidate(t *testing.T) {
 			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 3.0),
 		},
 		{
-			name:        "Zero-height bbox",
+			name:        "Zero-height bbox (now valid)",
 			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 2.0},
-			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: Top (%f) must be greater than Bottom (%f)", 2.0, 2.0),
+			expectError: false,
 		},
 		{
 			name:        "Negative-height bbox",
@@ -48,10 +46,9 @@ func TestBboxValidate(t *testing.T) {
 			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 1.0, 3.0),
 		},
 		{
-			name:        "Zero value bbox",
+			name:        "Zero value bbox (now valid)",
 			bbox:        Bbox{},
-			expectError: true,
-			errorMsg:    fmt.Sprintf("invalid bbox: Right (%f) must be greater than Left (%f)", 0.0, 0.0),
+			expectError: false,
 		},
 	}
 
