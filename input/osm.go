@@ -123,23 +123,9 @@ func calculateBoundsFromScanner(scanner osm.Scanner) (core.Bbox, error) {
 
 // LoadOSMFile loads an OSM file (XML or PBF) and returns its bounding box
 func LoadOSMFile(filename string) (core.Bbox, error) {
-	if filename == "" {
-		return core.Bbox{}, fmt.Errorf("empty filename")
-	}
-
-	// Check if file exists and is not a directory
-	fileInfo, err := os.Stat(filename)
-	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to access file: %w", err)
-	}
-	if fileInfo.IsDir() {
-		return core.Bbox{}, fmt.Errorf("path is a directory, not a file")
-	}
-
-	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
-		return core.Bbox{}, fmt.Errorf("failed to open file: %w", err)
+		return core.Bbox{}, err
 	}
 	defer file.Close()
 
