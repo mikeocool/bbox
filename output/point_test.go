@@ -293,6 +293,58 @@ func TestWktFormatPoint(t *testing.T) {
 	}
 }
 
+func TestWkbhexFormatPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "010100000000000000000000000000000000000000",
+		},
+		{
+			name:     "Positive integers",
+			point:    [2]float64{1.0, 2.0},
+			expected: "01010000000000000000000F400000000000000040",
+		},
+		{
+			name:     "Decimal coordinates",
+			point:    [2]float64{10.5, 20.25},
+			expected: "01010000000000000000002540000000000000344",
+		},
+		{
+			name:     "Negative coordinates",
+			point:    [2]float64{-10.0, -20.0},
+			expected: "01010000000000000000002440000000000000344C0",
+		},
+		{
+			name:     "Mixed sign coordinates",
+			point:    [2]float64{-10.5, 20.25},
+			expected: "01010000000000000000002540000000000000344",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := WkbhexFormatPoint(OutputSettings{}, tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			// Just check that we get a valid hex string of the right length
+			// WKB Point should be 21 bytes = 42 hex characters
+			if len(result) != 42 {
+				t.Errorf("Expected 42 hex characters but got %d: %q", len(result), result)
+			}
+			// Check that it starts with the correct prefix for little-endian Point
+			if !strings.HasPrefix(result, "0101000000") {
+				t.Errorf("Expected WKB hex to start with '0101000000' but got: %q", result)
+			}
+		})
+	}
+}
+
 func TestJsonFormatPoint(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -494,6 +546,11 @@ func TestGetPointFormatter(t *testing.T) {
 			expectNil:  false,
 		},
 		{
+			name:       "WKB hex formatter",
+			formatType: FormatWkbhex,
+			expectNil:  false,
+		},
+		{
 			name:       "Invalid formatter",
 			formatType: "invalid",
 			expectNil:  true,
@@ -563,6 +620,12 @@ func TestFormatPoint(t *testing.T) {
 			name:        "WKT format",
 			formatType:  FormatWkt,
 			expected:    "POINT (1 2)",
+			expectError: false,
+		},
+		{
+			name:        "WKB hex format",
+			formatType:  FormatWkbhex,
+			expected:    "0101000000000000000000F03F0000000000000040",
 			expectError: false,
 		},
 		{

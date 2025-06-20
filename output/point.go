@@ -1,6 +1,9 @@
 package output
 
 import (
+	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -45,6 +48,28 @@ func WktFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	return fmt.Sprintf("POINT (%g %g)", point[0], point[1]), nil
 }
 
+// WkbhexFormatPoint formats a point as a WKB (Well-Known Binary) Point geometry encoded as hexadecimal.
+// The returned string will be the hexadecimal representation of the WKB binary data.
+func WkbhexFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
+	// Create buffer for WKB data
+	buf := new(bytes.Buffer)
+
+	// Write byte order (little endian)
+	binary.Write(buf, binary.LittleEndian, uint8(1))
+
+	// Write geometry type (point = 1)
+	binary.Write(buf, binary.LittleEndian, uint32(1))
+
+	// Write X coordinate
+	binary.Write(buf, binary.LittleEndian, point[0])
+
+	// Write Y coordinate
+	binary.Write(buf, binary.LittleEndian, point[1])
+
+	// Convert to hex string
+	return strings.ToUpper(hex.EncodeToString(buf.Bytes())), nil
+}
+
 func JsonFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	data, err := json.Marshal(point)
 	if err != nil {
@@ -75,14 +100,17 @@ func GeojsonlFormatPoint(settings OutputSettings, coords [2]float64) (string, er
 
 // pointOutputFormatters maps format type constants to their corresponding format functions
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
-	FormatGoTpl:   TemplatedFormatPoint,
-	FormatComma:   CommaFormatPoint,
-	FormatSpace:   SpaceFormatPoint,
-	FormatTab:     TabFormatPoint,
-	FormatWkt:     WktFormatPoint,
-	FormatJson:    JsonFormatPoint,
-	FormatJsonl:   JsonFormatPoint,
-	FormatGeoJson: GeojsonFormatPoint,
+	FormatGoTpl:    TemplatedFormatPoint,
+	FormatComma:    CommaFormatPoint,
+	FormatSpace:    SpaceFormatPoint,
+	FormatTab:      TabFormatPoint,
+	FormatJson:     JsonFormatPoint,
+	FormatJsonl:    JsonFormatPoint,
+	FormatGeoJson:  GeojsonFormatPoint,
+	FormatGeoJsonl: GeojsonlFormatPoint,
+	FormatWkt:      WktFormatPoint,
+	FormatWkbhex:   WkbhexFormatPoint,
+	// TODO dublincore
 	// TODO url?
 }
 
