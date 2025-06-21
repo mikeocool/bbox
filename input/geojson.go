@@ -384,12 +384,17 @@ func parseJsonBounds(input []byte) (core.Bbox, error) {
 		return core.Bbox{}, fmt.Errorf("invalid bbox length: %d", len(bounds))
 	}
 
-	return core.Bbox{
+	bbox := core.Bbox{
 		Left:   bounds[0],
 		Bottom: bounds[1],
 		Right:  bounds[2],
 		Top:    bounds[3],
-	}, nil
+	}
+
+	if err := bbox.Validate(); err != nil {
+		return core.Bbox{}, err
+	}
+	return bbox, nil
 }
 
 // updateBounds updates the min/max bounds with the given coordinate

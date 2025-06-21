@@ -579,6 +579,11 @@ func TestParseGeojson(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:    "invalid bounds array",
+			input:   "[10,-5,-10,5]",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
