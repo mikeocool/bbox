@@ -322,6 +322,38 @@ func TestParseGeojson(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "Valid GeoJSON followed by garbage data",
+			input:   `{"type":"Point","coordinates":[1,2]}garbage data here`,
+			wantErr: true,
+		},
+		{
+			name: "Feature with additional unexpected keys",
+			input: `{
+				"type": "Feature",
+				"geometry": {
+					"type": "Point",
+					"coordinates": [10.5, 20.3]
+				},
+				"properties": {
+					"name": "Test Point",
+					"category": "marker"
+				},
+				"id": "feature-123",
+				"customField": "unexpected value",
+				"metadata": {
+					"source": "user input",
+					"timestamp": "2023-01-01"
+				}
+			}`,
+			want: core.Bbox{
+				Left:   10.5,
+				Bottom: 20.3,
+				Right:  10.5,
+				Top:    20.3,
+			},
+			wantErr: false,
+		},
+		{
 			name: "Empty FeatureCollection",
 			input: `{
 				"type": "FeatureCollection",
