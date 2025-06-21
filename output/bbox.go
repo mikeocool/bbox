@@ -2,8 +2,6 @@ package output
 
 import (
 	"bytes"
-	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -92,31 +90,10 @@ func WktFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
 // WkbhexFormat formats a Bbox as a WKB (Well-Known Binary) Polygon geometry encoded as hexadecimal.
 // The returned string will be the hexadecimal representation of the WKB binary data.
 func WkbhexFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
-	coords := bbox.Polygon()
-
 	// Create buffer for WKB data
 	buf := new(bytes.Buffer)
-
-	// Write byte order (little endian)
-	binary.Write(buf, binary.LittleEndian, uint8(1))
-
-	// Write geometry type (polygon = 3)
-	binary.Write(buf, binary.LittleEndian, uint32(3))
-
-	// Write number of rings (always 1 for a simple polygon)
-	binary.Write(buf, binary.LittleEndian, uint32(1))
-
-	// Write number of points in the ring
-	binary.Write(buf, binary.LittleEndian, uint32(len(coords)))
-
-	// Write each coordinate pair
-	for _, coord := range coords {
-		binary.Write(buf, binary.LittleEndian, coord[0])
-		binary.Write(buf, binary.LittleEndian, coord[1])
-	}
-
-	// Convert to hex string
-	return strings.ToUpper(hex.EncodeToString(buf.Bytes())), nil
+	WkbPolygon(buf, bbox)
+	return WkbHex(buf), nil
 }
 
 // UrlFormat formats a Bbox as a URL to visualize it on various mapping services.

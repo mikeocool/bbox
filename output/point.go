@@ -2,8 +2,6 @@ package output
 
 import (
 	"bytes"
-	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -53,21 +51,8 @@ func WktFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 func WkbhexFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
 	// Create buffer for WKB data
 	buf := new(bytes.Buffer)
-
-	// Write byte order (little endian)
-	binary.Write(buf, binary.LittleEndian, uint8(1))
-
-	// Write geometry type (point = 1)
-	binary.Write(buf, binary.LittleEndian, uint32(1))
-
-	// Write X coordinate
-	binary.Write(buf, binary.LittleEndian, point[0])
-
-	// Write Y coordinate
-	binary.Write(buf, binary.LittleEndian, point[1])
-
-	// Convert to hex string
-	return strings.ToUpper(hex.EncodeToString(buf.Bytes())), nil
+	WkbPoint(buf, point)
+	return WkbHex(buf), nil
 }
 
 func JsonFormatPoint(_ OutputSettings, point [2]float64) (string, error) {
