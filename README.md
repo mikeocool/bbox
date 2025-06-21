@@ -96,16 +96,11 @@ Output formats:
 ```
 
 # TODO
-<<<<<<< HEAD
-* wkbhex collection output is broken
-=======
 * for Bbox generated from bounds input, validate after creating
     * json
 * auto-recognize file paths (and URLs?) and load as files
-* fix collection wkbhex
 * wkbhex input
 * align input and output options across commands
->>>>>>> main
 * add github actions for testing
 * basic projection handling
     * read the projection if we can
