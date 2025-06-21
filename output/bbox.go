@@ -131,11 +131,18 @@ func UrlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 		return FormatWithTemplate("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
 	case "osm-api":
 		return FormatWithTemplate("https://www.openstreetmap.org/api/0.6/map?bbox={{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
+	case "maps.google.com", "google-maps":
+		return GoogleMapsUrl(bbox)
 	case "geojson.io":
 		return GeojsonIoUrl(bbox)
 	default:
 		return "", fmt.Errorf("Unknown url type: %s", urlType)
 	}
+}
+
+func GoogleMapsUrl(bbox core.Bbox) (string, error) {
+	center := bbox.Center()
+	return fmt.Sprintf("https://maps.google.com/maps?ll=%f,%f&spn=%f,%f", center[1], center[0], bbox.Height(), bbox.Width()), nil
 }
 
 // GeojsonIoUrl creates a URL to visualize the bbox on geojson.io.

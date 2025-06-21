@@ -105,13 +105,13 @@ func TestParseRaw(t *testing.T) {
 		},
 		{
 			name:        "Valid input - scientific notation",
-			input:       "1e2 2.5e1 3.0E0 4e-1",
+			input:       "1e2 4e-1 3.0E3 2.5e1",
 			expectError: false,
 			expectBbox: &core.Bbox{
 				Left:   100.0,
-				Bottom: 25.0,
-				Right:  3.0,
-				Top:    0.4,
+				Bottom: 0.4,
+				Right:  3000.0,
+				Top:    25.0,
 			},
 		},
 		{
@@ -161,6 +161,12 @@ func TestParseRaw(t *testing.T) {
 			input:       "1.0 xyz 3.0 4.0",
 			expectError: true,
 			errorMsg:    "could not parse value: xyz",
+		},
+		{
+			name:        "Invalid box order",
+			input:       "4.0 5.0 1.0 4.0",
+			expectError: true,
+			errorMsg:    "invalid bbox: Right (1.000000) must be greater than Left (4.000000)",
 		},
 		{
 			name:        "Too few numbers - 3 values",
