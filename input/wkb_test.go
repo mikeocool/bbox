@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"math"
 	"testing"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 func TestParseWKBBounds(t *testing.T) {
@@ -306,6 +308,144 @@ func TestParseHexWKB(t *testing.T) {
 					if got[i] != tt.want[i] {
 						t.Errorf("parseHexWKB()[%d] = %v, want %v", i, got[i], tt.want[i])
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestParseWKBToBbox(t *testing.T) {
+	tests := []struct {
+		name    string
+		wkbHex  string
+		wantBox core.Bbox
+		wantErr bool
+	}{
+		{
+			name:   "Point",
+			wkbHex: "0101000000000000000000F03F0000000000000040", // POINT(1 2)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "LineString",
+			wkbHex: "010200000002000000000000000000F03F00000000000000400000000000000840000000000000F03F", // LINESTRING(1 2, 3 1)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    2.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "Polygon",
+			wkbHex: "01030000000100000005000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000", // POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
+			wantBox: core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  1.0,
+				Top:    1.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:    "Invalid WKB",
+			wkbHex:  "01FF000000", // Invalid type
+			wantBox: core.Bbox{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wkb, err := hex.DecodeString(tt.wkbHex)
+			if err != nil && !tt.wantErr {
+				t.Fatalf("Failed to decode test hex: %v", err)
+			}
+
+			got, err := ParseWKBToBbox(wkb)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseWKBToBbox() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				const epsilon = 1e-10
+				if math.Abs(got.Left-tt.wantBox.Left) > epsilon ||
+					math.Abs(got.Bottom-tt.wantBox.Bottom) > epsilon ||
+					math.Abs(got.Right-tt.wantBox.Right) > epsilon ||
+					math.Abs(got.Top-tt.wantBox.Top) > epsilon {
+					t.Errorf("ParseWKBToBbox() = %+v, want %+v", got, tt.wantBox)
+				}
+			}
+		})
+	}
+}
+
+func TestParseHexWKBToBbox(t *testing.T) {
+	tests := []struct {
+		name    string
+		hexStr  string
+		wantBox core.Bbox
+		wantErr bool
+	}{
+		{
+			name:   "Point hex",
+			hexStr: "0101000000000000000000F03F0000000000000040", // POINT(1 2)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "LineString hex with whitespace",
+			hexStr: " 010200000002000000000000000000F03F00000000000000400000000000000840000000000000F03F ", // LINESTRING(1 2, 3 1)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    2.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:    "Invalid hex string",
+			hexStr:  "01GH000000",
+			wantBox: core.Bbox{},
+			wantErr: true,
+		},
+		{
+			name:    "Empty hex string",
+			hexStr:  "",
+			wantBox: core.Bbox{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseHexWKBToBbox(tt.hexStr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseHexWKBToBbox() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				const epsilon = 1e-10
+				if math.Abs(got.Left-tt.wantBox.Left) > epsilon ||
+					math.Abs(got.Bottom-tt.wantBox.Bottom) > epsilon ||
+					math.Abs(got.Right-tt.wantBox.Right) > epsilon ||
+					math.Abs(got.Top-tt.wantBox.Top) > epsilon {
+					t.Errorf("ParseHexWKBToBbox() = %+v, want %+v", got, tt.wantBox)
 				}
 			}
 		})

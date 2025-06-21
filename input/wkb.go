@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
+
+	"github.com/mikeocool/bbox/core"
 )
 
 const (
@@ -84,6 +87,15 @@ func ParseWKBBounds(wkb []byte) (minX, minY, maxX, maxY float64, err error) {
 }
 
 func (w *wkbReader) extractBounds(geomType uint32, minX, minY, maxX, maxY *float64) error {
+	// Handle EWKB SRID flag
+	if geomType&0x20000000 != 0 {
+		// Read and ignore SRID
+		var srid uint32
+		if err := binary.Read(w.r, w.byteOrder, &srid); err != nil {
+			return err
+		}
+	}
+	
 	// Strip any flags from geometry type (like SRID flag)
 	baseType := geomType & 0xff
 
@@ -295,4 +307,36 @@ func (w *wkbReader) readGeometryCollectionBounds(minX, minY, maxX, maxY *float64
 		}
 	}
 	return nil
+}
+
+// ParseWKBToBbox parses WKB binary data and returns a core.Bbox
+func ParseWKBToBbox(wkb []byte) (core.Bbox, error) {
+	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	if err != nil {
+		return core.Bbox{}, err
+	}
+	
+	bbox := core.Bbox{
+		Left:   minX,
+		Bottom: minY,
+		Right:  maxX,
+		Top:    maxY,
+	}
+	
+	if err := bbox.Validate(); err != nil {
+		return core.Bbox{}, err
+	}
+	
+	return bbox, nil
+}
+
+// ParseHexWKBToBbox parses hex-encoded WKB data and returns a core.Bbox
+func ParseHexWKBToBbox(hexStr string) (core.Bbox, error) {
+	hexStr = strings.TrimSpace(hexStr)
+	wkb, err := ParseHexWKB(hexStr)
+	if err != nil {
+		return core.Bbox{}, err
+	}
+	
+	return ParseWKBToBbox(wkb)
 }

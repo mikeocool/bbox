@@ -219,6 +219,57 @@ func TestParseRaw(t *testing.T) {
 			expectError: true,
 			errorMsg:    "invalid input",
 		},
+
+		// WKB tests
+		{
+			name:        "Valid WKB hex - Point",
+			input:       "0101000000000000000000F03F0000000000000040", // POINT(1 2)
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+		},
+		{
+			name:        "Valid WKB hex - LineString",
+			input:       "010200000002000000000000000000F03F00000000000000400000000000000840000000000000F03F", // LINESTRING(1 2, 3 1)
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    2.0,
+			},
+		},
+		{
+			name:        "Valid WKB hex - Polygon",
+			input:       "01030000000100000005000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000", // POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  1.0,
+				Top:    1.0,
+			},
+		},
+		{
+			name:        "Valid WKB hex with whitespace",
+			input:       " 0101000000000000000000F03F0000000000000040 ", // POINT(1 2) with whitespace
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+		},
+		{
+			name:        "Invalid WKB hex - bad characters",
+			input:       "01GH000000000000000000F03F0000000000000040",
+			expectError: true,
+		},
 	}
 
 	for _, tc := range tests {
