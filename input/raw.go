@@ -25,6 +25,24 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 		return bbox, nil
 	}
 
+	// attempt to parse as WKB (binary or hex-encoded)
+	if len(input) > 0 {
+		// First try as hex-encoded WKB
+		inputStr := strings.TrimSpace(string(input))
+		if isHexString(inputStr) {
+			bbox, err := ParseHexWKBToBbox(inputStr)
+			if err == nil {
+				return bbox, nil
+			}
+		}
+		
+		// Then try as binary WKB
+		bbox, err := ParseWKBToBbox(input)
+		if err == nil {
+			return bbox, nil
+		}
+	}
+
 	var rbbox *core.Bbox
 
 	expectedLineVals := 0 // unset value
@@ -106,4 +124,19 @@ func parseLine(line string) ([]float64, error) {
 	}
 
 	return floats[:], nil
+}
+
+// isHexString checks if a string contains only hexadecimal characters
+func isHexString(s string) bool {
+	if len(s) == 0 || len(s)%2 != 0 {
+		return false
+	}
+	
+	for _, c := range s {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+	
+	return true
 }
