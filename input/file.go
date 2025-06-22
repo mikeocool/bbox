@@ -75,12 +75,7 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 	}
 
 	if SniffShapefile(detectionBuf) {
-		box, err := ParseShapefile(fullReader)
-		if err == nil {
-			return box, nil
-		} else {
-			fmt.Printf("Error parsing shapefile: %s", err)
-		}
+		return ParseShapefile(fullReader)
 	}
 
 	// Note: GeoParquet files require random access and cannot be read from a stream

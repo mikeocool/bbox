@@ -9,6 +9,7 @@ import (
 
 	"github.com/mikeocool/bbox/core"
 	"github.com/mikeocool/bbox/input"
+	"github.com/mikeocool/bbox/logger"
 	"github.com/mikeocool/bbox/output"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ import (
 // Flag variables
 var inputParams input.InputParams
 var drawFlag bool
+var verboseFlag bool
 var outputSettings output.OutputSettings
 
 // RootCmd represents the base command when called without any subcommands
@@ -34,6 +36,11 @@ var RootCmd = &cobra.Command{
 	RunE: runRoot,
 
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Enable debug logging if verbose flag is set
+		if verboseFlag {
+			logger.EnableDebug()
+		}
+
 		// If the flags have had values passed in set them
 		inputParams.Left = GetFlagFloat64(cmd, "left")
 		inputParams.Bottom = GetFlagFloat64(cmd, "bottom")
@@ -83,6 +90,7 @@ func init() {
 	RootCmd.PersistentFlags().Float64Var(&inputParams.Buffer, "buffer", 0, "Grow the box by the specified amount, or shrink it if the value is negative.")
 
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
+	RootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "Enable verbose debug logging")
 
 	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")
 	RootCmd.PersistentFlags().IntVar(&outputSettings.GeojsonIndent, "geojson-indent", 0, "Indentation level for geojson output format")

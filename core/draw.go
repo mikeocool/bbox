@@ -15,6 +15,8 @@ import (
 	"os/signal"
 	"runtime"
 	"time"
+
+	"github.com/mikeocool/bbox/logger"
 )
 
 const defaultPort = 5500
@@ -69,7 +71,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 			Bbox: inputBbox,
 		})
 		if err != nil {
-			log.Printf("Failed to execute template: %v", err)
+			logger.Printf("Failed to execute template: %v", err)
 			http.Error(w, "Failed to render template", http.StatusInternalServerError)
 			return
 		}
@@ -123,7 +125,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 
 	// Start the server in a goroutine
 	go func() {
-		log.Printf("Go to http://localhost:%d to draw your bounding box\n", s.Port)
+		logger.Printf("Go to http://localhost:%d to draw your bounding box\n", s.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -146,20 +148,20 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	select {
 	case bbox = <-bboxCh:
 		boxCreated = true
-		log.Println("Received bounding box data")
+		logger.Printf("Received bounding box data")
 	case <-sigCh:
-		log.Println("Interrupted by user")
+		logger.Printf("Interrupted by user")
 	}
 
 	// Shutdown the server
-	log.Println("Shutting down server...")
+	logger.Printf("Shutting down server...")
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		return Bbox{}, fmt.Errorf("server shutdown error: %w", err)
 	}
-	log.Println("Server stopped")
+	logger.Printf("Server stopped")
 
 	if !boxCreated {
 		return Bbox{}, fmt.Errorf("No bounding box submitted")
@@ -197,6 +199,6 @@ func openBrowser(url string) {
 	}
 
 	if err != nil {
-		log.Printf("Failed to open browser: %v", err)
+		logger.Printf("Failed to open browser: %v", err)
 	}
 }

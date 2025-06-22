@@ -2,7 +2,6 @@ package input
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/mikeocool/bbox/core"
 	"github.com/mikeocool/bbox/geocoding"
+	"github.com/mikeocool/bbox/logger"
 )
 
 type InputParams struct {
@@ -223,7 +223,7 @@ var PlaceBuilder = BboxBuilder{
 			return core.Bbox{}, err
 		}
 
-		log.Printf("Geocoder matched %s: %s\n", result.Type, result.FullName)
+		logger.Printf("Geocoder matched %s: %s\n", result.Type, result.FullName)
 
 		// If width and height are specified, create bounds around the center
 		if params.HasWidth() && params.HasHeight() {
