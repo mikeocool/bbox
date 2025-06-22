@@ -14,7 +14,7 @@ type Bbox struct {
 
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
-func (b Bbox) Validate() error {
+func (b *Bbox) Validate() error {
 	if b.Right < b.Left {
 		return fmt.Errorf("invalid bbox: Right (%f) must be greater than Left (%f)", b.Right, b.Left)
 	}
@@ -26,14 +26,14 @@ func (b Bbox) Validate() error {
 	return nil
 }
 
-func (b Bbox) Equals(other Bbox) bool {
+func (b *Bbox) Equals(other Bbox) bool {
 	return b.Left == other.Left && b.Bottom == other.Bottom && b.Right == other.Right && b.Top == other.Top
 }
 
 // Polygon returns the corner points of the bounding box as a closed polygon.
 // The points are returned in counter-clockwise order starting from the bottom-left corner,
 // with the first point repeated at the end to close the polygon.
-func (b Bbox) Polygon() [][2]float64 {
+func (b *Bbox) Polygon() [][2]float64 {
 	return [][2]float64{
 		{b.Left, b.Bottom},  // bottom-left
 		{b.Right, b.Bottom}, // bottom-right
@@ -44,7 +44,7 @@ func (b Bbox) Polygon() [][2]float64 {
 }
 
 // Bounds returns the bounding box as a list of the bounds
-func (b Bbox) Bounds() []float64 {
+func (b *Bbox) Bounds() []float64 {
 	return []float64{
 		b.Left,
 		b.Bottom, // bottom-left
@@ -54,7 +54,7 @@ func (b Bbox) Bounds() []float64 {
 }
 
 // Center returns the center point of the bounding box.
-func (b Bbox) Center() [2]float64 {
+func (b *Bbox) Center() [2]float64 {
 	return [2]float64{
 		(b.Left + b.Right) / 2,
 		(b.Bottom + b.Top) / 2,
@@ -62,21 +62,21 @@ func (b Bbox) Center() [2]float64 {
 }
 
 // IsZero returns true if the bounding box has zero coordinates.
-func (b Bbox) IsZero() bool {
+func (b *Bbox) IsZero() bool {
 	return b.Left == 0 && b.Bottom == 0 && b.Right == 0 && b.Top == 0
 }
 
 // Width returns the width of the bounding box.
-func (b Bbox) Width() float64 {
+func (b *Bbox) Width() float64 {
 	return b.Right - b.Left
 }
 
 // Height returns the height of the bounding box.
-func (b Bbox) Height() float64 {
+func (b *Bbox) Height() float64 {
 	return b.Top - b.Bottom
 }
 
-func (b Bbox) Union(other Bbox) Bbox {
+func (b *Bbox) Union(other Bbox) Bbox {
 	return Bbox{
 		Left:   math.Min(b.Left, other.Left),
 		Bottom: math.Min(b.Bottom, other.Bottom),
@@ -86,7 +86,7 @@ func (b Bbox) Union(other Bbox) Bbox {
 }
 
 // extend the bbox to include the given point
-func (b Bbox) Extend(x, y float64) Bbox {
+func (b *Bbox) Extend(x, y float64) Bbox {
 	return Bbox{
 		Left:   math.Min(b.Left, x),
 		Bottom: math.Min(b.Bottom, y),
@@ -99,7 +99,7 @@ func (b Bbox) Extend(x, y float64) Bbox {
 // by the specified radius in all directions.
 // If the radius is negative and would result in an invalid bounding box (Right <= Left or Top <= Bottom),
 // an error is returned.
-func (b Bbox) Buffer(radius float64) (Bbox, error) {
+func (b *Bbox) Buffer(radius float64) (Bbox, error) {
 	width := b.Width()
 	height := b.Height()
 
@@ -124,7 +124,7 @@ func (b Bbox) Buffer(radius float64) (Bbox, error) {
 // Slice divides the bounding box into a grid of columns and rows,
 // returning a slice of bounding boxes for each cell in the grid.
 // The boxes are returned in row-major order (left to right, top to bottom).
-func (b Bbox) Slice(columns, rows int) []Bbox {
+func (b *Bbox) Slice(columns, rows int) []Bbox {
 	if columns <= 0 || rows <= 0 {
 		return []Bbox{}
 	}
