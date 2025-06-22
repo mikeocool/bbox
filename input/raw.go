@@ -14,7 +14,7 @@ import (
 func ParseRaw(input []byte) (core.Bbox, error) {
 	// TODO integrate ParseData here
 
-	// attempt to parse as a GeoJSON document
+	// attempt to parse common file formats
 	bbox, err := ParseData(bytes.NewReader(input))
 	if err != nil {
 		if !errors.Is(err, ErrUnrecognizedDataFormat) {
@@ -35,7 +35,7 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 				return bbox, nil
 			}
 		}
-		
+
 		// Then try as binary WKB
 		bbox, err := ParseWKBToBbox(input)
 		if err == nil {
@@ -131,12 +131,12 @@ func isHexString(s string) bool {
 	if len(s) == 0 || len(s)%2 != 0 {
 		return false
 	}
-	
+
 	for _, c := range s {
 		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
 			return false
 		}
 	}
-	
+
 	return true
 }
