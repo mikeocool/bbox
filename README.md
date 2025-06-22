@@ -97,7 +97,6 @@ Output formats:
 
 # TODO
 * auto-recognize file paths (and URLs?) and load as files
-* wkbhex input
 * align input and output options across commands
 * add github actions for testing
 * basic projection handling
@@ -118,7 +117,6 @@ Output formats:
     * overpass ql
     * r/sf format
     * option to open browser for url formats
-* match input and output formats as closely as possible
 * option to specify decimal precision/format
 * handle projections
     * https://github.com/twpayne/go-proj
