@@ -96,8 +96,6 @@ Output formats:
 ```
 
 # TODO
-* for Bbox generated from bounds input, validate after creating
-    * json
 * auto-recognize file paths (and URLs?) and load as files
 * wkbhex input
 * align input and output options across commands

@@ -99,14 +99,7 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 // - Single Polygon
 // - 3D coordinate array (polygon with rings): [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
-// func ParseGeojson(r io.Reader) (core.Bbox, error) {
-// 	input, err := io.ReadAll(r)
-// 	if err != nil {
-// 		return core.Bbox{}, fmt.Errorf("failed to read GeoJSON data: %w", err)
-// 	}
-
-// 	return GeojsonDocBbox(input)
-// }
+// - Bbox as array [1,2,3,4]
 
 func GeojsonDocBbox(input []byte) (core.Bbox, error) {
 	var bbox core.Bbox
