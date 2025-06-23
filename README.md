@@ -110,7 +110,6 @@ Output formats:
     * vector tiles(?)
     * preview bbox in common formats
     * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
-* Add a verbose flag
 * kml input
 * output formats
     * lines
