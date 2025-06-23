@@ -104,7 +104,6 @@ Output formats:
     * for projections that are close WGS84, allow --drow but show a warning
     * for those that aren't show error
 * cleanup draw UI
-    * handle click and drag when creating box
     * Show popup success message with button to close window when done
     * touch interactions/small screen UI
     * vector tiles(?)

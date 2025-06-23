@@ -437,9 +437,10 @@
             const doneButton = document.getElementById('done-button');
             const clearButton = document.getElementById('clear');
 
-            map.on('click', function(e) {
+            map.on('mousedown', function(e) {
                 if(!isDrawing) return;
 
+                e.preventDefault();
                 if(!anchorPoint) {
                     startNewBox(e.lngLat);
                 } else {
@@ -449,6 +450,7 @@
 
             map.on('mousemove', function(e) {
                 if (isDrawing && anchorPoint) {
+                    e.preventDefault();
                     updateBox(e.lngLat);
                 }
             });
