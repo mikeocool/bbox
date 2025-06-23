@@ -30,7 +30,7 @@ type DrawServer struct {
 }
 
 type TemplateContext struct {
-	Bbox Bbox
+	Bbox *Bbox
 }
 
 // StartDrawServer starts a web server for drawing bounding boxes.
@@ -68,7 +68,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		err := tmpl.Execute(w, TemplateContext{
-			Bbox: inputBbox,
+			Bbox: &inputBbox,
 		})
 		if err != nil {
 			logger.Printf("Failed to execute template: %v", err)
@@ -125,7 +125,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 
 	// Start the server in a goroutine
 	go func() {
-		logger.Printf("Go to http://localhost:%d to draw your bounding box\n", s.Port)
+		fmt.Fprintf(os.Stderr, "Go to http://localhost:%d to draw your bounding box\n", s.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -199,6 +199,6 @@ func openBrowser(url string) {
 	}
 
 	if err != nil {
-		logger.Printf("Failed to open browser: %v", err)
+		fmt.Fprintf(os.Stderr, "Failed to open browser: %v", err)
 	}
 }
