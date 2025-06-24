@@ -83,5 +83,5 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 		return core.Bbox{}, fmt.Errorf("GeoParquet files must be read from disk, not from stdin or streams")
 	}
 
-	return core.Bbox{}, ErrUnrecognizedDataFormat
+	return ParseSimpleRaw(fullReader)
 }

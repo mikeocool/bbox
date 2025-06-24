@@ -2,51 +2,43 @@ package input
 
 import (
 	"bufio"
-	"bytes"
-	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
 	"github.com/mikeocool/bbox/core"
 )
 
-func ParseRaw(input []byte) (core.Bbox, error) {
-	// TODO integrate ParseData here
+func ParseRawArgs(args []string) (core.Bbox, error) {
+	// TODO attempt to validate if args are file paths
+	// Call LoadFiles
 
-	// attempt to parse common file formats
-	bbox, err := ParseData(bytes.NewReader(input))
-	if err != nil {
-		if !errors.Is(err, ErrUnrecognizedDataFormat) {
-			return core.Bbox{}, err
-		}
-		// Continue to try other parsing methods
-	} else {
-		return bbox, nil
-	}
-
-	// attempt to parse as WKB (binary or hex-encoded)
-	if len(input) > 0 {
-		// First try as hex-encoded WKB
-		inputStr := strings.TrimSpace(string(input))
-		if isHexString(inputStr) {
-			bbox, err := ParseHexWKBToBbox(inputStr)
-			if err == nil {
-				return bbox, nil
-			}
-		}
-
-		// Then try as binary WKB
-		bbox, err := ParseWKBToBbox(input)
+	// TOOD accept WKT, GeoJSON, HexWKB
+	// NOTE these should also be accepted by ParseData
+	// -- maybe break them out into a function called here and ParseData
+	// accept hex wkb on cli
+	inputStr := strings.TrimSpace(args[0])
+	if isHexString(inputStr) {
+		bbox, err := ParseHexWKBToBbox(inputStr)
 		if err == nil {
 			return bbox, nil
 		}
 	}
 
+	// Join args into a single string and try parsing as simple format
+	joinedArgs := strings.Join(args, " ")
+	reader := strings.NewReader(joinedArgs)
+	return ParseSimpleRaw(reader)
+}
+
+// Parse simple bbox formats -- 4 ints or 2 ints separated by
+// space, tab, or comma
+func ParseSimpleRaw(r io.Reader) (core.Bbox, error) {
 	var rbbox *core.Bbox
 
 	expectedLineVals := 0 // unset value
-	scanner := bufio.NewScanner(bytes.NewReader(input))
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -99,7 +91,7 @@ func ParseRaw(input []byte) (core.Bbox, error) {
 	}
 
 	if rbbox == nil {
-		return core.Bbox{}, fmt.Errorf("invalid input")
+		return core.Bbox{}, ErrUnrecognizedDataFormat
 	}
 
 	return *rbbox, nil

@@ -2,6 +2,7 @@ package input
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strconv"
@@ -13,15 +14,18 @@ import (
 )
 
 type InputParams struct {
-	Left            *float64
-	Bottom          *float64
-	Right           *float64
-	Top             *float64
-	Center          []float64 // a pair of floats representing the center coordinates
-	Width           string
-	Height          string
-	Raw             []byte
-	File            []string
+	Left   *float64
+	Bottom *float64
+	Right  *float64
+	Top    *float64
+
+	Center []float64 // a pair of floats representing the center coordinates
+	Width  string
+	Height string
+
+	DataStream io.Reader
+	RawArgs    []string
+
 	Place           string
 	Geocoder        string
 	GeocoderURL     string
@@ -40,7 +44,6 @@ func (params *InputParams) GetBbox() (core.Bbox, error) {
 	builders := []BboxBuilder{
 		RawBuilder,
 		PlaceBuilder,
-		FileBuilder,
 		CenterBuilder,
 		BoundsBuilder,
 	}
@@ -128,65 +131,72 @@ type BboxBuilder struct {
 
 var RawBuilder = BboxBuilder{
 	IsUsable: func(params *InputParams) bool {
-		return params.Raw != nil
+		return params.RawArgs != nil || params.DataStream != nil
 	},
 	ValidateParams: func(params *InputParams) error {
+		if params.RawArgs != nil && params.DataStream != nil {
+			return InputValidationError{Field: "input", Message: "can only specify input using Stdin or Args, not both"}
+		}
 		return nil
 	},
-	UsedFields: []string{"Raw"},
+	UsedFields: []string{"RawArgs", "DataStream"},
 	Build: func(params *InputParams) (core.Bbox, error) {
-		return ParseRaw(params.Raw)
+		if params.DataStream != nil {
+			return ParseData(params.DataStream)
+		}
+
+		return ParseRawArgs(params.RawArgs)
 	},
 }
 
-var FileBuilder = BboxBuilder{
-	IsUsable: func(params *InputParams) bool {
-		return len(params.File) > 0
-	},
-	ValidateParams: func(params *InputParams) error {
-		// Filter out blank and whitespace values
-		var validFiles []string
-		for _, file := range params.File {
-			trimmed := strings.TrimSpace(file)
-			if trimmed != "" {
-				validFiles = append(validFiles, trimmed)
-			}
-		}
+// var FileBuilder = BboxBuilder{
+// 	IsUsable: func(params *InputParams) bool {
+// 		return len(params.File) > 0
+// 	},
+// 	ValidateParams: func(params *InputParams) error {
+// 		// Filter out blank and whitespace values
+// 		var validFiles []string
+// 		for _, file := range params.File {
+// 			trimmed := strings.TrimSpace(file)
+// 			if trimmed != "" {
+// 				validFiles = append(validFiles, trimmed)
+// 			}
+// 		}
 
-		if len(validFiles) == 0 {
-			return InputValidationError{Field: "File", Message: "no valid file paths provided"}
-		}
+// 		if len(validFiles) == 0 {
+// 			return InputValidationError{Field: "File", Message: "no valid file paths provided"}
+// 		}
 
-		return nil
-	},
-	UsedFields: []string{"File"},
-	Build: func(params *InputParams) (core.Bbox, error) {
-		var bbox *core.Bbox
+// 		return nil
+// 	},
+// 	UsedFields: []string{"File"},
+// 	Build: func(params *InputParams) (core.Bbox, error) {
+// 		var bbox *core.Bbox
 
-		for _, file := range params.File {
-			if file == "" {
-				continue
-			}
-			fbox, err := LoadFile(file)
-			if err == ErrNoFeaturesFound {
-				continue
-			} else if err != nil {
-				return core.Bbox{}, err
-			}
+// 		for _, file := range params.File {
+// 			if file == "" {
+// 				continue
+// 			}
+// 			fbox, err := LoadFile(file)
+// 			if err == ErrNoFeaturesFound {
+// 				continue
+// 			} else if err != nil {
+// 				return core.Bbox{}, err
+// 			}
 
-			if bbox == nil {
-				bbox = &fbox
-			} else {
-				updated_bbox := bbox.Union(fbox)
-				bbox = &updated_bbox
-			}
-		}
-		if bbox == nil {
-			return core.Bbox{}, ErrNoFeaturesFound
-		}
-		return *bbox, nil
-	},
-}
+// 			if bbox == nil {
+// 				bbox = &fbox
+// 			} else {
+// 				updated_bbox := bbox.Union(fbox)
+// 				bbox = &updated_bbox
+// 			}
+// 		}
+// 		if bbox == nil {
+// 			return core.Bbox{}, ErrNoFeaturesFound
+// 		}
+// 		return *bbox, nil
+// 	},
+// }
 
 var PlaceBuilder = BboxBuilder{
 	Name: "place",
@@ -208,7 +218,7 @@ var PlaceBuilder = BboxBuilder{
 	Build: func(params *InputParams) (core.Bbox, error) {
 		var result *geocoding.GeocodeResult
 		var err error
-		
+
 		// Geocode the place
 		if params.GeocoderURL != "" {
 			result, err = geocoding.GeocodePlaceWithURL(params.GeocoderURL, params.Place, params.GeocoderHeaders)

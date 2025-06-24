@@ -2,6 +2,7 @@ package input
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -288,11 +289,11 @@ func TestParseDataDetectionFallback(t *testing.T) {
 		_, err := ParseData(strings.NewReader(input))
 		if err == nil {
 			t.Errorf("ParseData() expected error when no format can be detected")
+			return
 		}
 
-		expectedMsg := "Input does not appear to be a valid format"
-		if err.Error() != expectedMsg {
-			t.Errorf("ParseData() error = %v, want %v", err.Error(), expectedMsg)
+		if errors.Is(err, ErrUnrecognizedDataFormat) {
+			t.Errorf("ParseData() error = %v, want %v", err.Error(), ErrUnrecognizedDataFormat.Error())
 		}
 	})
 }
@@ -555,7 +556,7 @@ func TestParseData_OSMXml(t *testing.T) {
 func TestParseData_OSMPbf(t *testing.T) {
 	// Test that ParseData can now handle OSM PBF via SniffOsmPbf detection
 	pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
-	
+
 	// Check if file exists
 	if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
 		t.Skip("Monaco PBF file not found, skipping test")
