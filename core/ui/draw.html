@@ -58,6 +58,11 @@
             #coords .label {
                 font-size: 10px;
                 color: #999;
+                user-select: none;
+            }
+
+            #coords .label:hover {
+                color: #666;
             }
 
             #pannel button {
@@ -180,8 +185,28 @@
             {{end}}
 
             let drawnBbox = null;
+            let currentLabelSet = 0; // 0: Left/Bottom/Right/Top, 1: Min X/Min Y/Max X/Max Y, 2: West/South/East/North
+
+            const labelSets = [
+                ['Left', 'Bottom', 'Right', 'Top'],
+                ['Min X', 'Min Y', 'Max X', 'Max Y'],
+                ['West', 'South', 'East', 'North']
+            ];
 
             const pannelEl = document.querySelector('#pannel');
+
+            function updateLabels() {
+                const labels = labelSets[currentLabelSet];
+                document.querySelector('#coords .left .label').textContent = labels[0];
+                document.querySelector('#coords .bottom .label').textContent = labels[1];
+                document.querySelector('#coords .right .label').textContent = labels[2];
+                document.querySelector('#coords .top .label').textContent = labels[3];
+            }
+
+            function rotateLabelSet() {
+                currentLabelSet = (currentLabelSet + 1) % labelSets.length;
+                updateLabels();
+            }
 
             function modeUpdated() {
                 let clsNames = [];
@@ -350,6 +375,12 @@
                         essential: true
                     });
                 }
+
+                // Initialize labels and add click listeners
+                updateLabels();
+                document.querySelectorAll('#coords .label').forEach(label => {
+                    label.addEventListener('click', rotateLabelSet);
+                });
 
             });
 
