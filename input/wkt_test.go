@@ -495,3 +495,183 @@ type errorReader struct {
 func (r *errorReader) Read(p []byte) (n int, err error) {
 	return 0, r.error
 }
+
+func TestSniffWkt(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		// Valid WKT formats
+		{
+			name:     "Simple POINT",
+			input:    "POINT (10 20)",
+			expected: true,
+		},
+		{
+			name:     "POINT with whitespace",
+			input:    "POINT   (10 20)",
+			expected: true,
+		},
+		{
+			name:     "POINT with leading whitespace",
+			input:    "  POINT (10 20)",
+			expected: true,
+		},
+		{
+			name:     "Lowercase point",
+			input:    "point (10 20)",
+			expected: true,
+		},
+		{
+			name:     "Mixed case point",
+			input:    "Point (10 20)",
+			expected: true,
+		},
+		{
+			name:     "LINESTRING",
+			input:    "LINESTRING (0 0, 10 10)",
+			expected: true,
+		},
+		{
+			name:     "POLYGON",
+			input:    "POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0))",
+			expected: true,
+		},
+		{
+			name:     "MULTIPOINT",
+			input:    "MULTIPOINT ((10 20), (30 40))",
+			expected: true,
+		},
+		{
+			name:     "MULTILINESTRING",
+			input:    "MULTILINESTRING ((0 0, 10 10), (20 20, 30 30))",
+			expected: true,
+		},
+		{
+			name:     "MULTIPOLYGON",
+			input:    "MULTIPOLYGON (((0 0, 10 0, 10 10, 0 10, 0 0)))",
+			expected: true,
+		},
+		{
+			name:     "GEOMETRYCOLLECTION",
+			input:    "GEOMETRYCOLLECTION (POINT (10 20))",
+			expected: true,
+		},
+		{
+			name:     "POINT with tabs",
+			input:    "POINT\t(10 20)",
+			expected: true,
+		},
+		{
+			name:     "POINT with newlines",
+			input:    "POINT\n(10 20)",
+			expected: true,
+		},
+
+		// Invalid formats
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: false,
+		},
+		{
+			name:     "Too short",
+			input:    "POIN",
+			expected: false,
+		},
+		{
+			name:     "Invalid geometry type",
+			input:    "INVALID (10 20)",
+			expected: false,
+		},
+		{
+			name:     "POINT without space or parenthesis",
+			input:    "POINTABC",
+			expected: false,
+		},
+		{
+			name:     "JSON data",
+			input:    `{"type": "Point", "coordinates": [10, 20]}`,
+			expected: false,
+		},
+		{
+			name:     "Plain coordinates",
+			input:    "10 20 30 40",
+			expected: false,
+		},
+		{
+			name:     "CSV data",
+			input:    "x,y,z\n10,20,30",
+			expected: false,
+		},
+		{
+			name:     "POINT in middle of string",
+			input:    "Some text POINT (10 20)",
+			expected: false,
+		},
+		{
+			name:     "Whitespace only",
+			input:    "   \n\t   ",
+			expected: false,
+		},
+		{
+			name:     "Partial geometry type",
+			input:    "POI (10 20)",
+			expected: false,
+		},
+
+		// Edge cases
+		{
+			name:     "POINT exactly 5 chars",
+			input:    "POINT",
+			expected: false, // No space or parenthesis after
+		},
+		{
+			name:     "POINT with immediate parenthesis",
+			input:    "POINT(10 20)",
+			expected: true,
+		},
+		{
+			name:     "Long geometry type",
+			input:    "GEOMETRYCOLLECTION (POINT (1 2))",
+			expected: true,
+		},
+		{
+			name:     "Binary data with POINT",
+			input:    "\x00\x01POINT (10 20)",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SniffWkt([]byte(tt.input))
+			if result != tt.expected {
+				t.Errorf("SniffWkt(%q) = %v, expected %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSniffWktWithLargeData(t *testing.T) {
+	// Test with data larger than typical detection buffers
+	largeWkt := "LINESTRING ("
+	for i := 0; i < 1000; i++ {
+		if i > 0 {
+			largeWkt += ", "
+		}
+		largeWkt += fmt.Sprintf("%d %d", i, i)
+	}
+	largeWkt += ")"
+
+	if !SniffWkt([]byte(largeWkt)) {
+		t.Error("SniffWkt should detect large WKT data")
+	}
+
+	// Test with large non-WKT data
+	largeNonWkt := strings.Repeat("not wkt data ", 1000)
+	if SniffWkt([]byte(largeNonWkt)) {
+		t.Error("SniffWkt should not detect large non-WKT data")
+	}
+}
