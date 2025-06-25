@@ -108,7 +108,6 @@ Output formats:
     * touch interactions/small screen UI
     * vector tiles(?)
     * preview bbox in common formats
-    * allow changing labels left/bottom/top/right, minx..., min lat, west/south/east/north
 * kml input
 * output formats
     * lines
