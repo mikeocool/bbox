@@ -26,7 +26,8 @@ var drawHTML []byte
 
 // DrawServer holds the configuration and state for the bounding box drawing server
 type DrawServer struct {
-	Port int
+	Port    int
+	Address string
 }
 
 type TemplateContext struct {
@@ -35,20 +36,24 @@ type TemplateContext struct {
 
 // StartDrawServer starts a web server for drawing bounding boxes.
 // It returns the received bounding box data as a Bbox struct.
-func StartDrawServer(bbox Bbox) (Bbox, error) {
+func StartDrawServer(bbox Bbox, address string, port int) (Bbox, error) {
 	// Ensure the box appears to be Valid Wgs84 coords
 	if !IsValidWgs84(bbox) {
 		return Bbox{}, fmt.Errorf("Box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode.")
 	}
 
-	// Find the first available port starting from 5000
-	port := findAvailablePort(defaultPort)
 	if port == 0 {
-		return Bbox{}, fmt.Errorf("could not find an available port")
+		// Auto-find an available port starting from default
+		port = findAvailablePort(address, defaultPort)
+		if port == 0 {
+			return Bbox{}, fmt.Errorf("could not find an available port")
+		}
 	}
+	// If port != 0, use the specific port requested and let server fail if it can't bind
 
 	server := &DrawServer{
-		Port: port,
+		Port:    port,
+		Address: address,
 	}
 
 	return server.Start(bbox)
@@ -115,7 +120,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	})
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.Port),
+		Addr:    fmt.Sprintf("%s:%d", s.Address, s.Port),
 		Handler: mux,
 	}
 
@@ -125,7 +130,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 
 	// Start the server in a goroutine
 	go func() {
-		fmt.Fprintf(os.Stderr, "Go to http://localhost:%d to draw your bounding box\n", s.Port)
+		fmt.Fprintf(os.Stderr, "Go to http://%s:%d to draw your bounding box\n", s.Address, s.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -134,7 +139,11 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	// Open the browser
 	go func() {
 		time.Sleep(500 * time.Millisecond) // Give the server a moment to start
-		openBrowser(fmt.Sprintf("http://localhost:%d", s.Port))
+		browserAddress := s.Address
+		if browserAddress == "0.0.0.0" {
+			browserAddress = "localhost"
+		}
+		openBrowser(fmt.Sprintf("http://%s:%d", browserAddress, s.Port))
 	}()
 
 	// Set up signal handling for graceful shutdown
@@ -171,9 +180,9 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 }
 
 // findAvailablePort returns the first available port starting from the given port
-func findAvailablePort(startPort int) int {
+func findAvailablePort(address string, startPort int) int {
 	for port := startPort; port < startPort+1000; port++ {
-		addr := fmt.Sprintf(":%d", port)
+		addr := fmt.Sprintf("%s:%d", address, port)
 		listener, err := net.Listen("tcp", addr)
 		if err == nil {
 			listener.Close()

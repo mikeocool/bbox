@@ -19,6 +19,8 @@ import (
 var inputParams input.InputParams
 var drawFlag bool
 var verboseFlag bool
+var addressFlag string
+var portFlag int
 var outputSettings output.OutputSettings
 
 // RootCmd represents the base command when called without any subcommands
@@ -90,6 +92,8 @@ func init() {
 	RootCmd.PersistentFlags().Float64Var(&inputParams.Buffer, "buffer", 0, "Grow the box by the specified amount, or shrink it if the value is negative.")
 
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
+	RootCmd.PersistentFlags().StringVar(&addressFlag, "address", "localhost", "IP address to bind the draw server to")
+	RootCmd.PersistentFlags().IntVar(&portFlag, "port", 0, "Port to bind the draw server to (0 = auto-find available port)")
 	RootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "Enable verbose debug logging")
 
 	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")
@@ -126,7 +130,7 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 
 	if drawFlag {
 		// Start the drawing server
-		bbox, err = core.StartDrawServer(bbox)
+		bbox, err = core.StartDrawServer(bbox, addressFlag, portFlag)
 		if err != nil {
 			return core.Bbox{}, fmt.Errorf("Error running draw server: %w", err)
 		}
