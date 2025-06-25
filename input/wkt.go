@@ -564,26 +564,49 @@ func (p *wktParser) parseCoordinate() (float64, float64, error) {
 	return x, y, nil
 }
 
-// ParseWkt parses a WKT string from a reader and returns the bounding box
+// ParseWkt parses one or more WKT geometries from a reader and returns the combined bounding box
 func ParseWkt(r io.Reader) (core.Bbox, error) {
 	lexer := newWktLexer(r)
 	parser := newWktParser(lexer)
 
-	err := parser.parseGeometry()
-	if err != nil {
-		return core.Bbox{}, err
+	// Check for empty input first
+	if parser.currentToken.typ == tokenEOF {
+		return core.Bbox{}, errors.New("empty input")
 	}
 
-	// Check for extra characters after valid WKT
-	if parser.currentToken.typ != tokenEOF {
-		if parser.currentToken.typ == tokenLParen || parser.currentToken.typ == tokenRParen {
-			return core.Bbox{}, errors.New("mismatched parentheses")
+	// Parse multiple geometries until EOF
+	geometryCount := 0
+	for parser.currentToken.typ != tokenEOF {
+		// Check for error tokens
+		if parser.currentToken.typ == tokenError {
+			return core.Bbox{}, errors.New(parser.currentToken.value)
 		}
-		return core.Bbox{}, errors.New("unexpected characters")
+
+		err := parser.parseGeometry()
+		if err != nil {
+			// Special handling for unknown geometry types in multi-geometry context
+			if geometryCount > 0 && strings.Contains(err.Error(), "unknown geometry type") {
+				return core.Bbox{}, errors.New("unexpected characters")
+			}
+			return core.Bbox{}, err
+		}
+		geometryCount++
+
+		// Check what comes after this geometry
+		if parser.currentToken.typ == tokenEOF {
+			break
+		} else if parser.currentToken.typ == tokenWord {
+			// Another geometry follows, continue parsing
+			continue
+		} else if parser.currentToken.typ == tokenLParen || parser.currentToken.typ == tokenRParen {
+			return core.Bbox{}, errors.New("mismatched parentheses")
+		} else {
+			return core.Bbox{}, errors.New("unexpected characters")
+		}
 	}
 
-	if !parser.bbox.initialized {
-		return core.Bbox{}, errors.New("no coordinates found")
+	if geometryCount == 0 || !parser.bbox.initialized {
+		return core.Bbox{}, errors.New("empty input")
 	}
 
 	return parser.bbox.toBbox(), nil

@@ -14,10 +14,11 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 	// TODO attempt to validate if args are file paths
 	// Call LoadFiles
 
-	// TOOD accept WKT, GeoJSON, HexWKB
-	// NOTE these should also be accepted by ParseData
-	// -- maybe break them out into a function called here and ParseData
-	// accept hex wkb on cli
+	// Join args into a single string for format detection
+	joinedArgs := strings.Join(args, " ")
+	inputBytes := []byte(joinedArgs)
+	
+	// Try hex WKB first (single arg only)
 	inputStr := strings.TrimSpace(args[0])
 	if SniffWkbHex([]byte(inputStr)) {
 		bbox, err := ParseHexWKBToBbox(inputStr)
@@ -26,8 +27,19 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 		}
 	}
 
-	// Join args into a single string and try parsing as simple format
-	joinedArgs := strings.Join(args, " ")
+	// Try WKT format
+	if SniffWkt(inputBytes) {
+		reader := strings.NewReader(joinedArgs)
+		return ParseWkt(reader)
+	}
+
+	// Try GeoJSON format
+	if SniffGeojson(inputBytes) {
+		reader := strings.NewReader(joinedArgs)
+		return ParseGeojson(reader)
+	}
+
+	// Fall back to simple coordinate format
 	reader := strings.NewReader(joinedArgs)
 	return ParseSimpleRaw(reader)
 }

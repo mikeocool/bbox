@@ -675,3 +675,67 @@ func TestSniffWktWithLargeData(t *testing.T) {
 		t.Error("SniffWkt should not detect large non-WKT data")
 	}
 }
+
+func TestParseWktMultipleGeometries(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		expectBbox *core.Bbox
+	}{
+		{
+			name:  "Two POINT geometries",
+			input: "POINT(1 2) POINT(3 4)",
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  3.0,
+				Top:    4.0,
+			},
+		},
+		{
+			name:  "POINT and LINESTRING",
+			input: "POINT(0 0) LINESTRING(5 5, 10 10)",
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  10.0,
+				Top:    10.0,
+			},
+		},
+		{
+			name:  "Multiple geometries with newlines",
+			input: "POINT(1 2)\nPOINT(3 4)\nLINESTRING(0 0, 5 5)",
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  5.0,
+				Top:    5.0,
+			},
+		},
+		{
+			name:  "Multiple geometries with various whitespace",
+			input: "POINT(1 1)   \n\t  POLYGON((0 0, 2 0, 2 2, 0 2, 0 0))",
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  2.0,
+				Top:    2.0,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := strings.NewReader(tt.input)
+			bbox, err := ParseWkt(reader)
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			} else if tt.expectBbox != nil {
+				if !bboxEqual(bbox, *tt.expectBbox) {
+					t.Errorf("Expected bbox %+v, got %+v", *tt.expectBbox, bbox)
+				}
+			}
+		})
+	}
+}
