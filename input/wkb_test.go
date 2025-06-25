@@ -451,3 +451,104 @@ func TestParseHexWKBToBbox(t *testing.T) {
 		})
 	}
 }
+
+func TestSniffWkbHex(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		// Valid hex WKB formats
+		{
+			name:     "Valid point hex",
+			input:    "0101000000000000000000f03f0000000000000040",
+			expected: true,
+		},
+		{
+			name:     "Valid hex uppercase",
+			input:    "0101000000000000000000F03F0000000000000040",
+			expected: true,
+		},
+		{
+			name:     "Valid hex mixed case",
+			input:    "0101000000000000000000f03F0000000000000040",
+			expected: true,
+		},
+		{
+			name:     "Valid hex with whitespace",
+			input:    "  0101000000000000000000f03f0000000000000040  ",
+			expected: true,
+		},
+		{
+			name:     "Minimal valid hex (10 chars)",
+			input:    "0102030405",
+			expected: true,
+		},
+
+		// Invalid formats
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: false,
+		},
+		{
+			name:     "Too short",
+			input:    "01020304",
+			expected: false,
+		},
+		{
+			name:     "Odd length",
+			input:    "010203040",
+			expected: false,
+		},
+		{
+			name:     "Invalid hex characters",
+			input:    "0101000g00000000000000f03f0000000000000040",
+			expected: false,
+		},
+		{
+			name:     "Non-hex string",
+			input:    "POINT(1 2)",
+			expected: false,
+		},
+		{
+			name:     "JSON data",
+			input:    `{"type": "Point", "coordinates": [1, 2]}`,
+			expected: false,
+		},
+		{
+			name:     "Plain coordinates",
+			input:    "10 20 30 40",
+			expected: false,
+		},
+		{
+			name:     "Hex with spaces inside",
+			input:    "0101 0000 0000 0000",
+			expected: false,
+		},
+		{
+			name:     "Hex with newlines",
+			input:    "0101000000\n000000000000f03f",
+			expected: false,
+		},
+		{
+			name:     "Binary data",
+			input:    "\x01\x01\x00\x00\x00",
+			expected: false,
+		},
+		{
+			name:     "Whitespace only",
+			input:    "   \n\t   ",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SniffWkbHex([]byte(tt.input))
+			if result != tt.expected {
+				t.Errorf("SniffWkbHex(%q) = %v, expected %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}

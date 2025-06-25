@@ -11,6 +11,35 @@ import (
 	"github.com/mikeocool/bbox/core"
 )
 
+// SniffWkbHex checks if the data looks like hexadecimal Well-Known Binary (WKB) format
+func SniffWkbHex(data []byte) bool {
+	if len(data) == 0 {
+		return false
+	}
+
+	// Trim whitespace and convert to string for analysis
+	s := strings.TrimSpace(string(data))
+	
+	// Must have even length for valid hex
+	if len(s) == 0 || len(s)%2 != 0 {
+		return false
+	}
+
+	// Must be at least 10 characters (5 bytes) for minimal WKB geometry
+	if len(s) < 10 {
+		return false
+	}
+
+	// Check if all characters are valid hexadecimal
+	for _, c := range s {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+
+	return true
+}
+
 const (
 	wkbPoint              = 1
 	wkbLineString         = 2

@@ -19,7 +19,7 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 	// -- maybe break them out into a function called here and ParseData
 	// accept hex wkb on cli
 	inputStr := strings.TrimSpace(args[0])
-	if isHexString(inputStr) {
+	if SniffWkbHex([]byte(inputStr)) {
 		bbox, err := ParseHexWKBToBbox(inputStr)
 		if err == nil {
 			return bbox, nil
@@ -118,17 +118,3 @@ func parseLine(line string) ([]float64, error) {
 	return floats[:], nil
 }
 
-// isHexString checks if a string contains only hexadecimal characters
-func isHexString(s string) bool {
-	if len(s) == 0 || len(s)%2 != 0 {
-		return false
-	}
-
-	for _, c := range s {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			return false
-		}
-	}
-
-	return true
-}
