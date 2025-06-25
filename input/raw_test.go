@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
+	tu "github.com/mikeocool/bbox/test_utils"
 )
 
 // TODO move geosjon and wkb stuff out
@@ -194,14 +195,14 @@ func TestParseRawArgs(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "Valid file - test_point.geojson",
-			input:       []string{"../test_point.geojson"},
+			name:        "Valid file",
+			input:       []string{"../integration_tests/data/campsites.geojson"},
 			expectError: false,
 			expectBbox: &core.Bbox{
-				Left:   1.0,
-				Bottom: 2.0,
-				Right:  1.0,
-				Top:    2.0,
+				Left:   -92.429194,
+				Bottom: 47.776398,
+				Right:  -90.035484,
+				Top:    48.355011,
 			},
 		},
 	}
@@ -230,18 +231,7 @@ func TestParseRawArgs(t *testing.T) {
 
 			// If not expecting an error, verify the bbox
 			if tc.expectBbox != nil {
-				if bbox.Left != tc.expectBbox.Left {
-					t.Errorf("Expected Left %f but got %f", tc.expectBbox.Left, bbox.Left)
-				}
-				if bbox.Bottom != tc.expectBbox.Bottom {
-					t.Errorf("Expected Bottom %f but got %f", tc.expectBbox.Bottom, bbox.Bottom)
-				}
-				if bbox.Right != tc.expectBbox.Right {
-					t.Errorf("Expected Right %f but got %f", tc.expectBbox.Right, bbox.Right)
-				}
-				if bbox.Top != tc.expectBbox.Top {
-					t.Errorf("Expected Top %f but got %f", tc.expectBbox.Top, bbox.Top)
-				}
+				tu.AssertBboxEqual(t, *tc.expectBbox, bbox)
 			}
 		})
 	}
@@ -468,18 +458,7 @@ func TestParseSimpleRaw(t *testing.T) {
 
 			// If not expecting an error, verify the bbox
 			if tc.expectBbox != nil {
-				if bbox.Left != tc.expectBbox.Left {
-					t.Errorf("Expected Left %f but got %f", tc.expectBbox.Left, bbox.Left)
-				}
-				if bbox.Bottom != tc.expectBbox.Bottom {
-					t.Errorf("Expected Bottom %f but got %f", tc.expectBbox.Bottom, bbox.Bottom)
-				}
-				if bbox.Right != tc.expectBbox.Right {
-					t.Errorf("Expected Right %f but got %f", tc.expectBbox.Right, bbox.Right)
-				}
-				if bbox.Top != tc.expectBbox.Top {
-					t.Errorf("Expected Top %f but got %f", tc.expectBbox.Top, bbox.Top)
-				}
+				tu.AssertBboxEqual(t, *tc.expectBbox, bbox)
 			}
 		})
 	}

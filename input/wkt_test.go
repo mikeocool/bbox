@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
+	tu "github.com/mikeocool/bbox/test_utils"
 )
 
 func TestParseWkt(t *testing.T) {
@@ -234,9 +235,7 @@ func TestParseWkt(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				} else if tt.expectBbox != nil {
-					if !bboxEqual(bbox, *tt.expectBbox) {
-						t.Errorf("Expected bbox %+v, got %+v", *tt.expectBbox, bbox)
-					}
+					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
 				}
 			}
 		})
@@ -427,9 +426,7 @@ func TestParseWktStreamingBehavior(t *testing.T) {
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			} else if tt.expectBbox != nil {
-				if !bboxEqual(bbox, *tt.expectBbox) {
-					t.Errorf("Expected bbox %+v, got %+v", *tt.expectBbox, bbox)
-				}
+				tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
 			}
 		})
 	}
@@ -443,57 +440,6 @@ func TestParseWktIOErrors(t *testing.T) {
 			t.Error("Expected error from reader but got none")
 		}
 	})
-}
-
-// Helper functions
-
-func bboxEqual(a, b core.Bbox) bool {
-	const epsilon = 1e-9
-	return abs(a.Left-b.Left) < epsilon &&
-		abs(a.Bottom-b.Bottom) < epsilon &&
-		abs(a.Right-b.Right) < epsilon &&
-		abs(a.Top-b.Top) < epsilon
-}
-
-func abs(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func generateLargeLineString(numPoints int) string {
-	var sb strings.Builder
-	sb.WriteString("LINESTRING (")
-	for i := 0; i < numPoints; i++ {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(fmt.Sprintf("%d %d", i, i))
-	}
-	sb.WriteString(")")
-	return sb.String()
-}
-
-func generateLargeGeometryCollection(numGeometries int) string {
-	var sb strings.Builder
-	sb.WriteString("GEOMETRYCOLLECTION (")
-	for i := 0; i < numGeometries; i++ {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(fmt.Sprintf("POINT (%d %d)", i, i))
-	}
-	sb.WriteString(")")
-	return sb.String()
-}
-
-type errorReader struct {
-	error error
-}
-
-func (r *errorReader) Read(p []byte) (n int, err error) {
-	return 0, r.error
 }
 
 func TestSniffWkt(t *testing.T) {
@@ -732,10 +678,43 @@ func TestParseWktMultipleGeometries(t *testing.T) {
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			} else if tt.expectBbox != nil {
-				if !bboxEqual(bbox, *tt.expectBbox) {
-					t.Errorf("Expected bbox %+v, got %+v", *tt.expectBbox, bbox)
-				}
+				tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
 			}
 		})
 	}
+}
+
+// Helper functions
+func generateLargeLineString(numPoints int) string {
+	var sb strings.Builder
+	sb.WriteString("LINESTRING (")
+	for i := 0; i < numPoints; i++ {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(fmt.Sprintf("%d %d", i, i))
+	}
+	sb.WriteString(")")
+	return sb.String()
+}
+
+func generateLargeGeometryCollection(numGeometries int) string {
+	var sb strings.Builder
+	sb.WriteString("GEOMETRYCOLLECTION (")
+	for i := 0; i < numGeometries; i++ {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(fmt.Sprintf("POINT (%d %d)", i, i))
+	}
+	sb.WriteString(")")
+	return sb.String()
+}
+
+type errorReader struct {
+	error error
+}
+
+func (r *errorReader) Read(p []byte) (n int, err error) {
+	return 0, r.error
 }
