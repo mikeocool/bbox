@@ -13,6 +13,38 @@ import (
 	"github.com/mikeocool/bbox/core"
 )
 
+// WKT geometry types for detection
+var wktGeometryTypes = []string{
+	"POINT", "LINESTRING", "POLYGON",
+	"MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON",
+	"GEOMETRYCOLLECTION",
+}
+
+// SniffWkt checks if the data looks like Well-Known Text (WKT) format
+func SniffWkt(data []byte) bool {
+	if len(data) < 5 { // Minimum: "POINT" = 5 characters
+		return false
+	}
+
+	// Convert to uppercase string for pattern matching
+	dataStr := strings.ToUpper(strings.TrimSpace(string(data)))
+	
+	// Must start with a known geometry type
+	for _, geomType := range wktGeometryTypes {
+		if strings.HasPrefix(dataStr, geomType) {
+			// Check if followed by whitespace or opening parenthesis
+			if len(dataStr) > len(geomType) {
+				nextChar := dataStr[len(geomType)]
+				if nextChar == ' ' || nextChar == '\t' || nextChar == '\n' || nextChar == '(' {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 // Token types for WKT parsing
 type tokenType int
 
