@@ -193,6 +193,17 @@ func TestParseRawArgs(t *testing.T) {
 			input:       []string{"PONT(1 2)"},
 			expectError: true,
 		},
+		{
+			name:        "Valid file - test_point.geojson",
+			input:       []string{"../test_point.geojson"},
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+			},
+		},
 	}
 
 	for _, tc := range tests {

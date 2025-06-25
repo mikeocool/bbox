@@ -4,15 +4,61 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/mikeocool/bbox/core"
 )
 
+// tryLoadAsFiles attempts to load all args as file paths and returns combined bbox
+func tryLoadAsFiles(args []string) (core.Bbox, bool, error) {
+	// Check if all args are valid file paths
+	allFilesExist := len(args) > 0
+	for _, arg := range args {
+		trimmed := strings.TrimSpace(arg)
+		if _, err := os.Stat(trimmed); err != nil {
+			// Debug: uncomment next line to see why file detection fails
+			// fmt.Printf("File check failed for '%s': %v\n", trimmed, err)
+			allFilesExist = false
+			break
+		}
+	}
+
+	// If not all args are files, return early
+	if !allFilesExist {
+		return core.Bbox{}, false, nil
+	}
+
+	// Load all files and combine their bboxes
+	var combinedBbox *core.Bbox
+	for _, filename := range args {
+		filename = strings.TrimSpace(filename)
+		bbox, err := LoadFile(filename)
+		if err != nil {
+			return core.Bbox{}, true, fmt.Errorf("error loading file %s: %w", filename, err)
+		}
+
+		if combinedBbox == nil {
+			combinedBbox = &bbox
+		} else {
+			unionBbox := combinedBbox.Union(bbox)
+			combinedBbox = &unionBbox
+		}
+	}
+
+	if combinedBbox != nil {
+		return *combinedBbox, true, nil
+	}
+
+	return core.Bbox{}, true, fmt.Errorf("no valid bounding boxes found in files")
+}
+
 func ParseRawArgs(args []string) (core.Bbox, error) {
-	// TODO attempt to validate if args are file paths
-	// Call LoadFiles
+	// Try loading args as file paths first
+	if bbox, isFiles, err := tryLoadAsFiles(args); isFiles {
+		return bbox, err
+	}
 
 	// Join args into a single string for format detection
 	joinedArgs := strings.Join(args, " ")
