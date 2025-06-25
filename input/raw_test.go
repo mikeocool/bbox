@@ -194,6 +194,8 @@ func TestParseRawArgs(t *testing.T) {
 			input:       []string{"PONT(1 2)"},
 			expectError: true,
 		},
+
+		// file paths
 		{
 			name:        "Valid file",
 			input:       []string{"../integration_tests/data/campsites.geojson"},
@@ -204,6 +206,47 @@ func TestParseRawArgs(t *testing.T) {
 				Right:  -90.035484,
 				Top:    48.355011,
 			},
+		},
+		{
+			name:        "Single valid file",
+			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+		},
+		{
+			name:        "Multiple valid files - union",
+			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+		},
+		{
+			name:        "Empty file",
+			input:       []string{getTestDataPath(t, "../integration_tests/data/empty.geojson")},
+			expectError: true, // Assuming empty file causes an error
+			errorMsg:    "no features found",
+		},
+		{
+			name:        "Non-existent file",
+			input:       []string{getTestDataPath(t, "non_existent_file.geojson")},
+			expectError: true,
+		},
+		{
+			name:        "Mixed valid and empty files",
+			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/empty.geojson")},
+			expectError: false,
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+		},
+		{
+			name:        "Empty string in file list",
+			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), "", getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
+			expectError: false, // Empty strings should be skipped
+			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+		},
+		{
+			name:        "Empty args list",
+			input:       []string{},
+			expectError: true,
+			errorMsg:    "no arguments provided",
 		},
 	}
 

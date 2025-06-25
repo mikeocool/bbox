@@ -55,6 +55,10 @@ func tryLoadAsFiles(args []string) (core.Bbox, bool, error) {
 }
 
 func ParseRawArgs(args []string) (core.Bbox, error) {
+	if len(args) == 0 {
+		return core.Bbox{}, fmt.Errorf("no arguments provided")
+	}
+
 	// Try loading args as file paths first
 	if bbox, isFiles, err := tryLoadAsFiles(args); isFiles {
 		return bbox, err
@@ -63,7 +67,7 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 	// Join args into a single string for format detection
 	joinedArgs := strings.Join(args, " ")
 	inputBytes := []byte(joinedArgs)
-	
+
 	// Try hex WKB first (single arg only)
 	inputStr := strings.TrimSpace(args[0])
 	if SniffWkbHex([]byte(inputStr)) {
@@ -175,4 +179,3 @@ func parseLine(line string) ([]float64, error) {
 
 	return floats[:], nil
 }
-
