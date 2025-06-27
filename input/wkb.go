@@ -19,7 +19,7 @@ func SniffWkbHex(data []byte) bool {
 
 	// Trim whitespace and convert to string for analysis
 	s := strings.TrimSpace(string(data))
-	
+
 	// Must have even length for valid hex
 	if len(s) == 0 || len(s)%2 != 0 {
 		return false
@@ -124,7 +124,7 @@ func (w *wkbReader) extractBounds(geomType uint32, minX, minY, maxX, maxY *float
 			return err
 		}
 	}
-	
+
 	// Strip any flags from geometry type (like SRID flag)
 	baseType := geomType & 0xff
 
@@ -344,18 +344,18 @@ func ParseWKBToBbox(wkb []byte) (core.Bbox, error) {
 	if err != nil {
 		return core.Bbox{}, err
 	}
-	
+
 	bbox := core.Bbox{
 		Left:   minX,
 		Bottom: minY,
 		Right:  maxX,
 		Top:    maxY,
 	}
-	
+
 	if err := bbox.Validate(); err != nil {
 		return core.Bbox{}, err
 	}
-	
+
 	return bbox, nil
 }
 
@@ -366,6 +366,6 @@ func ParseHexWKBToBbox(hexStr string) (core.Bbox, error) {
 	if err != nil {
 		return core.Bbox{}, err
 	}
-	
+
 	return ParseWKBToBbox(wkb)
 }
