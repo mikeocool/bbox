@@ -235,7 +235,7 @@ func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding s
 	}
 
 	if !geometryFound {
-		return core.Bbox{}, fmt.Errorf("no valid geometries found in column %s", geoColumn)
+		return core.Bbox{}, ErrNoFeaturesFound
 	}
 
 	// Create and return the bounding box

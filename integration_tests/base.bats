@@ -52,7 +52,7 @@ setup() {
 
 @test "invalid stdin" {
     run /bin/bash -c "echo '' | ./bbox"
-    assert_output --partial "invalid input"
+    assert_output --partial "Input does not appear to be a valid format"
     assert_failure
 }
 
@@ -63,25 +63,25 @@ setup() {
 }
 
 @test "load geojson" {
-    run ./bbox --file $DIR/data/campsites.geojson
+    run ./bbox $DIR/data/campsites.geojson
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
     assert_success
 }
 
 @test "load geojsonl" {
-    run ./bbox --file $DIR/data/campsites.geojsonl
+    run ./bbox $DIR/data/campsites.geojsonl
     assert_output "-91.34175985747542 47.99755413385825 -91.1474123626266 48.01355378301334"
     assert_success
 }
 
 @test "load geojson without extension" {
-    run ./bbox --file $DIR/data/coords
+    run ./bbox $DIR/data/coords
     assert_output "-10 -5 10 5"
     assert_success
 }
 
 @test "load shapfile" {
-    run ./bbox --file $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp
+    run ./bbox $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp
     assert_output "-179.5899789 -89.9999998 179.3833036 82.4833232"
     assert_success
 }

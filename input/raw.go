@@ -2,6 +2,7 @@ package input
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,47 +12,50 @@ import (
 	"github.com/mikeocool/bbox/core"
 )
 
-// tryLoadAsFiles attempts to load all args as file paths and returns combined bbox
-func tryLoadAsFiles(args []string) (core.Bbox, bool, error) {
+// LoadFilePaths attempts to load all args as file paths and returns combined bbox
+func LoadFilePaths(paths []string) (core.Bbox, bool, error) {
+	// TOOD attempt to determine if the paths appear to be file paths
+	// (whether or not that are paths to exiting files)
+	// And return errors accordingly
+
 	// Check if all args are valid file paths
-	allFilesExist := len(args) > 0
-	for _, arg := range args {
+	var cleanedPaths []string
+	for _, arg := range paths {
 		trimmed := strings.TrimSpace(arg)
-		if _, err := os.Stat(trimmed); err != nil {
-			// Debug: uncomment next line to see why file detection fails
-			// fmt.Printf("File check failed for '%s': %v\n", trimmed, err)
-			allFilesExist = false
-			break
+		if trimmed == "" {
+			continue
 		}
+
+		if _, err := os.Stat(trimmed); err != nil {
+			return core.Bbox{}, false, nil
+		}
+
+		cleanedPaths = append(cleanedPaths, trimmed)
 	}
 
-	// If not all args are files, return early
-	if !allFilesExist {
+	if len(cleanedPaths) == 0 {
 		return core.Bbox{}, false, nil
 	}
 
 	// Load all files and combine their bboxes
-	var combinedBbox *core.Bbox
-	for _, filename := range args {
-		filename = strings.TrimSpace(filename)
+	var combinedBbox core.Bbox = core.EmptyBbox()
+	for _, filename := range cleanedPaths {
 		bbox, err := LoadFile(filename)
 		if err != nil {
+			if errors.Is(err, ErrNoFeaturesFound) {
+				continue
+			}
 			return core.Bbox{}, true, fmt.Errorf("error loading file %s: %w", filename, err)
 		}
 
-		if combinedBbox == nil {
-			combinedBbox = &bbox
-		} else {
-			unionBbox := combinedBbox.Union(bbox)
-			combinedBbox = &unionBbox
-		}
+		combinedBbox = combinedBbox.Union(bbox)
 	}
 
-	if combinedBbox != nil {
-		return *combinedBbox, true, nil
+	if combinedBbox.Validate() == nil {
+		return combinedBbox, true, nil
 	}
 
-	return core.Bbox{}, true, fmt.Errorf("no valid bounding boxes found in files")
+	return core.Bbox{}, true, ErrNoFeaturesFound
 }
 
 func ParseRawArgs(args []string) (core.Bbox, error) {
@@ -60,7 +64,7 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 	}
 
 	// Try loading args as file paths first
-	if bbox, isFiles, err := tryLoadAsFiles(args); isFiles {
+	if bbox, isFiles, err := LoadFilePaths(args); isFiles {
 		return bbox, err
 	}
 

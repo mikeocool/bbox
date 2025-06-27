@@ -1,6 +1,7 @@
 package input
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"github.com/mikeocool/bbox/geocoding"
 	"github.com/mikeocool/bbox/logger"
 )
+
+var ErrNoFeaturesFound = errors.New("no features found")
 
 type InputParams struct {
 	Left   *float64

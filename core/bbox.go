@@ -12,6 +12,15 @@ type Bbox struct {
 	Top    float64 `json:"top"`
 }
 
+func EmptyBbox() Bbox {
+	return Bbox{
+		Left:   math.Inf(1),
+		Bottom: math.Inf(1),
+		Right:  math.Inf(-1),
+		Top:    math.Inf(-1),
+	}
+}
+
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
 func (b *Bbox) Validate() error {

@@ -15,7 +15,6 @@ import (
 )
 
 var ErrCouldNotParseGeoJSON = errors.New("unable to parse input as valid GeoJSON format")
-var ErrNoFeaturesFound = errors.New("no features found")
 
 func LoadGeojsonFile(filename string) (core.Bbox, error) {
 	file, err := os.Open(filename)
