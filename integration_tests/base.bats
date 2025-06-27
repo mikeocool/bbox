@@ -86,6 +86,12 @@ setup() {
     assert_success
 }
 
+@test "load files with glob" {
+    run /bin/bash -c "./bbox ${DIR}/data/*.geojson"
+    assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"
+    assert_success
+}
+
 @test "pipe geojson" {
     run /bin/bash -c "cat $DIR/data/campsites.geojson | ./bbox"
     assert_output "-92.42919378022346 47.77639791033817 -90.03548429130946 48.35501085637799"

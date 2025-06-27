@@ -8,7 +8,6 @@ import (
 	tu "github.com/mikeocool/bbox/test_utils"
 )
 
-// TODO move geosjon and wkb stuff out
 func TestParseRawArgs(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -241,6 +240,12 @@ func TestParseRawArgs(t *testing.T) {
 			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), "", getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
 			expectError: false, // Empty strings should be skipped
 			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+		},
+		{
+			name:        "Whitespace args list",
+			input:       []string{" "},
+			expectError: true,
+			errorMsg:    "Input does not appear to be a valid format",
 		},
 		{
 			name:        "Empty args list",
