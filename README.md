@@ -59,10 +59,10 @@ cat whatevs.geojson | bbox --output wkt
 
 ### Create a bounding box from gis files
 ```
-bbox --file whatevs.shp
-bbox --file whatevs.geojson
-bbox --file whatevs.geojsonl
-bbox --file whatevs.osm
+bbox whatevs.shp
+bbox whatevs.geojson
+bbox whatevs.geojsonl
+bbox whatevs.osm
 ```
 
 ### specify a bbox on the cli -- then edit it in the browser
@@ -96,7 +96,7 @@ Output formats:
 ```
 
 # TODO
-* auto-recognize file paths (and URLs?) and load as files
+* add support wkt/wkb/hexwkb formats to ParseData (and give better name)
 * align input and output options across commands
 * add github actions for testing
 * basic projection handling
