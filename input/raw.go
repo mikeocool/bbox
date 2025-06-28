@@ -63,6 +63,8 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 		return core.Bbox{}, fmt.Errorf("no arguments provided")
 	}
 
+	fmt.Printf("ParseRawArgs: %v", args)
+
 	// Try loading args as file paths first
 	if bbox, isFiles, err := LoadFilePaths(args); isFiles {
 		return bbox, err
@@ -167,6 +169,7 @@ func parseLine(line string) ([]float64, error) {
 	parts := strings.FieldsFunc(line, func(c rune) bool {
 		return c == ' ' || c == ',' || c == '\t'
 	})
+	fmt.Printf("parseLine: %v\n", parts)
 
 	// Filter out empty strings
 	var floats []float64
