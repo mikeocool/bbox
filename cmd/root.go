@@ -134,7 +134,6 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 }
 
 func runRoot(cmd *cobra.Command, args []string) error {
-	fmt.Printf("Args: %v", args)
 	bbox, err := getBboxFromInput(args)
 	if err != nil {
 		if errors.Is(err, ErrInputCouldNotCreateBbox) {

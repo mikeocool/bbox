@@ -169,7 +169,6 @@ func parseLine(line string) ([]float64, error) {
 	parts := strings.FieldsFunc(line, func(c rune) bool {
 		return c == ' ' || c == ',' || c == '\t'
 	})
-	fmt.Printf("parseLine: %v\n", parts)
 
 	// Filter out empty strings
 	var floats []float64

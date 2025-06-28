@@ -48,7 +48,6 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 	teeReader := io.TeeReader(r, &buf)
 
 	detectionBuf := make([]byte, 8192)
-	fmt.Printf("ParseData db: %v", detectionBuf)
 	_, err := teeReader.Read(detectionBuf)
 	if err != nil && err != io.EOF {
 		return core.Bbox{}, fmt.Errorf("failed to read data: %w", err)
