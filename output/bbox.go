@@ -55,7 +55,7 @@ func GeojsonFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 func GeojsonlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 	// for a single bbox, Geojsonl is the same geojson, we just dont allow indentation
 	if settings.GeojsonIndent != 0 {
-		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+		return "", fmt.Errorf("geojsonl format does not support indentation")
 	}
 
 	return GeojsonFormat(settings, bbox)
@@ -113,7 +113,7 @@ func UrlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 	case "geojson.io":
 		return GeojsonIoUrl(bbox)
 	default:
-		return "", fmt.Errorf("Unknown url type: %s", urlType)
+		return "", fmt.Errorf("unknown url type: %s", urlType)
 	}
 }
 

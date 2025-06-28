@@ -76,7 +76,7 @@ func ParseHexWKB(hexStr string) ([]byte, error) {
 // ParseWKBBounds extracts the bounding box from WKB data without fully parsing the geometry
 func ParseWKBBounds(wkb []byte) (minX, minY, maxX, maxY float64, err error) {
 	if len(wkb) < 5 {
-		return 0, 0, 0, 0, fmt.Errorf("WKB data too short")
+		return 0, 0, 0, 0, fmt.Errorf("wkb data too short")
 	}
 
 	minX, minY = math.Inf(1), math.Inf(1)

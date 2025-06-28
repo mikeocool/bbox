@@ -32,7 +32,7 @@ func runSlice(cmd *cobra.Command, args []string) error {
 	boxes := bbox.Slice(columns, rows)
 	formatted, err := output.FormatCollection(boxes, outputSettings)
 	if err != nil {
-		return fmt.Errorf("Error formatting result: %v", err)
+		return fmt.Errorf("error formatting result: %v", err)
 	}
 
 	// Output the formatted bounding box

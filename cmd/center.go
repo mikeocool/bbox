@@ -30,7 +30,7 @@ func runCenter(cmd *cobra.Command, args []string) error {
 	center := bbox.Center()
 	formatted, err := output.FormatPoint(center, outputSettings)
 	if err != nil {
-		return fmt.Errorf("Error formatting point: %v", err)
+		return fmt.Errorf("error formatting point: %v", err)
 	}
 
 	// Output the formatted bounding box

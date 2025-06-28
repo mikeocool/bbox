@@ -76,7 +76,7 @@ func GeojsonFormatCollection(settings OutputSettings, boxes []core.Bbox) (string
 
 func GeojsonlFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
 	if settings.GeojsonIndent != 0 {
-		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+		return "", fmt.Errorf("geojsonl format does not support indentation")
 	}
 
 	return JoinedFormatCollection(GeojsonFormat, boxes, settings)

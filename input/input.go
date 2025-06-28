@@ -59,7 +59,7 @@ func (params *InputParams) GetBbox() (core.Bbox, error) {
 
 	// dont allow the buffer parameter if there is no GetBbox
 	if params.Buffer != 0 {
-		return core.Bbox{}, fmt.Errorf("Cannot specify buffer without a bounding box")
+		return core.Bbox{}, fmt.Errorf("cannot specify buffer without a bounding box")
 	}
 
 	return core.Bbox{}, NoUsableBuilderError{}
@@ -87,7 +87,7 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 	for _, field := range setFields {
 		// buffer is a global used field TODO make this better
 		if !usedFieldsSet[field] && field != "Buffer" {
-			return core.Bbox{}, fmt.Errorf("Unexpected argument: %s with %s", field, builder.Name)
+			return core.Bbox{}, fmt.Errorf("unexpected argument: %s with %s", field, builder.Name)
 		}
 	}
 
@@ -264,7 +264,7 @@ var PlaceBuilder = BboxBuilder{
 		}
 
 		// No extent and no width/height
-		return core.Bbox{}, fmt.Errorf("Geocoder did not return extent for '%s', please a width and height", params.Place)
+		return core.Bbox{}, fmt.Errorf("geocoder did not return extent for '%s', please a width and height", params.Place)
 	},
 }
 

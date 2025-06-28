@@ -140,7 +140,7 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 
 	// Check if we got any results
 	if len(geocodeResp.Features) == 0 {
-		return nil, fmt.Errorf("Could not find place matching: \"%s\"", query)
+		return nil, fmt.Errorf("could not find place matching: \"%s\"", query)
 	}
 
 	feature := geocodeResp.Features[0]

@@ -118,7 +118,7 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 				return core.Bbox{}, ErrInputCouldNotCreateBbox
 			}
 		} else {
-			return core.Bbox{}, fmt.Errorf("Error creating bounding box: %w", err)
+			return core.Bbox{}, fmt.Errorf("error creating bounding box: %w", err)
 		}
 	}
 
@@ -126,7 +126,7 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 		// Start the drawing server
 		bbox, err = core.StartDrawServer(bbox, addressFlag, portFlag)
 		if err != nil {
-			return core.Bbox{}, fmt.Errorf("Error running draw server: %w", err)
+			return core.Bbox{}, fmt.Errorf("error running draw server: %w", err)
 		}
 	}
 
@@ -146,7 +146,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 
 	formatted, err := output.FormatBbox(bbox, outputSettings)
 	if err != nil {
-		return fmt.Errorf("Error formatting bounding box: %w", err)
+		return fmt.Errorf("error formatting bounding box: %w", err)
 	}
 
 	// Output the formatted bounding box
