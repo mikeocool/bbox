@@ -152,7 +152,7 @@ func TestGeocodePlaceWithClient_NoResults(t *testing.T) {
 		t.Fatal("Expected error for no results, got nil")
 	}
 
-	expectedError := `Could not find place matching: "NonexistentPlace"`
+	expectedError := `could not find place matching: "NonexistentPlace"`
 	if err.Error() != expectedError {
 		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
 	}

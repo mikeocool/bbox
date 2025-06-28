@@ -367,7 +367,7 @@ func TestGeojsonlFormatCollection(t *testing.T) {
 
 			// Check specific error message for indentation error
 			if tc.expectError && tc.settings.GeojsonIndent != 0 && err != nil {
-				expectedErrMsg := "GeoJSONL format does not support indentation"
+				expectedErrMsg := "geojsonl format does not support indentation"
 				if err.Error() != expectedErrMsg {
 					t.Errorf("Expected error message %q but got %q", expectedErrMsg, err.Error())
 				}
