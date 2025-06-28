@@ -40,5 +40,8 @@ jobs:
               run: ./integration_tests/setup.sh
 
             - name: Run bats integration tests
+              # fixes open stdin in GH actions breaking stdin detection, see:
+              # https://github.com/actions/runner-images/issues/10959
+              # https://github.com/janpieterz/prettier-cli-repro/pull/2/files
               shell: 'script --return --quiet --log-out /dev/null --command "bash -e {0}"'
               run: bats integration_tests
