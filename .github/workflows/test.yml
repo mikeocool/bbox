@@ -41,4 +41,5 @@ jobs:
 
             - name: Run bats integration tests
               run: |
+                  exec 0</dev/null # Redirect stdin globally to avoid stdin detection issues
                   bats integration_tests
