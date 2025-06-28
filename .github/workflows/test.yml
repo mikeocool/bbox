@@ -33,7 +33,7 @@ jobs:
         git diff --exit-code go.mod go.sum
     
     - name: Build
-      run: go build ./...
+      run: go build
     
     - name: Run go tests
       run: go test -v ./...
