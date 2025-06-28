@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"time"
 	"unsafe"
 
 	"github.com/parquet-go/parquet-go"
@@ -26,17 +25,10 @@ func main() {
 	var (
 		outputFile = flag.String("output", "test_data.parquet", "Output parquet file path")
 		count      = flag.Int("count", 1000, "Number of records to generate")
-		seed       = flag.Int64("seed", 0, "Random seed (0 for current time)")
 	)
 	flag.Parse()
 
-	// Set random seed
-	if *seed == 0 {
-		*seed = time.Now().UnixNano()
-	}
-	rand.Seed(*seed)
-
-	fmt.Printf("Generating %d records to %s (seed: %d)\n", *count, *outputFile, *seed)
+	fmt.Printf("Generating %d records to %s\n", *count, *outputFile)
 
 	// Create output file
 	file, err := os.Create(*outputFile)
