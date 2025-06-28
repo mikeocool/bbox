@@ -24,10 +24,15 @@ jobs:
             - name: Check go fmt
               run: go fmt ./... && git diff --exit-code
 
+            - name: Download dependencies
+              run: go mod download
+
             - name: Verify dependencies
+              run: go mod verify
+
+            - name: Check go.mod and go.sum are up to date
               run: |
                   go mod tidy
-                  go mod verify
                   git diff --exit-code go.mod go.sum
 
             - name: Build
