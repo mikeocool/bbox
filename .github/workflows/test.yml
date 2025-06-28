@@ -40,6 +40,6 @@ jobs:
     
     - name: Setup integration test dependencies
       run: ./integration_tests/setup.sh
-    
+    - run: bats --version
     - name: Run bats integration tests
       run: bats integration_tests
