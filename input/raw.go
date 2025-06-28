@@ -63,8 +63,6 @@ func ParseRawArgs(args []string) (core.Bbox, error) {
 		return core.Bbox{}, fmt.Errorf("no arguments provided")
 	}
 
-	fmt.Printf("ParseRawArgs: %v", args)
-
 	// Try loading args as file paths first
 	if bbox, isFiles, err := LoadFilePaths(args); isFiles {
 		return bbox, err
