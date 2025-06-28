@@ -40,6 +40,5 @@ jobs:
               run: ./integration_tests/setup.sh
 
             - name: Run bats integration tests
-              run: |
-                  exec 0</dev/null # Redirect stdin globally to avoid stdin detection issues
-                  bats integration_tests
+              shell: 'script --return --quiet --log-out /dev/null --command "bash -e {0}"'
+              run: bats integration_tests
