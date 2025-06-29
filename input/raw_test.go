@@ -245,7 +245,7 @@ func TestParseRawArgs(t *testing.T) {
 			name:        "Whitespace args list",
 			input:       []string{" "},
 			expectError: true,
-			errorMsg:    "Input does not appear to be a valid format",
+			errorMsg:    "input does not appear to be a valid format",
 		},
 		{
 			name:        "Empty args list",

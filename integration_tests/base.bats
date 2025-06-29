@@ -52,7 +52,7 @@ setup() {
 
 @test "invalid stdin" {
     run /bin/bash -c "echo '' | ./bbox"
-    assert_output --partial "Input does not appear to be a valid format"
+    assert_output --partial "input does not appear to be a valid format"
     assert_failure
 }
 
@@ -99,7 +99,8 @@ setup() {
 }
 
 @test "pipe shapefile" {
-    run /bin/bash -c "cat $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp | ./bbox"
+    # pipe stdin to dev/null to avoid the error: "cat: write error: Broken pipe"
+    run /bin/bash -c "cat $DIR/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp 2>/dev/null | ./bbox"
     assert_output "-179.5899789 -89.9999998 179.3833036 82.4833232"
     assert_success
 }

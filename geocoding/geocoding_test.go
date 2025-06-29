@@ -152,7 +152,7 @@ func TestGeocodePlaceWithClient_NoResults(t *testing.T) {
 		t.Fatal("Expected error for no results, got nil")
 	}
 
-	expectedError := `Could not find place matching: "NonexistentPlace"`
+	expectedError := `could not find place matching: "NonexistentPlace"`
 	if err.Error() != expectedError {
 		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
 	}
@@ -192,12 +192,12 @@ func TestGeocodePlaceWithClient_HTTPErrorWithLongBody(t *testing.T) {
 	if !strings.Contains(err.Error(), "geocoding request failed with status 503") {
 		t.Errorf("Expected error to contain status code, got '%s'", err.Error())
 	}
-	
+
 	// The error message should be truncated to around 500 characters of body content
 	if len(err.Error()) > 600 { // Some buffer for the status message part
 		t.Errorf("Expected error message to be truncated, but got %d characters: %s", len(err.Error()), err.Error())
 	}
-	
+
 	// Should contain some of the error details but not all
 	if !strings.Contains(err.Error(), "Error details: server overloaded") {
 		t.Errorf("Expected error to contain body preview, got '%s'", err.Error())

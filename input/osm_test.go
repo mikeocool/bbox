@@ -107,7 +107,7 @@ func TestSniffOsmPbf(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Contains OSMData string", 
+			name: "Contains OSMData string",
 			data: []byte{0x00, 0x00, 0x00, 0x13, 'y', 'y', 'O', 'S', 'M', 'D', 'a', 't', 'a', 'y', 'y', 'y', 'y', 'y', 'y', '1', '2', '3', '4'},
 			want: true,
 		},
@@ -137,7 +137,7 @@ func TestSniffOsmPbf_RealFiles(t *testing.T) {
 	// Test with real Monaco PBF file - should return true
 	t.Run("Real PBF file", func(t *testing.T) {
 		pbfFile := "../integration_tests/data/monaco-latest.osm.pbf"
-		
+
 		// Check if file exists
 		if _, err := os.Stat(pbfFile); os.IsNotExist(err) {
 			t.Skip("Monaco PBF file not found, skipping test")
@@ -164,7 +164,7 @@ func TestSniffOsmPbf_RealFiles(t *testing.T) {
 	// Test with real OSM XML file - should return false
 	t.Run("Real XML file", func(t *testing.T) {
 		xmlFile := "../integration_tests/data/map.osm"
-		
+
 		file, err := os.Open(xmlFile)
 		if err != nil {
 			t.Fatalf("Failed to open OSM XML file: %v", err)

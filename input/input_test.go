@@ -34,7 +34,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Place:   "unexpected",
 			},
 			expectError: true,
-			errorMsg:    "Unexpected argument: Place with ",
+			errorMsg:    "unexpected argument: Place with ",
 		},
 
 		// PlaceBuilder tests
@@ -58,7 +58,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Left:   floatPtr(1.0),
 			},
 			expectError: true,
-			errorMsg:    "Unexpected argument: Left with place",
+			errorMsg:    "unexpected argument: Left with place",
 		},
 
 		// CenterBuilder tests
@@ -236,7 +236,7 @@ func TestInputParams_GetBbox(t *testing.T) {
 				Buffer: 2.0,
 			},
 			expectError: true,
-			errorMsg:    "Cannot specify buffer without a bounding box",
+			errorMsg:    "cannot specify buffer without a bounding box",
 		},
 		{
 			name: "Buffered bounds",

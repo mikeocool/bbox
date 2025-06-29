@@ -39,7 +39,7 @@ func ParseFileData(filename string) (core.Bbox, error) {
 	return ParseData(file)
 }
 
-var ErrUnrecognizedDataFormat = fmt.Errorf("Input does not appear to be a valid format")
+var ErrUnrecognizedDataFormat = fmt.Errorf("input does not appear to be a valid format")
 
 // Attempt to auto-detect the format and parse the data
 func ParseData(r io.Reader) (core.Bbox, error) {
@@ -80,7 +80,7 @@ func ParseData(r io.Reader) (core.Bbox, error) {
 
 	// Note: GeoParquet files require random access and cannot be read from a stream
 	if SniffGeoparquet(detectionBuf) {
-		return core.Bbox{}, fmt.Errorf("GeoParquet files must be read from disk, not from stdin or streams")
+		return core.Bbox{}, fmt.Errorf("geoparquet files must be read from disk, not from stdin or streams")
 	}
 
 	return ParseSimpleRaw(fullReader)

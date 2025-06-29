@@ -77,7 +77,7 @@ func GeojsonFormatPoint(settings OutputSettings, coords [2]float64) (string, err
 
 func GeojsonlFormatPoint(settings OutputSettings, coords [2]float64) (string, error) {
 	if settings.GeojsonIndent != 0 {
-		return "", fmt.Errorf("GeoJSONL format does not support indentation")
+		return "", fmt.Errorf("geojsonl format does not support indentation")
 	}
 
 	return GeojsonFormatPoint(settings, coords)

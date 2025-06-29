@@ -28,7 +28,7 @@ func SniffWkt(data []byte) bool {
 
 	// Convert to uppercase string for pattern matching
 	dataStr := strings.ToUpper(strings.TrimSpace(string(data)))
-	
+
 	// Must start with a known geometry type
 	for _, geomType := range wktGeometryTypes {
 		if strings.HasPrefix(dataStr, geomType) {
@@ -172,9 +172,9 @@ func (l *wktLexer) readNumber() token {
 
 // WKT Parser
 type wktParser struct {
-	lexer       *wktLexer
+	lexer        *wktLexer
 	currentToken token
-	bbox        bboxAccumulator
+	bbox         bboxAccumulator
 }
 
 type bboxAccumulator struct {

@@ -3,6 +3,7 @@ package input
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -176,6 +177,9 @@ func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding s
 
 			vr := page.Values()
 			n, err := vr.ReadValues(values)
+			if err != nil && err != io.EOF {
+				return core.Bbox{}, fmt.Errorf("error reading page values: %w", err)
+			}
 			if n == 0 {
 				break
 			}

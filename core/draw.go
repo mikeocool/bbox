@@ -39,7 +39,7 @@ type TemplateContext struct {
 func StartDrawServer(bbox Bbox, address string, port int) (Bbox, error) {
 	// Ensure the box appears to be Valid Wgs84 coords
 	if !IsValidWgs84(bbox) {
-		return Bbox{}, fmt.Errorf("Box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode.")
+		return Bbox{}, fmt.Errorf("box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode")
 	}
 
 	if port == 0 {
@@ -173,7 +173,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	logger.Printf("Server stopped")
 
 	if !boxCreated {
-		return Bbox{}, fmt.Errorf("No bounding box submitted")
+		return Bbox{}, fmt.Errorf("no bounding box submitted")
 	}
 
 	return bbox, nil

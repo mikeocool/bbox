@@ -94,7 +94,7 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 	if geocoderURL == "" {
 		return nil, fmt.Errorf("geocoder URL is required")
 	}
-	
+
 	requestURL := fmt.Sprintf(geocoderURL, url.QueryEscape(query))
 
 	// Create HTTP request
@@ -140,7 +140,7 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 
 	// Check if we got any results
 	if len(geocodeResp.Features) == 0 {
-		return nil, fmt.Errorf("Could not find place matching: \"%s\"", query)
+		return nil, fmt.Errorf("could not find place matching: \"%s\"", query)
 	}
 
 	feature := geocodeResp.Features[0]
@@ -182,12 +182,12 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 
 	// Check for bbox/extent in properties first, then at feature level
 	var extent *core.Bbox
-	
+
 	// Check for bbox in properties first
 	if bboxVal, hasBbox := feature.Properties["bbox"]; hasBbox {
 		extent = parseBboxFromInterface(bboxVal)
 	}
-	
+
 	// If no bbox in properties, check for extent property (Photon format)
 	if extent == nil {
 		if extentVal, hasExtent := feature.Properties["extent"]; hasExtent {
