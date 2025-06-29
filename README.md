@@ -98,10 +98,6 @@ Output formats:
 # TODO
 * add support wkt/wkb/hexwkb formats to ParseData (and give better name)
 * align input and output options across commands
-* add github actions for testing
-    * cleanup go mod code
-    * adding linting
-    * add go vet
 * basic projection handling
     * read the projection if we can
     * for projections that are close WGS84, allow --drow but show a warning
@@ -111,7 +107,6 @@ Output formats:
     * touch interactions/small screen UI
     * vector tiles(?)
     * preview bbox in common formats
-* kml input
 * output formats
     * lines
     * overpass ql
