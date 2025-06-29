@@ -2,6 +2,7 @@ package output
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strings"
 )
@@ -11,6 +12,16 @@ type OutputSettings struct {
 	FormatDetails string
 	GeojsonIndent int
 	GeojsonType   string
+	Browser       bool
+}
+
+// Validate validates the output settings and returns an error if invalid
+func (o *OutputSettings) Validate() error {
+	// Validate --browser flag usage
+	if o.Browser && o.FormatType != FormatUrl {
+		return fmt.Errorf("--browser flag can only be used with URL output format")
+	}
+	return nil
 }
 
 // ParseFormat parses a format string into format type and details.

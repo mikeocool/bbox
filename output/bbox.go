@@ -103,18 +103,32 @@ func UrlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 		return "", fmt.Errorf("no url type specified")
 	}
 
+	var url string
+	var err error
+
 	switch strings.ToLower(urlType) {
 	case "openstreetmap.org", "openstreetmap.com", "osm":
-		return FormatWithTemplate("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
+		url, err = FormatWithTemplate("https://www.openstreetmap.org/?box=yes&minlon={{.Left}}&minlat={{.Bottom}}&maxlon={{.Right}}&maxlat={{.Top}}", bbox)
 	case "osm-api":
-		return FormatWithTemplate("https://www.openstreetmap.org/api/0.6/map?bbox={{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
+		url, err = FormatWithTemplate("https://www.openstreetmap.org/api/0.6/map?bbox={{.Left}},{{.Bottom}},{{.Right}},{{.Top}}", bbox)
 	case "maps.google.com", "google-maps":
-		return GoogleMapsUrl(bbox)
+		url, err = GoogleMapsUrl(bbox)
 	case "geojson.io":
-		return GeojsonIoUrl(bbox)
+		url, err = GeojsonIoUrl(bbox)
 	default:
 		return "", fmt.Errorf("unknown url type: %s", urlType)
 	}
+
+	if err != nil {
+		return "", err
+	}
+
+	// Open browser if requested
+	if settings.Browser {
+		core.OpenBrowser(url)
+	}
+
+	return url, nil
 }
 
 func GoogleMapsUrl(bbox core.Bbox) (string, error) {

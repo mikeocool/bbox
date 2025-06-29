@@ -143,7 +143,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 		if browserAddress == "0.0.0.0" {
 			browserAddress = "localhost"
 		}
-		openBrowser(fmt.Sprintf("http://%s:%d", browserAddress, s.Port))
+		OpenBrowser(fmt.Sprintf("http://%s:%d", browserAddress, s.Port))
 	}()
 
 	// Set up signal handling for graceful shutdown
@@ -192,8 +192,8 @@ func findAvailablePort(address string, startPort int) int {
 	return 0
 }
 
-// openBrowser opens the default browser to the specified URL
-func openBrowser(url string) {
+// OpenBrowser opens the default browser to the specified URL
+func OpenBrowser(url string) {
 	var err error
 
 	switch runtime.GOOS {

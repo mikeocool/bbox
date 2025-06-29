@@ -97,6 +97,7 @@ func init() {
 	RootCmd.PersistentFlags().StringP("output", "o", "space", "Output format or destination")
 	RootCmd.PersistentFlags().IntVar(&outputSettings.GeojsonIndent, "geojson-indent", 0, "Indentation level for geojson output format")
 	RootCmd.PersistentFlags().StringVar(&outputSettings.GeojsonType, "geojson-type", "", "Type of geojson object to output - featurecollection, feature, geometry, or coordinates")
+	RootCmd.PersistentFlags().BoolVar(&outputSettings.Browser, "browser", false, "Open URL in browser (only valid with URL output format)")
 }
 
 var ErrInputCouldNotCreateBbox = errors.New("could not create bounding box")
@@ -134,6 +135,11 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 }
 
 func runRoot(cmd *cobra.Command, args []string) error {
+	// Validate output settings
+	if err := outputSettings.Validate(); err != nil {
+		return err
+	}
+
 	bbox, err := getBboxFromInput(args)
 	if err != nil {
 		if errors.Is(err, ErrInputCouldNotCreateBbox) {
