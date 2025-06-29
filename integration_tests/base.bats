@@ -52,7 +52,7 @@ setup() {
 
 @test "invalid stdin" {
     run /bin/bash -c "echo '' | ./bbox"
-    assert_output --partial "Input does not appear to be a valid format"
+    assert_output --partial "input does not appear to be a valid format"
     assert_failure
 }
 
