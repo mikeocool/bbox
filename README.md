@@ -98,6 +98,8 @@ Output formats:
 # TODO
 * add support wkt/wkb/hexwkb formats to ParseData (and give better name)
 * align input and output options across commands
+    * url output for center
+* Cleanup internal errors vs user errors
 * basic projection handling
     * read the projection if we can
     * for projections that are close WGS84, allow --drow but show a warning
