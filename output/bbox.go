@@ -123,11 +123,6 @@ func UrlFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
 		return "", err
 	}
 
-	// Open browser if requested
-	if settings.Browser {
-		core.OpenBrowser(url)
-	}
-
 	return url, nil
 }
 

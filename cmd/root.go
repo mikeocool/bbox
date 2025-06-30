@@ -134,6 +134,23 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 	return bbox, nil
 }
 
+func handleOutput(bbox core.Bbox, settings output.OutputSettings) error {
+	formatted, err := output.FormatBbox(bbox, outputSettings)
+	if err != nil {
+		return fmt.Errorf("error formatting bounding box: %w", err)
+	}
+
+	fmt.Println(formatted)
+
+	// Open browser if requested
+	// TODO suppport template as well?
+	if settings.FormatType == output.FormatUrl && settings.Browser {
+		core.OpenBrowser(formatted)
+	}
+
+	return nil
+}
+
 func runRoot(cmd *cobra.Command, args []string) error {
 	// Validate output settings
 	if err := outputSettings.Validate(); err != nil {
@@ -150,12 +167,9 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	formatted, err := output.FormatBbox(bbox, outputSettings)
-	if err != nil {
+	if err := handleOutput(bbox, outputSettings); err != nil {
 		return fmt.Errorf("error formatting bounding box: %w", err)
 	}
 
-	// Output the formatted bounding box
-	fmt.Println(formatted)
 	return nil
 }

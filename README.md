@@ -111,7 +111,6 @@ Output formats:
     * lines
     * overpass ql
     * r/sf format
-    * option to open browser for url formats
 * option to specify decimal precision/format
 * handle projections
     * https://github.com/twpayne/go-proj
