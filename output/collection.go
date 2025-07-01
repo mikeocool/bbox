@@ -101,6 +101,10 @@ func WkbhexFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error)
 	return WkbHex(buf), nil
 }
 
+func UnsupportedFormatCollection(settings OutputSettings, _ []core.Bbox) (string, error) {
+	return "", fmt.Errorf("format type: %s is not supported for collections", settings.FormatType)
+}
+
 // collectionOutputFormatters maps format type constants to their corresponding format functions
 var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (string, error){
 	FormatGoTpl:    TemplatedFormatCollection,
@@ -113,6 +117,7 @@ var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (s
 	FormatGeoJsonl: GeojsonlFormatCollection,
 	FormatWkt:      WktFormatCollection,
 	FormatWkbhex:   WkbhexFormatCollection,
+	FormatUrl:      UnsupportedFormatCollection,
 	// dublin core
 }
 
