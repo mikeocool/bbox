@@ -47,7 +47,7 @@ jobs:
               run: go build
 
             - name: Run go tests
-              run: go test -v ./...
+              run: go test ./...
 
             - name: Setup integration test dependencies
               run: ./integration_tests/setup.sh

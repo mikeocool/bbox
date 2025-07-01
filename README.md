@@ -98,7 +98,7 @@ Output formats:
 # TODO
 * add support wkt/wkb/hexwkb formats to ParseData (and give better name)
 * align input and output options across commands
-    * url output for center
+    * dublinecore output for center/collection
 * Cleanup internal errors vs user errors
 * basic projection handling
     * read the projection if we can
@@ -107,7 +107,6 @@ Output formats:
 * cleanup draw UI
     * Show popup success message with button to close window when done
     * touch interactions/small screen UI
-    * vector tiles(?)
     * preview bbox in common formats
 * output formats
     * lines
@@ -120,6 +119,7 @@ Output formats:
     * Map tiler api
     * call out to proj
     * implement basic projections
+    * https://github.com/wroge/wgs84
 * units on width, height, buffer options
 * clean input error messaging
 * add http api
