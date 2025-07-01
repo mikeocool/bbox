@@ -526,13 +526,13 @@ func TestUrlFormatPoint(t *testing.T) {
 		{
 			name:        "OpenStreetMap URL",
 			urlType:     "osm",
-			expected:    "https://www.openstreetmap.org/?mlat=40.730610&mlon=-73.935242&zoom=16",
+			expected:    "https://www.openstreetmap.org/?mlat=40.73061&mlon=-73.935242&zoom=16",
 			expectError: false,
 		},
 		{
 			name:        "OpenStreetMap.org URL",
 			urlType:     "openstreetmap.org",
-			expected:    "https://www.openstreetmap.org/?mlat=40.730610&mlon=-73.935242&zoom=16",
+			expected:    "https://www.openstreetmap.org/?mlat=40.73061&mlon=-73.935242&zoom=16",
 			expectError: false,
 		},
 		{
