@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/mikeocool/bbox/geojson"
@@ -83,6 +84,43 @@ func GeojsonlFormatPoint(settings OutputSettings, coords [2]float64) (string, er
 	return GeojsonFormatPoint(settings, coords)
 }
 
+// UrlFormatPoint formats a point as a URL to visualize it on various mapping services.
+func UrlFormatPoint(settings OutputSettings, point [2]float64) (string, error) {
+	urlType := settings.FormatDetails
+	if urlType == "" {
+		return "", fmt.Errorf("no url type specified")
+	}
+
+	var urlStr string
+	var err error
+
+	switch strings.ToLower(urlType) {
+	case "openstreetmap.org", "openstreetmap.com", "osm":
+		urlStr = fmt.Sprintf("https://www.openstreetmap.org/?mlat=%g&mlon=%g&zoom=16", point[1], point[0])
+	case "maps.google.com", "google-maps":
+		urlStr = fmt.Sprintf("https://maps.google.com/maps?q=%f,%f", point[1], point[0])
+	case "geojson.io":
+		urlStr, err = GeojsonIoPointUrl(point)
+	default:
+		return "", fmt.Errorf("unknown url type: %s", urlType)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return urlStr, nil
+}
+
+func GeojsonIoPointUrl(point [2]float64) (string, error) {
+	geojson, err := GeojsonFormatPoint(OutputSettings{}, point)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("https://geojson.io/#data=data:application/json,%s", url.QueryEscape(geojson)), nil
+}
+
 // pointOutputFormatters maps format type constants to their corresponding format functions
 var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string, error){
 	FormatGoTpl:    TemplatedFormatPoint,
@@ -96,7 +134,7 @@ var pointOutputFormatters = map[string]func(OutputSettings, [2]float64) (string,
 	FormatWkt:      WktFormatPoint,
 	FormatWkbhex:   WkbhexFormatPoint,
 	// TODO dublincore
-	// TODO url?
+	FormatUrl: UrlFormatPoint,
 }
 
 // GetPointFormatter returns the format function for the given format type.

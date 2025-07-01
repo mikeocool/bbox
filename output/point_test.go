@@ -514,6 +514,109 @@ func TestGeojsonlFormatPoint(t *testing.T) {
 	}
 }
 
+func TestUrlFormatPoint(t *testing.T) {
+	point := [2]float64{-73.935242, 40.730610} // NYC coordinates
+
+	tests := []struct {
+		name        string
+		urlType     string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "OpenStreetMap URL",
+			urlType:     "osm",
+			expected:    "https://www.openstreetmap.org/?mlat=40.730610&mlon=-73.935242&zoom=16",
+			expectError: false,
+		},
+		{
+			name:        "OpenStreetMap.org URL",
+			urlType:     "openstreetmap.org",
+			expected:    "https://www.openstreetmap.org/?mlat=40.730610&mlon=-73.935242&zoom=16",
+			expectError: false,
+		},
+		{
+			name:        "Google Maps URL",
+			urlType:     "google-maps",
+			expected:    "https://maps.google.com/maps?q=40.730610,-73.935242",
+			expectError: false,
+		},
+		{
+			name:        "Maps.google.com URL",
+			urlType:     "maps.google.com",
+			expected:    "https://maps.google.com/maps?q=40.730610,-73.935242",
+			expectError: false,
+		},
+		{
+			name:        "GeoJSON.io URL",
+			urlType:     "geojson.io",
+			expected:    "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Point%22%2C%22coordinates%22%3A%5B-73.935242%2C40.73061%5D%7D",
+			expectError: false,
+		},
+		{
+			name:        "Empty URL type",
+			urlType:     "",
+			expected:    "",
+			expectError: true,
+		},
+		{
+			name:        "Unknown URL type",
+			urlType:     "unknown",
+			expected:    "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := OutputSettings{FormatDetails: tc.urlType}
+			result, err := UrlFormatPoint(settings, point)
+
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if !tc.expectError && result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestGeojsonIoPointUrl(t *testing.T) {
+	tests := []struct {
+		name     string
+		point    [2]float64
+		expected string
+	}{
+		{
+			name:     "Zero coordinates",
+			point:    [2]float64{0.0, 0.0},
+			expected: "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Point%22%2C%22coordinates%22%3A%5B0%2C0%5D%7D",
+		},
+		{
+			name:     "NYC coordinates",
+			point:    [2]float64{-73.935242, 40.730610},
+			expected: "https://geojson.io/#data=data:application/json,%7B%22type%22%3A%22Point%22%2C%22coordinates%22%3A%5B-73.935242%2C40.73061%5D%7D",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := GeojsonIoPointUrl(tc.point)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("Expected %q but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
 func TestGetPointFormatter(t *testing.T) {
 	tests := []struct {
 		name       string
