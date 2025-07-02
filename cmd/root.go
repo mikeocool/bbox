@@ -58,7 +58,11 @@ var RootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		if userErr, ok := err.(*UserError); ok {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", userErr.UserError())
+		} else {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		}
 		os.Exit(1)
 	}
 }
@@ -127,7 +131,11 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 		// Start the drawing server
 		bbox, err = core.StartDrawServer(bbox, addressFlag, portFlag)
 		if err != nil {
-			return core.Bbox{}, fmt.Errorf("error running draw server: %w", err)
+			if errors.Is(err, core.ErrNonWGS84Coordinates) {
+				// TODO wrap in error so we can provide friendly message
+				return core.Bbox{}, NewUserError(err, "Box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode")
+			}
+			return core.Bbox{}, fmt.Errorf("starting draw server: %w", err)
 		}
 	}
 

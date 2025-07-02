@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -24,6 +25,8 @@ const defaultPort = 5500
 //go:embed ui/draw.html
 var drawHTML []byte
 
+var ErrNonWGS84Coordinates = fmt.Errorf("coordinates do not appear to be valid WGS84")
+
 // DrawServer holds the configuration and state for the bounding box drawing server
 type DrawServer struct {
 	Port    int
@@ -39,14 +42,14 @@ type TemplateContext struct {
 func StartDrawServer(bbox Bbox, address string, port int) (Bbox, error) {
 	// Ensure the box appears to be Valid Wgs84 coords
 	if !IsValidWgs84(bbox) {
-		return Bbox{}, fmt.Errorf("box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode")
+		return Bbox{}, ErrNonWGS84Coordinates
 	}
 
 	if port == 0 {
 		// Auto-find an available port starting from default
 		port = findAvailablePort(address, defaultPort)
 		if port == 0 {
-			return Bbox{}, fmt.Errorf("could not find an available port")
+			return Bbox{}, errors.New("can not find an available port")
 		}
 	}
 	// If port != 0, use the specific port requested and let server fail if it can't bind
@@ -67,7 +70,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	// Parse the HTML template
 	tmpl, err := template.New("draw").Parse(string(drawHTML))
 	if err != nil {
-		return Bbox{}, fmt.Errorf("failed to parse template: %w", err)
+		return Bbox{}, fmt.Errorf("parsing html template: %w", err)
 	}
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +79,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 			Bbox: &inputBbox,
 		})
 		if err != nil {
+			// TODO panic or log.Fatal? Or send message to error channel
 			logger.Printf("Failed to execute template: %v", err)
 			http.Error(w, "Failed to render template", http.StatusInternalServerError)
 			return
@@ -132,6 +136,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	go func() {
 		fmt.Fprintf(os.Stderr, "Go to http://%s:%d to draw your bounding box\n", s.Address, s.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			// TODO error channel?
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
@@ -168,7 +173,7 @@ func (s *DrawServer) Start(inputBbox Bbox) (Bbox, error) {
 	defer shutdownCancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		return Bbox{}, fmt.Errorf("server shutdown error: %w", err)
+		return Bbox{}, fmt.Errorf("shutdown: %w", err)
 	}
 	logger.Printf("Server stopped")
 
