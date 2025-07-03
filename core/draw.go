@@ -213,6 +213,6 @@ func OpenBrowser(url string) {
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open browser: %v", err)
+		fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
 	}
 }
