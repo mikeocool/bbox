@@ -105,9 +105,10 @@ Output formats:
     * for projections that are close WGS84, allow --drow but show a warning
     * for those that aren't show error
 * cleanup draw UI
-    * Show popup success message with button to close window when done
+    * Important: Show popup success message with button to close window when done - disable/blank out UI
     * touch interactions/small screen UI
     * preview bbox in common formats
+    * UI mode that just opens the UI in the browser
 * output formats
     * lines
     * overpass ql
