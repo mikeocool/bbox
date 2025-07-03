@@ -774,3 +774,178 @@ func TestBboxUnionProperties(t *testing.T) {
 		}
 	})
 }
+
+func TestBboxExtend(t *testing.T) {
+	tests := []struct {
+		name     string
+		bbox     Bbox
+		x        float64
+		y        float64
+		expected Bbox
+	}{
+		{
+			name:     "Extend with point inside bbox",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 4.0, Top: 4.0},
+			x:        2.0,
+			y:        2.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 4.0, Top: 4.0},
+		},
+		{
+			name:     "Extend left boundary",
+			bbox:     Bbox{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0},
+			x:        1.0,
+			y:        3.0,
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 4.0},
+		},
+		{
+			name:     "Extend right boundary",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0},
+			x:        3.0,
+			y:        1.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 3.0, Top: 2.0},
+		},
+		{
+			name:     "Extend bottom boundary",
+			bbox:     Bbox{Left: 0.0, Bottom: 2.0, Right: 2.0, Top: 4.0},
+			x:        1.0,
+			y:        1.0,
+			expected: Bbox{Left: 0.0, Bottom: 1.0, Right: 2.0, Top: 4.0},
+		},
+		{
+			name:     "Extend top boundary",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0},
+			x:        1.0,
+			y:        3.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 3.0},
+		},
+		{
+			name:     "Extend multiple boundaries",
+			bbox:     Bbox{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0},
+			x:        1.0,
+			y:        5.0,
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0},
+		},
+		{
+			name:     "Extend all boundaries",
+			bbox:     Bbox{Left: 2.0, Bottom: 2.0, Right: 3.0, Top: 3.0},
+			x:        1.0,
+			y:        1.0,
+			expected: Bbox{Left: 1.0, Bottom: 1.0, Right: 3.0, Top: 3.0},
+		},
+		{
+			name:     "Extend with negative coordinates",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0},
+			x:        -1.0,
+			y:        -1.0,
+			expected: Bbox{Left: -1.0, Bottom: -1.0, Right: 2.0, Top: 2.0},
+		},
+		{
+			name:     "Extend with large coordinates",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 1.0, Top: 1.0},
+			x:        1000.0,
+			y:        1000.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 1000.0, Top: 1000.0},
+		},
+		{
+			name:     "Extend zero-size bbox",
+			bbox:     Bbox{Left: 5.0, Bottom: 5.0, Right: 5.0, Top: 5.0},
+			x:        3.0,
+			y:        7.0,
+			expected: Bbox{Left: 3.0, Bottom: 5.0, Right: 5.0, Top: 7.0},
+		},
+		{
+			name:     "Extend with point on boundary",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0},
+			x:        2.0,
+			y:        2.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0},
+		},
+		{
+			name:     "Extend preserves CRS",
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Crs: Wgs84},
+			x:        3.0,
+			y:        3.0,
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 3.0, Top: 3.0, Crs: Wgs84},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.bbox.Extend(tc.x, tc.y)
+
+			if result.Left != tc.expected.Left || result.Bottom != tc.expected.Bottom ||
+				result.Right != tc.expected.Right || result.Top != tc.expected.Top ||
+				result.Crs != tc.expected.Crs {
+				t.Errorf("Expected %+v, got %+v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestBboxExtendProperties(t *testing.T) {
+	bbox := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+
+	t.Run("Extend with point inside doesn't change bbox", func(t *testing.T) {
+		result := bbox.Extend(2.0, 3.0)
+
+		if result.Left != bbox.Left || result.Bottom != bbox.Bottom ||
+			result.Right != bbox.Right || result.Top != bbox.Top ||
+			result.Crs != bbox.Crs {
+			t.Errorf("Expected bbox to remain unchanged: %+v, got %+v", bbox, result)
+		}
+	})
+
+	t.Run("Extend result contains original bbox", func(t *testing.T) {
+		result := bbox.Extend(0.0, 5.0)
+
+		// Check that result contains original bbox
+		if result.Left > bbox.Left || result.Bottom > bbox.Bottom ||
+			result.Right < bbox.Right || result.Top < bbox.Top {
+			t.Errorf("Extended bbox %+v does not contain original bbox %+v", result, bbox)
+		}
+	})
+
+	t.Run("Extend result contains the new point", func(t *testing.T) {
+		x, y := 0.5, 5.5
+		result := bbox.Extend(x, y)
+
+		// Check that result contains the new point
+		if result.Left > x || result.Right < x || result.Bottom > y || result.Top < y {
+			t.Errorf("Extended bbox %+v does not contain point (%f, %f)", result, x, y)
+		}
+	})
+
+	t.Run("Extend preserves CRS", func(t *testing.T) {
+		bboxWithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Nad83}
+		result := bboxWithCrs.Extend(5.0, 6.0)
+
+		if result.Crs != Nad83 {
+			t.Errorf("Expected CRS to be preserved: %v, got %v", Nad83, result.Crs)
+		}
+	})
+
+	t.Run("Extend result is valid", func(t *testing.T) {
+		result := bbox.Extend(0.0, 5.0)
+
+		if err := result.Validate(); err != nil {
+			t.Errorf("Extended bbox is invalid: %v", err)
+		}
+	})
+
+	t.Run("Multiple extends are commutative", func(t *testing.T) {
+		// Extending with two points should give same result regardless of order
+		x1, y1 := 0.0, 5.0
+		x2, y2 := 4.0, 1.0
+
+		intermediate1 := bbox.Extend(x1, y1)
+		result1 := intermediate1.Extend(x2, y2)
+		
+		intermediate2 := bbox.Extend(x2, y2)
+		result2 := intermediate2.Extend(x1, y1)
+
+		if result1.Left != result2.Left || result1.Bottom != result2.Bottom ||
+			result1.Right != result2.Right || result1.Top != result2.Top {
+			t.Errorf("Multiple extends not commutative: %+v vs %+v", result1, result2)
+		}
+	})
+}
