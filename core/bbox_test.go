@@ -50,6 +50,29 @@ func TestBboxValidate(t *testing.T) {
 			bbox:        Bbox{},
 			expectError: false,
 		},
+		{
+			name: "Invalid CRS",
+			bbox: Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  3.0,
+				Top:    4.0,
+				Crs:    InvalidCrs,
+			},
+			expectError: true,
+			errorMsg:    "invalid bbox: invalid CRS",
+		},
+		{
+			name: "Valid CRS",
+			bbox: Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  3.0,
+				Top:    4.0,
+				Crs:    Wgs84,
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -92,6 +115,24 @@ func TestBboxSlice(t *testing.T) {
 				{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0}, // top-right
 				{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0}, // bottom-left
 				{Left: 2.0, Bottom: 0.0, Right: 4.0, Top: 2.0}, // bottom-right
+			},
+		},
+		{
+			name: "2x2 grid with crs",
+			bbox: Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  4.0,
+				Top:    4.0,
+				Crs:    Wgs84,
+			},
+			columns: 2,
+			rows:    2,
+			expected: []Bbox{
+				{Left: 0.0, Bottom: 2.0, Right: 2.0, Top: 4.0, Crs: Wgs84}, // top-left
+				{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0, Crs: Wgs84}, // top-right
+				{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Crs: Wgs84}, // bottom-left
+				{Left: 2.0, Bottom: 0.0, Right: 4.0, Top: 2.0, Crs: Wgs84}, // bottom-right
 			},
 		},
 		{
@@ -457,6 +498,13 @@ func TestBboxBuffer(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "Positive buffer with CRS",
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
+			radius:      1.0,
+			expected:    Bbox{Left: 0.0, Bottom: 1.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
+			expectError: false,
+		},
+		{
 			name:        "Zero buffer",
 			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
 			radius:      0.0,
@@ -573,6 +621,156 @@ func TestBboxBufferProperties(t *testing.T) {
 		if result.Left != bbox.Left || result.Bottom != bbox.Bottom ||
 			result.Right != bbox.Right || result.Top != bbox.Top {
 			t.Errorf("Expected unchanged bbox %+v, got %+v", bbox, result)
+		}
+	})
+}
+
+func TestBboxUnion(t *testing.T) {
+	tests := []struct {
+		name     string
+		bbox1    Bbox
+		bbox2    Bbox
+		expected Bbox
+	}{
+		{
+			name:     "Basic union",
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0},
+		},
+		{
+			name:     "Non-overlapping boxes",
+			bbox1:    Bbox{Left: 0.0, Bottom: 0.0, Right: 1.0, Top: 1.0},
+			bbox2:    Bbox{Left: 2.0, Bottom: 2.0, Right: 3.0, Top: 3.0},
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 3.0, Top: 3.0},
+		},
+		{
+			name:     "One box inside another",
+			bbox1:    Bbox{Left: 0.0, Bottom: 0.0, Right: 10.0, Top: 10.0},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 5.0, Top: 7.0},
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 10.0, Top: 10.0},
+		},
+		{
+			name:     "Identical boxes",
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			bbox2:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0},
+		},
+		{
+			name:     "Negative coordinates",
+			bbox1:    Bbox{Left: -5.0, Bottom: -3.0, Right: -1.0, Top: 1.0},
+			bbox2:    Bbox{Left: -2.0, Bottom: -1.0, Right: 2.0, Top: 3.0},
+			expected: Bbox{Left: -5.0, Bottom: -3.0, Right: 2.0, Top: 3.0},
+		},
+		{
+			name:     "Zero-width boxes",
+			bbox1:    Bbox{Left: 1.0, Bottom: 1.0, Right: 1.0, Top: 3.0},
+			bbox2:    Bbox{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 2.0},
+			expected: Bbox{Left: 1.0, Bottom: 1.0, Right: 4.0, Top: 3.0},
+		},
+		{
+			name:     "Union with same CRS",
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
+		},
+		{
+			name:     "Union with different CRS returns InvalidCrs",
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Nad83},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: InvalidCrs},
+		},
+		{
+			name:     "Union with UnknownCrs uses other CRS",
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: UnknownCrs},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Nad83},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: Nad83},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.bbox1.Union(tc.bbox2)
+
+			if result.Left != tc.expected.Left || result.Bottom != tc.expected.Bottom ||
+				result.Right != tc.expected.Right || result.Top != tc.expected.Top ||
+				result.Crs != tc.expected.Crs {
+				t.Errorf("Expected %+v, got %+v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestBboxUnionProperties(t *testing.T) {
+	bbox1 := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0}
+	bbox2 := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0}
+
+	t.Run("Union is commutative for coordinates", func(t *testing.T) {
+		union1 := bbox1.Union(bbox2)
+		union2 := bbox2.Union(bbox1)
+
+		if union1.Left != union2.Left || union1.Bottom != union2.Bottom ||
+			union1.Right != union2.Right || union1.Top != union2.Top {
+			t.Errorf("Union coordinates not commutative: %+v vs %+v", union1, union2)
+		}
+	})
+
+	t.Run("Union CRS behavior", func(t *testing.T) {
+		bbox1WithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Nad83}
+		bbox2WithCrs := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Crs: Wgs84}
+
+		// Different CRS should result in InvalidCrs
+		union1 := bbox1WithCrs.Union(bbox2WithCrs)
+		union2 := bbox2WithCrs.Union(bbox1WithCrs)
+
+		if union1.Crs != InvalidCrs {
+			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union1.Crs)
+		}
+		if union2.Crs != InvalidCrs {
+			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union2.Crs)
+		}
+
+		// Same CRS should preserve CRS
+		bbox1Same := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84}
+		bbox2Same := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Crs: Wgs84}
+		
+		unionSame := bbox1Same.Union(bbox2Same)
+		if unionSame.Crs != Wgs84 {
+			t.Errorf("Expected union of same CRS to have %v, got %v", Wgs84, unionSame.Crs)
+		}
+	})
+
+	t.Run("Union contains both original boxes", func(t *testing.T) {
+		union := bbox1.Union(bbox2)
+
+		// Check that union contains bbox1
+		if union.Left > bbox1.Left || union.Bottom > bbox1.Bottom ||
+			union.Right < bbox1.Right || union.Top < bbox1.Top {
+			t.Errorf("Union %+v does not contain bbox1 %+v", union, bbox1)
+		}
+
+		// Check that union contains bbox2
+		if union.Left > bbox2.Left || union.Bottom > bbox2.Bottom ||
+			union.Right < bbox2.Right || union.Top < bbox2.Top {
+			t.Errorf("Union %+v does not contain bbox2 %+v", union, bbox2)
+		}
+	})
+
+	t.Run("Union with self is identity", func(t *testing.T) {
+		union := bbox1.Union(bbox1)
+
+		if union.Left != bbox1.Left || union.Bottom != bbox1.Bottom ||
+			union.Right != bbox1.Right || union.Top != bbox1.Top ||
+			union.Crs != bbox1.Crs {
+			t.Errorf("Union with self should be identity: expected %+v, got %+v", bbox1, union)
+		}
+	})
+
+	t.Run("Union result is valid", func(t *testing.T) {
+		union := bbox1.Union(bbox2)
+
+		if err := union.Validate(); err != nil {
+			t.Errorf("Union result is invalid: %v", err)
 		}
 	})
 }
