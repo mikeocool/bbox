@@ -10,6 +10,7 @@ type Bbox struct {
 	Bottom float64 `json:"bottom"`
 	Right  float64 `json:"right"`
 	Top    float64 `json:"top"`
+	Crs    int     `json:"crs"`
 }
 
 func EmptyBbox() Bbox {
