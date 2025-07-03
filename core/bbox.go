@@ -25,6 +25,10 @@ func EmptyBbox() Bbox {
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
 func (b *Bbox) Validate() error {
+	if b.Crs == InvalidCrs {
+		return fmt.Errorf("invalid bbox: invalid CRS")
+	}
+
 	if b.Right < b.Left {
 		return fmt.Errorf("invalid bbox: Right (%f) must be greater than Left (%f)", b.Right, b.Left)
 	}
@@ -37,7 +41,11 @@ func (b *Bbox) Validate() error {
 }
 
 func (b *Bbox) Equals(other Bbox) bool {
-	return b.Left == other.Left && b.Bottom == other.Bottom && b.Right == other.Right && b.Top == other.Top
+	return (b.Left == other.Left &&
+		b.Bottom == other.Bottom &&
+		b.Right == other.Right &&
+		b.Top == other.Top &&
+		b.Crs == other.Crs)
 }
 
 // Polygon returns the corner points of the bounding box as a closed polygon.
@@ -87,11 +95,23 @@ func (b *Bbox) Height() float64 {
 }
 
 func (b *Bbox) Union(other Bbox) Bbox {
+	var crs int
+	if b.Crs == other.Crs {
+		crs = b.Crs
+	} else if b.Crs == UnknownCrs {
+		crs = other.Crs
+	} else if other.Crs == UnknownCrs {
+		crs = b.Crs
+	} else {
+		crs = InvalidCrs
+	}
+
 	return Bbox{
 		Left:   math.Min(b.Left, other.Left),
 		Bottom: math.Min(b.Bottom, other.Bottom),
 		Right:  math.Max(b.Right, other.Right),
 		Top:    math.Max(b.Top, other.Top),
+		Crs:    crs,
 	}
 }
 
@@ -102,6 +122,7 @@ func (b *Bbox) Extend(x, y float64) Bbox {
 		Bottom: math.Min(b.Bottom, y),
 		Right:  math.Max(b.Right, x),
 		Top:    math.Max(b.Top, y),
+		Crs:    b.Crs,
 	}
 }
 
@@ -128,6 +149,7 @@ func (b *Bbox) Buffer(radius float64) (Bbox, error) {
 		Bottom: b.Bottom - radius,
 		Right:  b.Right + radius,
 		Top:    b.Top + radius,
+		Crs:    b.Crs,
 	}, nil
 }
 
@@ -158,6 +180,7 @@ func (b *Bbox) Slice(columns, rows int) []Bbox {
 				Bottom: bottom,
 				Right:  right,
 				Top:    top,
+				Crs:    b.Crs,
 			})
 		}
 	}

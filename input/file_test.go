@@ -43,6 +43,7 @@ func TestParseData(t *testing.T) {
 				Bottom: 0.5,
 				Right:  101.0,
 				Top:    1.5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -60,6 +61,7 @@ func TestParseData(t *testing.T) {
 				Bottom: -5,
 				Right:  10,
 				Top:    5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -86,6 +88,7 @@ func TestParseData(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -97,6 +100,7 @@ func TestParseData(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -237,6 +241,7 @@ func TestParseDataEdgeCases(t *testing.T) {
 			Bottom: 10,
 			Right:  5,
 			Top:    10,
+			Crs:    core.Wgs84,
 		}
 
 		if got != want {
@@ -300,7 +305,13 @@ func TestParseDataDetectionFallback(t *testing.T) {
 
 func TestParseDataWithDifferentReaderTypes(t *testing.T) {
 	geoJSON := `{"type":"Feature","geometry":{"type":"Point","coordinates":[42,24]}}`
-	want := core.Bbox{Left: 42, Bottom: 24, Right: 42, Top: 24}
+	want := core.Bbox{
+		Left:   42,
+		Bottom: 24,
+		Right:  42,
+		Top:    24,
+		Crs:    core.Wgs84,
+	}
 
 	t.Run("strings.Reader", func(t *testing.T) {
 		got, err := ParseData(strings.NewReader(geoJSON))
@@ -350,7 +361,13 @@ func TestParseDataDetectionBufferEdgeCases(t *testing.T) {
 			return
 		}
 
-		want := core.Bbox{Left: 42, Bottom: 24, Right: 42, Top: 24}
+		want := core.Bbox{
+			Left:   42,
+			Bottom: 24,
+			Right:  42,
+			Top:    24,
+			Crs:    core.Wgs84,
+		}
 		if got != want {
 			t.Errorf("ParseData() = %v, want %v", got, want)
 		}
@@ -372,7 +389,13 @@ func TestParseDataDetectionBufferEdgeCases(t *testing.T) {
 			return
 		}
 
-		want := core.Bbox{Left: 1, Bottom: 2, Right: 1, Top: 2}
+		want := core.Bbox{
+			Left:   1,
+			Bottom: 2,
+			Right:  1,
+			Top:    2,
+			Crs:    core.Wgs84,
+		}
 		if got != want {
 			t.Errorf("ParseData() = %v, want %v", got, want)
 		}
@@ -393,7 +416,13 @@ func TestParseDataDetectionBufferEdgeCases(t *testing.T) {
 			return
 		}
 
-		want := core.Bbox{Left: 100, Bottom: 200, Right: 100, Top: 200}
+		want := core.Bbox{
+			Left:   100,
+			Bottom: 200,
+			Right:  100,
+			Top:    200,
+			Crs:    core.Wgs84,
+		}
 		if got != want {
 			t.Errorf("ParseData() = %v, want %v", got, want)
 		}
@@ -471,6 +500,7 @@ func TestParseDataComplexGeoJSON(t *testing.T) {
 			Bottom: 0,
 			Right:  30,
 			Top:    30,
+			Crs:    core.Wgs84,
 		}
 
 		if got != want {
@@ -517,6 +547,7 @@ func TestParseDataComplexGeoJSON(t *testing.T) {
 			Bottom: 30,
 			Right:  -70,
 			Top:    50,
+			Crs:    core.Wgs84,
 		}
 
 		if got != want {

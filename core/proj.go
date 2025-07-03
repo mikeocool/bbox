@@ -1,5 +1,12 @@
 package core
 
+const (
+	InvalidCrs = -1
+	UnknownCrs = 0
+	Wgs84      = 4326
+	Nad83      = 4269
+)
+
 // IsValidWgs84 checks if the bounding box coordinates are within valid WGS84 ranges.
 // Valid WGS84 coordinates: longitude [-180, 180], latitude [-90, 90]
 func IsValidWgs84(b Bbox) bool {

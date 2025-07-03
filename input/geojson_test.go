@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
+	tu "github.com/mikeocool/bbox/test_utils"
 )
 
 func TestParseGeojson(t *testing.T) {
@@ -33,6 +34,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -62,6 +64,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0,
 				Right:  2,
 				Top:    2,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -88,6 +91,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: -1,
 				Right:  2,
 				Top:    2,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -105,6 +109,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: -5,
 				Right:  10,
 				Top:    5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -119,6 +124,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  101.0,
 				Top:    1.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -130,6 +136,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -141,6 +148,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -152,6 +160,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -163,6 +172,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: -5,
 				Right:  10,
 				Top:    5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -174,6 +184,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.5,
 				Right:  101.5,
 				Top:    1.5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -191,6 +202,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 10.1,
 				Right:  125.6,
 				Top:    10.1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -208,6 +220,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  102.0,
 				Top:    1.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -225,6 +238,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  101.0,
 				Top:    1.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -245,6 +259,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  103.0,
 				Top:    3.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -265,6 +280,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  103.0,
 				Top:    3.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -282,6 +298,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  101.0,
 				Top:    1.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -295,6 +312,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: -6,
 				Right:  10,
 				Top:    5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -313,6 +331,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: -6,
 				Right:  10,
 				Top:    5,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -350,6 +369,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 20.3,
 				Right:  10.5,
 				Top:    20.3,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -456,6 +476,25 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  100.0,
 				Top:    0.0,
+				Crs:    core.Wgs84,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Large coordinates",
+			input: `{
+				"type": "Feature",
+				"geometry": {
+					"type": "Point",
+					"coordinates": [1e308, -1e308]
+				}
+			}`,
+			want: core.Bbox{
+				Left:   -1e308,
+				Bottom: -1e308,
+				Right:  1e308,
+				Top:    1e308,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -496,6 +535,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 1,
 				Right:  1,
 				Top:    1,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -538,6 +578,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 50.0,
 				Right:  100.0,
 				Top:    50.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -608,6 +649,7 @@ func TestParseGeojson(t *testing.T) {
 				Bottom: 0.0,
 				Right:  103.0,
 				Top:    3.0,
+				Crs:    core.Wgs84,
 			},
 			wantErr: false,
 		},
@@ -626,10 +668,7 @@ func TestParseGeojson(t *testing.T) {
 				return
 			}
 			if !tt.wantErr {
-				if got.Left != tt.want.Left || got.Bottom != tt.want.Bottom ||
-					got.Right != tt.want.Right || got.Top != tt.want.Top {
-					t.Errorf("ParseGeojson() = %v, want %v", got, tt.want)
-				}
+				tu.BboxAlmostEqual(got, tt.want)
 			}
 		})
 	}
@@ -654,6 +693,7 @@ func TestParseGeojsonNegativeCoordinates(t *testing.T) {
 		Bottom: -90,
 		Right:  180,
 		Top:    90,
+		Crs:    core.Wgs84,
 	}
 
 	got, err := ParseGeojson(bytes.NewReader([]byte(input)))
@@ -662,10 +702,7 @@ func TestParseGeojsonNegativeCoordinates(t *testing.T) {
 		return
 	}
 
-	if got.Left != want.Left || got.Bottom != want.Bottom ||
-		got.Right != want.Right || got.Top != want.Top {
-		t.Errorf("ParseGeojson() = %v, want %v", got, want)
-	}
+	tu.BboxAlmostEqual(got, want)
 }
 
 func TestParseGeojsonInvalidByteInput(t *testing.T) {
@@ -694,28 +731,6 @@ func TestParseGeojsonInvalidByteInput(t *testing.T) {
 				t.Errorf("ParseGeojson() expected error for invalid byte input, got nil")
 			}
 		})
-	}
-}
-
-func TestParseGeojsonLargeCoordinates(t *testing.T) {
-	// Test with very large coordinate values
-	input := `{
-		"type": "Feature",
-		"geometry": {
-			"type": "Point",
-			"coordinates": [1e308, -1e308]
-		}
-	}`
-
-	got, err := ParseGeojson(bytes.NewReader([]byte(input)))
-	if err != nil {
-		t.Errorf("ParseGeojson() unexpected error = %v", err)
-		return
-	}
-
-	if got.Left != 1e308 || got.Bottom != -1e308 ||
-		got.Right != 1e308 || got.Top != -1e308 {
-		t.Errorf("ParseGeojson() failed to handle large coordinates correctly")
 	}
 }
 

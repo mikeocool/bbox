@@ -76,12 +76,15 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 			return core.Bbox{}, err
 		}
 
-		dbbox, err := GeojsonDocBbox(raw)
+		dbbox, err := geojsonDocBbox(raw)
 		if err != nil {
 			return core.Bbox{}, err
 		}
 		bbox = bbox.Union(dbbox)
 	}
+
+	// per spec GeoJson is WGS84
+	bbox.Crs = core.Wgs84
 
 	if bbox.Validate() != nil {
 		return core.Bbox{}, errors.New("no geojson found")
@@ -100,7 +103,7 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
 // - Bbox as array [1,2,3,4]
 
-func GeojsonDocBbox(input []byte) (core.Bbox, error) {
+func geojsonDocBbox(input []byte) (core.Bbox, error) {
 	var bbox core.Bbox
 
 	// Try parsing as FeatureCollection
