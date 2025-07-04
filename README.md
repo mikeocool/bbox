@@ -105,7 +105,6 @@ Output formats:
     * for projections that are close WGS84, allow --drow but show a warning
     * for those that aren't show error
     * read proj from:
-        * EWKT
         * WKB
         * geoparquet
         * shapefile

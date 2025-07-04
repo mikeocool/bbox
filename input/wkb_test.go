@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mikeocool/bbox/core"
+	tu "github.com/mikeocool/bbox/test_utils"
 )
 
 func TestParseWKBBounds(t *testing.T) {
@@ -197,15 +198,14 @@ func TestParseWKBBoundsGeometryCollection(t *testing.T) {
 }
 
 func TestParseWKBBoundsWithSRID(t *testing.T) {
-	// Point with SRID flag set (geometry type will be 0x20000001)
-	wkbHex := "0101000000000000000000f03f0000000000000040" // SRID=4326;POINT(1 2)
+	// EWKB Point with SRID=4326; geometry type will have SRID flag (0x20000001)
+	wkbHex := "0101000020E6100000000000000000F03F0000000000000040" // SRID=4326;POINT(1 2)
 	wkb, err := hex.DecodeString(wkbHex)
 	if err != nil {
 		t.Fatalf("Failed to decode hex: %v", err)
 	}
 
-	// Manually skip the first 5 bytes (byte order + type with SRID flag) and SRID value (4 bytes)
-	// to test our parser handles SRID correctly
+	// Test ParseWKBBounds (should work but ignore SRID)
 	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
 	if err != nil {
 		t.Fatalf("ParseWKBBounds() unexpected error: %v", err)
@@ -216,6 +216,87 @@ func TestParseWKBBoundsWithSRID(t *testing.T) {
 		math.Abs(maxX-1.0) > epsilon || math.Abs(maxY-2.0) > epsilon {
 		t.Errorf("ParseWKBBounds() = (%v, %v, %v, %v), want (1, 2, 1, 2)",
 			minX, minY, maxX, maxY)
+	}
+
+	// Test ParseWKBBoundsWithSRID (should extract SRID)
+	minX2, minY2, maxX2, maxY2, srid, err := ParseWKBBoundsWithSRID(wkb)
+	if err != nil {
+		t.Fatalf("ParseWKBBoundsWithSRID() unexpected error: %v", err)
+	}
+
+	if math.Abs(minX2-1.0) > epsilon || math.Abs(minY2-2.0) > epsilon ||
+		math.Abs(maxX2-1.0) > epsilon || math.Abs(maxY2-2.0) > epsilon {
+		t.Errorf("ParseWKBBoundsWithSRID() bounds = (%v, %v, %v, %v), want (1, 2, 1, 2)",
+			minX2, minY2, maxX2, maxY2)
+	}
+
+	if srid != 4326 {
+		t.Errorf("ParseWKBBoundsWithSRID() srid = %v, want 4326", srid)
+	}
+}
+
+func TestParseWKBToBboxWithSRID(t *testing.T) {
+	tests := []struct {
+		name     string
+		wkbHex   string
+		wantBox  core.Bbox
+		wantErr  bool
+	}{
+		{
+			name:   "EWKB Point with SRID=4326",
+			wkbHex: "0101000020E6100000000000000000F03F0000000000000040", // SRID=4326;POINT(1 2)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+				Srid:   4326,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "EWKB LineString with SRID=3857",
+			wkbHex: "0102000020110F000002000000000000000000F03F00000000000000400000000000000840000000000000F03F", // SRID=3857;LINESTRING(1 2, 3 1)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 1.0,
+				Right:  3.0,
+				Top:    2.0,
+				Srid:   3857,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "Regular WKB Point (no SRID)",
+			wkbHex: "0101000000000000000000F03F0000000000000040", // POINT(1 2)
+			wantBox: core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+				Srid:   0,
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wkb, err := hex.DecodeString(tt.wkbHex)
+			if err != nil && !tt.wantErr {
+				t.Fatalf("Failed to decode test hex: %v", err)
+			}
+
+			got, err := ParseWKBToBbox(wkb)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseWKBToBbox() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				tu.AssertBboxEqual(t, tt.wantBox, got)
+			}
+		})
 	}
 }
 

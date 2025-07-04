@@ -75,8 +75,14 @@ func ParseHexWKB(hexStr string) ([]byte, error) {
 
 // ParseWKBBounds extracts the bounding box from WKB data without fully parsing the geometry
 func ParseWKBBounds(wkb []byte) (minX, minY, maxX, maxY float64, err error) {
+	minX, minY, maxX, maxY, _, err = ParseWKBBoundsWithSRID(wkb)
+	return
+}
+
+// ParseWKBBoundsWithSRID extracts the bounding box and SRID from WKB data
+func ParseWKBBoundsWithSRID(wkb []byte) (minX, minY, maxX, maxY float64, srid int, err error) {
 	if len(wkb) < 5 {
-		return 0, 0, 0, 0, fmt.Errorf("wkb data too short")
+		return 0, 0, 0, 0, 0, fmt.Errorf("wkb data too short")
 	}
 
 	minX, minY = math.Inf(1), math.Inf(1)
@@ -87,7 +93,7 @@ func ParseWKBBounds(wkb []byte) (minX, minY, maxX, maxY float64, err error) {
 	// Read byte order
 	var byteOrderFlag uint8
 	if err := binary.Read(reader.r, binary.LittleEndian, &byteOrderFlag); err != nil {
-		return 0, 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 
 	if byteOrderFlag == 0 {
@@ -99,33 +105,34 @@ func ParseWKBBounds(wkb []byte) (minX, minY, maxX, maxY float64, err error) {
 	// Read geometry type
 	var geomType uint32
 	if err := binary.Read(reader.r, reader.byteOrder, &geomType); err != nil {
-		return 0, 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
+	}
+
+	// Handle EWKB SRID flag and extract SRID
+	if geomType&0x20000000 != 0 {
+		var sridValue uint32
+		if err := binary.Read(reader.r, reader.byteOrder, &sridValue); err != nil {
+			return 0, 0, 0, 0, 0, err
+		}
+		srid = int(sridValue)
 	}
 
 	// Extract bounds based on geometry type
 	if err := reader.extractBounds(geomType, &minX, &minY, &maxX, &maxY); err != nil {
-		return 0, 0, 0, 0, err
+		return 0, 0, 0, 0, 0, err
 	}
 
 	// Check if we found any valid coordinates
 	if math.IsInf(minX, 1) || math.IsInf(minY, 1) || math.IsInf(maxX, -1) || math.IsInf(maxY, -1) {
-		return 0, 0, 0, 0, fmt.Errorf("no valid coordinates found in WKB")
+		return 0, 0, 0, 0, 0, fmt.Errorf("no valid coordinates found in WKB")
 	}
 
-	return minX, minY, maxX, maxY, nil
+	return minX, minY, maxX, maxY, srid, nil
 }
 
 func (w *wkbReader) extractBounds(geomType uint32, minX, minY, maxX, maxY *float64) error {
-	// Handle EWKB SRID flag
-	if geomType&0x20000000 != 0 {
-		// Read and ignore SRID
-		var srid uint32
-		if err := binary.Read(w.r, w.byteOrder, &srid); err != nil {
-			return err
-		}
-	}
-
 	// Strip any flags from geometry type (like SRID flag)
+	// Note: SRID is now handled in ParseWKBBoundsWithSRID before calling this function
 	baseType := geomType & 0xff
 
 	switch baseType {
@@ -340,7 +347,7 @@ func (w *wkbReader) readGeometryCollectionBounds(minX, minY, maxX, maxY *float64
 
 // ParseWKBToBbox parses WKB binary data and returns a core.Bbox
 func ParseWKBToBbox(wkb []byte) (core.Bbox, error) {
-	minX, minY, maxX, maxY, err := ParseWKBBounds(wkb)
+	minX, minY, maxX, maxY, srid, err := ParseWKBBoundsWithSRID(wkb)
 	if err != nil {
 		return core.Bbox{}, err
 	}
@@ -350,6 +357,7 @@ func ParseWKBToBbox(wkb []byte) (core.Bbox, error) {
 		Bottom: minY,
 		Right:  maxX,
 		Top:    maxY,
+		Srid:   srid,
 	}
 
 	if err := bbox.Validate(); err != nil {
