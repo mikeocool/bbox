@@ -20,7 +20,7 @@ var wktGeometryTypes = []string{
 	"GEOMETRYCOLLECTION",
 }
 
-// SniffWkt checks if the data looks like Well-Known Text (WKT) format
+// SniffWkt checks if the data looks like Well-Known Text (WKT) or Extended WKT (EWKT) format
 func SniffWkt(data []byte) bool {
 	if len(data) < 5 { // Minimum: "POINT" = 5 characters
 		return false
@@ -28,6 +28,18 @@ func SniffWkt(data []byte) bool {
 
 	// Convert to uppercase string for pattern matching
 	dataStr := strings.ToUpper(strings.TrimSpace(string(data)))
+
+	// Check for EWKT format with SRID prefix
+	if strings.HasPrefix(dataStr, "SRID=") {
+		// Find the semicolon that separates SRID from geometry
+		semicolonPos := strings.Index(dataStr, ";")
+		if semicolonPos == -1 {
+			return false
+		}
+		// Extract the geometry part after the semicolon
+		geometryPart := strings.TrimSpace(dataStr[semicolonPos+1:])
+		dataStr = geometryPart
+	}
 
 	// Must start with a known geometry type
 	for _, geomType := range wktGeometryTypes {
@@ -55,6 +67,8 @@ const (
 	tokenLParen
 	tokenRParen
 	tokenComma
+	tokenSemicolon
+	tokenEquals
 	tokenError
 )
 
@@ -113,6 +127,10 @@ func (l *wktLexer) nextToken() token {
 		return token{typ: tokenRParen, value: ")"}
 	case ',':
 		return token{typ: tokenComma, value: ","}
+	case ';':
+		return token{typ: tokenSemicolon, value: ";"}
+	case '=':
+		return token{typ: tokenEquals, value: "="}
 	default:
 		l.reader.UnreadByte()
 		if unicode.IsLetter(rune(ch)) {
@@ -175,6 +193,7 @@ type wktParser struct {
 	lexer        *wktLexer
 	currentToken token
 	bbox         bboxAccumulator
+	srid         int
 }
 
 type bboxAccumulator struct {
@@ -202,12 +221,13 @@ func (b *bboxAccumulator) addPoint(x, y float64) {
 	}
 }
 
-func (b *bboxAccumulator) toBbox() core.Bbox {
+func (b *bboxAccumulator) toBbox(srid int) core.Bbox {
 	return core.Bbox{
 		Left:   b.minX,
 		Bottom: b.minY,
 		Right:  b.maxX,
 		Top:    b.maxY,
+		Srid:   srid,
 	}
 }
 
@@ -564,6 +584,41 @@ func (p *wktParser) parseCoordinate() (float64, float64, error) {
 	return x, y, nil
 }
 
+// parseSrid parses SRID=value; from EWKT format
+func (p *wktParser) parseSrid() error {
+	// Expect SRID
+	if p.currentToken.typ != tokenWord || p.currentToken.value != "SRID" {
+		return errors.New("expected SRID")
+	}
+	p.nextToken()
+
+	// Expect =
+	if p.currentToken.typ != tokenEquals {
+		return errors.New("expected = after SRID")
+	}
+	p.nextToken()
+
+	// Expect number
+	if p.currentToken.typ != tokenNumber {
+		return errors.New("expected SRID number")
+	}
+
+	srid, err := strconv.Atoi(p.currentToken.value)
+	if err != nil {
+		return errors.New("invalid SRID number")
+	}
+	p.srid = srid
+	p.nextToken()
+
+	// Expect ;
+	if p.currentToken.typ != tokenSemicolon {
+		return errors.New("expected ; after SRID")
+	}
+	p.nextToken()
+
+	return nil
+}
+
 // ParseWkt parses one or more WKT geometries from a reader and returns the combined bounding box
 func ParseWkt(r io.Reader) (core.Bbox, error) {
 	lexer := newWktLexer(r)
@@ -572,6 +627,13 @@ func ParseWkt(r io.Reader) (core.Bbox, error) {
 	// Check for empty input first
 	if parser.currentToken.typ == tokenEOF {
 		return core.Bbox{}, errors.New("empty input")
+	}
+
+	// Check for EWKT format with SRID prefix
+	if parser.currentToken.typ == tokenWord && parser.currentToken.value == "SRID" {
+		if err := parser.parseSrid(); err != nil {
+			return core.Bbox{}, err
+		}
 	}
 
 	// Parse multiple geometries until EOF
@@ -609,5 +671,5 @@ func ParseWkt(r io.Reader) (core.Bbox, error) {
 		return core.Bbox{}, errors.New("empty input")
 	}
 
-	return parser.bbox.toBbox(), nil
+	return parser.bbox.toBbox(parser.srid), nil
 }
