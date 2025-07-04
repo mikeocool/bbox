@@ -218,37 +218,7 @@ func TestParseWkt(t *testing.T) {
 				Top:    20.0,
 			},
 		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reader := strings.NewReader(tt.input)
-			bbox, err := ParseWkt(reader)
-
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error but got none")
-				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				} else if tt.expectBbox != nil {
-					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
-				}
-			}
-		})
-	}
-}
-
-func TestParseWktEdgeCases(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expectError bool
-		errorMsg    string
-	}{
 		// Empty and invalid inputs
 		{
 			name:        "Empty input",
@@ -373,17 +343,19 @@ func TestParseWktEdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.input)
-			_, err := ParseWkt(reader)
+			bbox, err := ParseWkt(reader)
 
-			if !tt.expectError {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
-			} else {
+			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
 				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
 					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if tt.expectBbox != nil {
+					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
 				}
 			}
 		})

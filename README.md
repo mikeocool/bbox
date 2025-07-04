@@ -113,6 +113,7 @@ Output formats:
         * EWKT
         * WKB
         * DublinCore
+    * handle case where files have mismatched SRIDs
 * cleanup draw UI
     * Show popup success message with button to close window when done
     * touch interactions/small screen UI
