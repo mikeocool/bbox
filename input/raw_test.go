@@ -60,7 +60,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  1.0,
 				Top:    2.0,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 
@@ -206,7 +206,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.776398,
 				Right:  -90.035484,
 				Top:    48.355011,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -218,7 +218,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.99755413385825,
 				Right:  -91.14794444117372,
 				Top:    48.01355378301334,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -230,7 +230,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.99067253859491,
 				Right:  -90.92072645384923,
 				Top:    48.07394149630552,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -253,7 +253,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.99755413385825,
 				Right:  -91.14794444117372,
 				Top:    48.01355378301334,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -265,7 +265,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.99067253859491,
 				Right:  -90.92072645384923,
 				Top:    48.07394149630552,
-				Crs:    core.Wgs84,
+				Srid:   core.Wgs84,
 			},
 		},
 		{

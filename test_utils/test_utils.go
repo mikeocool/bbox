@@ -13,7 +13,7 @@ func BboxAlmostEqual(a, b core.Bbox) bool {
 		math.Abs(a.Bottom-b.Bottom) < epsilon &&
 		math.Abs(a.Right-b.Right) < epsilon &&
 		math.Abs(a.Top-b.Top) < epsilon &&
-		a.Crs == b.Crs
+		a.Srid == b.Srid
 }
 
 func AssertBboxEqual(t *testing.T, expected, actual core.Bbox) {

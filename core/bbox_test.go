@@ -57,7 +57,7 @@ func TestBboxValidate(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
-				Crs:    InvalidCrs,
+				Srid:   InvalidCrs,
 			},
 			expectError: true,
 			errorMsg:    "invalid bbox: invalid CRS",
@@ -69,7 +69,7 @@ func TestBboxValidate(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
-				Crs:    Wgs84,
+				Srid:   Wgs84,
 			},
 			expectError: false,
 		},
@@ -124,15 +124,15 @@ func TestBboxSlice(t *testing.T) {
 				Bottom: 0.0,
 				Right:  4.0,
 				Top:    4.0,
-				Crs:    Wgs84,
+				Srid:   Wgs84,
 			},
 			columns: 2,
 			rows:    2,
 			expected: []Bbox{
-				{Left: 0.0, Bottom: 2.0, Right: 2.0, Top: 4.0, Crs: Wgs84}, // top-left
-				{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0, Crs: Wgs84}, // top-right
-				{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Crs: Wgs84}, // bottom-left
-				{Left: 2.0, Bottom: 0.0, Right: 4.0, Top: 2.0, Crs: Wgs84}, // bottom-right
+				{Left: 0.0, Bottom: 2.0, Right: 2.0, Top: 4.0, Srid: Wgs84}, // top-left
+				{Left: 2.0, Bottom: 2.0, Right: 4.0, Top: 4.0, Srid: Wgs84}, // top-right
+				{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Srid: Wgs84}, // bottom-left
+				{Left: 2.0, Bottom: 0.0, Right: 4.0, Top: 2.0, Srid: Wgs84}, // bottom-right
 			},
 		},
 		{
@@ -499,9 +499,9 @@ func TestBboxBuffer(t *testing.T) {
 		},
 		{
 			name:        "Positive buffer with CRS",
-			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
+			bbox:        Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Wgs84},
 			radius:      1.0,
-			expected:    Bbox{Left: 0.0, Bottom: 1.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
+			expected:    Bbox{Left: 0.0, Bottom: 1.0, Right: 4.0, Top: 5.0, Srid: Wgs84},
 			expectError: false,
 		},
 		{
@@ -670,21 +670,21 @@ func TestBboxUnion(t *testing.T) {
 		},
 		{
 			name:     "Union with same CRS",
-			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
-			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
-			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: Wgs84},
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Wgs84},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Srid: Wgs84},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Srid: Wgs84},
 		},
 		{
 			name:     "Union with different CRS returns InvalidCrs",
-			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84},
-			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Nad83},
-			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: InvalidCrs},
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Wgs84},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Srid: Nad83},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Srid: InvalidCrs},
 		},
 		{
 			name:     "Union with UnknownCrs uses other CRS",
-			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: UnknownCrs},
-			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Crs: Nad83},
-			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Crs: Nad83},
+			bbox1:    Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: UnknownCrs},
+			bbox2:    Bbox{Left: 2.0, Bottom: 3.0, Right: 4.0, Top: 5.0, Srid: Nad83},
+			expected: Bbox{Left: 1.0, Bottom: 2.0, Right: 4.0, Top: 5.0, Srid: Nad83},
 		},
 	}
 
@@ -694,7 +694,7 @@ func TestBboxUnion(t *testing.T) {
 
 			if result.Left != tc.expected.Left || result.Bottom != tc.expected.Bottom ||
 				result.Right != tc.expected.Right || result.Top != tc.expected.Top ||
-				result.Crs != tc.expected.Crs {
+				result.Srid != tc.expected.Srid {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 		})
@@ -716,27 +716,27 @@ func TestBboxUnionProperties(t *testing.T) {
 	})
 
 	t.Run("Union CRS behavior", func(t *testing.T) {
-		bbox1WithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Nad83}
-		bbox2WithCrs := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Crs: Wgs84}
+		bbox1WithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Nad83}
+		bbox2WithCrs := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Srid: Wgs84}
 
 		// Different CRS should result in InvalidCrs
 		union1 := bbox1WithCrs.Union(bbox2WithCrs)
 		union2 := bbox2WithCrs.Union(bbox1WithCrs)
 
-		if union1.Crs != InvalidCrs {
-			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union1.Crs)
+		if union1.Srid != InvalidCrs {
+			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union1.Srid)
 		}
-		if union2.Crs != InvalidCrs {
-			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union2.Crs)
+		if union2.Srid != InvalidCrs {
+			t.Errorf("Expected union of different CRS to have %v, got %v", InvalidCrs, union2.Srid)
 		}
 
 		// Same CRS should preserve CRS
-		bbox1Same := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Wgs84}
-		bbox2Same := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Crs: Wgs84}
-		
+		bbox1Same := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Wgs84}
+		bbox2Same := Bbox{Left: 2.5, Bottom: 3.5, Right: 5.0, Top: 6.0, Srid: Wgs84}
+
 		unionSame := bbox1Same.Union(bbox2Same)
-		if unionSame.Crs != Wgs84 {
-			t.Errorf("Expected union of same CRS to have %v, got %v", Wgs84, unionSame.Crs)
+		if unionSame.Srid != Wgs84 {
+			t.Errorf("Expected union of same CRS to have %v, got %v", Wgs84, unionSame.Srid)
 		}
 	})
 
@@ -761,7 +761,7 @@ func TestBboxUnionProperties(t *testing.T) {
 
 		if union.Left != bbox1.Left || union.Bottom != bbox1.Bottom ||
 			union.Right != bbox1.Right || union.Top != bbox1.Top ||
-			union.Crs != bbox1.Crs {
+			union.Srid != bbox1.Srid {
 			t.Errorf("Union with self should be identity: expected %+v, got %+v", bbox1, union)
 		}
 	})
@@ -862,10 +862,10 @@ func TestBboxExtend(t *testing.T) {
 		},
 		{
 			name:     "Extend preserves CRS",
-			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Crs: Wgs84},
+			bbox:     Bbox{Left: 0.0, Bottom: 0.0, Right: 2.0, Top: 2.0, Srid: Wgs84},
 			x:        3.0,
 			y:        3.0,
-			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 3.0, Top: 3.0, Crs: Wgs84},
+			expected: Bbox{Left: 0.0, Bottom: 0.0, Right: 3.0, Top: 3.0, Srid: Wgs84},
 		},
 	}
 
@@ -875,7 +875,7 @@ func TestBboxExtend(t *testing.T) {
 
 			if result.Left != tc.expected.Left || result.Bottom != tc.expected.Bottom ||
 				result.Right != tc.expected.Right || result.Top != tc.expected.Top ||
-				result.Crs != tc.expected.Crs {
+				result.Srid != tc.expected.Srid {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 		})
@@ -890,7 +890,7 @@ func TestBboxExtendProperties(t *testing.T) {
 
 		if result.Left != bbox.Left || result.Bottom != bbox.Bottom ||
 			result.Right != bbox.Right || result.Top != bbox.Top ||
-			result.Crs != bbox.Crs {
+			result.Srid != bbox.Srid {
 			t.Errorf("Expected bbox to remain unchanged: %+v, got %+v", bbox, result)
 		}
 	})
@@ -916,11 +916,11 @@ func TestBboxExtendProperties(t *testing.T) {
 	})
 
 	t.Run("Extend preserves CRS", func(t *testing.T) {
-		bboxWithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Crs: Nad83}
+		bboxWithCrs := Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: Nad83}
 		result := bboxWithCrs.Extend(5.0, 6.0)
 
-		if result.Crs != Nad83 {
-			t.Errorf("Expected CRS to be preserved: %v, got %v", Nad83, result.Crs)
+		if result.Srid != Nad83 {
+			t.Errorf("Expected CRS to be preserved: %v, got %v", Nad83, result.Srid)
 		}
 	})
 
@@ -939,7 +939,7 @@ func TestBboxExtendProperties(t *testing.T) {
 
 		intermediate1 := bbox.Extend(x1, y1)
 		result1 := intermediate1.Extend(x2, y2)
-		
+
 		intermediate2 := bbox.Extend(x2, y2)
 		result2 := intermediate2.Extend(x1, y1)
 

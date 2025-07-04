@@ -10,7 +10,7 @@ type Bbox struct {
 	Bottom float64 `json:"bottom"`
 	Right  float64 `json:"right"`
 	Top    float64 `json:"top"`
-	Crs    int     `json:"crs"`
+	Srid   int     `json:"crs"`
 }
 
 func EmptyBbox() Bbox {
@@ -25,7 +25,7 @@ func EmptyBbox() Bbox {
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
 func (b *Bbox) Validate() error {
-	if b.Crs == InvalidCrs {
+	if b.Srid == InvalidCrs {
 		return fmt.Errorf("invalid bbox: invalid CRS")
 	}
 
@@ -45,7 +45,7 @@ func (b *Bbox) Equals(other Bbox) bool {
 		b.Bottom == other.Bottom &&
 		b.Right == other.Right &&
 		b.Top == other.Top &&
-		b.Crs == other.Crs)
+		b.Srid == other.Srid)
 }
 
 // Polygon returns the corner points of the bounding box as a closed polygon.
@@ -96,12 +96,12 @@ func (b *Bbox) Height() float64 {
 
 func (b *Bbox) Union(other Bbox) Bbox {
 	var crs int
-	if b.Crs == other.Crs {
-		crs = b.Crs
-	} else if b.Crs == UnknownCrs {
-		crs = other.Crs
-	} else if other.Crs == UnknownCrs {
-		crs = b.Crs
+	if b.Srid == other.Srid {
+		crs = b.Srid
+	} else if b.Srid == UnknownCrs {
+		crs = other.Srid
+	} else if other.Srid == UnknownCrs {
+		crs = b.Srid
 	} else {
 		crs = InvalidCrs
 	}
@@ -111,7 +111,7 @@ func (b *Bbox) Union(other Bbox) Bbox {
 		Bottom: math.Min(b.Bottom, other.Bottom),
 		Right:  math.Max(b.Right, other.Right),
 		Top:    math.Max(b.Top, other.Top),
-		Crs:    crs,
+		Srid:   crs,
 	}
 }
 
@@ -122,7 +122,7 @@ func (b *Bbox) Extend(x, y float64) Bbox {
 		Bottom: math.Min(b.Bottom, y),
 		Right:  math.Max(b.Right, x),
 		Top:    math.Max(b.Top, y),
-		Crs:    b.Crs,
+		Srid:   b.Srid,
 	}
 }
 
@@ -149,7 +149,7 @@ func (b *Bbox) Buffer(radius float64) (Bbox, error) {
 		Bottom: b.Bottom - radius,
 		Right:  b.Right + radius,
 		Top:    b.Top + radius,
-		Crs:    b.Crs,
+		Srid:   b.Srid,
 	}, nil
 }
 
@@ -180,7 +180,7 @@ func (b *Bbox) Slice(columns, rows int) []Bbox {
 				Bottom: bottom,
 				Right:  right,
 				Top:    top,
-				Crs:    b.Crs,
+				Srid:   b.Srid,
 			})
 		}
 	}

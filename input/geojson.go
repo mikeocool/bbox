@@ -84,7 +84,7 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	}
 
 	// per spec GeoJson is WGS84
-	bbox.Crs = core.Wgs84
+	bbox.Srid = core.Wgs84
 
 	if bbox.Validate() != nil {
 		return core.Bbox{}, errors.New("no geojson found")
