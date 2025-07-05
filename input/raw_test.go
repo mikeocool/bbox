@@ -60,6 +60,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  1.0,
 				Top:    2.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -78,6 +79,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 
@@ -204,19 +206,32 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 47.776398,
 				Right:  -90.035484,
 				Top:    48.355011,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
 			name:        "Single valid file",
 			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson")},
 			expectError: false,
-			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+			expectBbox: &core.Bbox{
+				Left:   -91.34175985747542,
+				Bottom: 47.99755413385825,
+				Right:  -91.14794444117372,
+				Top:    48.01355378301334,
+				Srid:   core.Wgs84,
+			},
 		},
 		{
 			name:        "Multiple valid files - union",
 			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
 			expectError: false,
-			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+			expectBbox: &core.Bbox{
+				Left:   -91.34175985747542,
+				Bottom: 47.99067253859491,
+				Right:  -90.92072645384923,
+				Top:    48.07394149630552,
+				Srid:   core.Wgs84,
+			},
 		},
 		{
 			name:        "Empty file",
@@ -233,13 +248,25 @@ func TestParseRawArgs(t *testing.T) {
 			name:        "Mixed valid and empty files",
 			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), getTestDataPath(t, "../integration_tests/data/empty.geojson")},
 			expectError: false,
-			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99755413385825, Right: -91.14794444117372, Top: 48.01355378301334},
+			expectBbox: &core.Bbox{
+				Left:   -91.34175985747542,
+				Bottom: 47.99755413385825,
+				Right:  -91.14794444117372,
+				Top:    48.01355378301334,
+				Srid:   core.Wgs84,
+			},
 		},
 		{
 			name:        "Empty string in file list",
 			input:       []string{getTestDataPath(t, "../integration_tests/data/subset_a.geojson"), "", getTestDataPath(t, "../integration_tests/data/subset_b.geojson")},
 			expectError: false, // Empty strings should be skipped
-			expectBbox:  &core.Bbox{Left: -91.34175985747542, Bottom: 47.99067253859491, Right: -90.92072645384923, Top: 48.07394149630552},
+			expectBbox: &core.Bbox{
+				Left:   -91.34175985747542,
+				Bottom: 47.99067253859491,
+				Right:  -90.92072645384923,
+				Top:    48.07394149630552,
+				Srid:   core.Wgs84,
+			},
 		},
 		{
 			name:        "Whitespace args list",

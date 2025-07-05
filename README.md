@@ -104,6 +104,15 @@ Output formats:
     * read the projection if we can
     * for projections that are close WGS84, allow --drow but show a warning
     * for those that aren't show error
+    * read proj from:
+        * WKB
+        * geoparquet
+        * shapefile
+    * output CRS:
+        * EWKT
+        * WKB
+        * DublinCore
+    * handle case where files have mismatched SRIDs
 * cleanup draw UI
     * Important: Show popup success message with button to close window when done - disable/blank out UI
     * touch interactions/small screen UI

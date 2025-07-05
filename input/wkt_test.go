@@ -218,37 +218,7 @@ func TestParseWkt(t *testing.T) {
 				Top:    20.0,
 			},
 		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reader := strings.NewReader(tt.input)
-			bbox, err := ParseWkt(reader)
-
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error but got none")
-				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				} else if tt.expectBbox != nil {
-					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
-				}
-			}
-		})
-	}
-}
-
-func TestParseWktEdgeCases(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		expectError bool
-		errorMsg    string
-	}{
 		// Empty and invalid inputs
 		{
 			name:        "Empty input",
@@ -373,17 +343,19 @@ func TestParseWktEdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.input)
-			_, err := ParseWkt(reader)
+			bbox, err := ParseWkt(reader)
 
-			if !tt.expectError {
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
-			} else {
+			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
 				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
 					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if tt.expectBbox != nil {
+					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
 				}
 			}
 		})
@@ -717,4 +689,171 @@ type errorReader struct {
 
 func (r *errorReader) Read(p []byte) (n int, err error) {
 	return 0, r.error
+}
+
+func TestParseWktEWKT(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expectError bool
+		errorMsg    string
+		expectBbox  *core.Bbox
+	}{
+		{
+			name:        "EWKT POINT with SRID",
+			input:       "SRID=4326;POINT(-122.4094 37.7849)",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   -122.4094,
+				Bottom: 37.7849,
+				Right:  -122.4094,
+				Top:    37.7849,
+				Srid:   4326,
+			},
+		},
+		{
+			name:        "EWKT POLYGON with SRID",
+			input:       "SRID=3857;POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  10.0,
+				Top:    10.0,
+				Srid:   3857,
+			},
+		},
+		{
+			name:        "EWKT LINESTRING with SRID",
+			input:       "SRID=2154;LINESTRING(0 0, 5 5, 10 0)",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   0.0,
+				Bottom: 0.0,
+				Right:  10.0,
+				Top:    5.0,
+				Srid:   2154,
+			},
+		},
+		{
+			name:        "EWKT with SRID=0",
+			input:       "SRID=0;POINT(1 2)",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   1.0,
+				Bottom: 2.0,
+				Right:  1.0,
+				Top:    2.0,
+				Srid:   0,
+			},
+		},
+		{
+			name:        "Invalid EWKT - missing SRID value",
+			input:       "SRID=;POINT(1 2)",
+			expectError: true,
+			errorMsg:    "expected SRID number",
+		},
+		{
+			name:        "Invalid EWKT - missing equals sign",
+			input:       "SRID4326;POINT(1 2)",
+			expectError: true,
+			errorMsg:    "expected = after SRID",
+		},
+		{
+			name:        "Invalid EWKT - missing semicolon",
+			input:       "SRID=4326POINT(1 2)",
+			expectError: true,
+			errorMsg:    "expected ; after SRID",
+		},
+		{
+			name:        "Invalid EWKT - non-numeric SRID",
+			input:       "SRID=abc;POINT(1 2)",
+			expectError: true,
+			errorMsg:    "expected SRID number",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := strings.NewReader(tt.input)
+			bbox, err := ParseWkt(reader)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if tt.expectBbox != nil {
+					tu.AssertBboxEqual(t, *tt.expectBbox, bbox)
+				}
+			}
+		})
+	}
+}
+
+func TestSniffWktEWKT(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		expect bool
+	}{
+		{
+			name:   "EWKT POINT with SRID",
+			input:  "SRID=4326;POINT(-122.4094 37.7849)",
+			expect: true,
+		},
+		{
+			name:   "EWKT POLYGON with SRID",
+			input:  "SRID=3857;POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))",
+			expect: true,
+		},
+		{
+			name:   "EWKT LINESTRING with SRID",
+			input:  "SRID=2154;LINESTRING(0 0, 5 5, 10 0)",
+			expect: true,
+		},
+		{
+			name:   "EWKT with lowercase srid",
+			input:  "srid=4326;point(1 2)",
+			expect: true,
+		},
+		{
+			name:   "EWKT with SRID=0",
+			input:  "SRID=0;POINT(1 2)",
+			expect: true,
+		},
+		{
+			name:   "Invalid EWKT - missing semicolon",
+			input:  "SRID=4326POINT(1 2)",
+			expect: false,
+		},
+		{
+			name:   "Invalid EWKT - SRID without geometry",
+			input:  "SRID=4326;",
+			expect: false,
+		},
+		{
+			name:   "Not EWKT - regular WKT",
+			input:  "POINT(1 2)",
+			expect: true,
+		},
+		{
+			name:   "Not EWKT - starts with SRID but not proper format",
+			input:  "SRID 4326 POINT(1 2)",
+			expect: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SniffWkt([]byte(tt.input))
+			if result != tt.expect {
+				t.Errorf("Expected %v, got %v for input: %s", tt.expect, result, tt.input)
+			}
+		})
+	}
 }

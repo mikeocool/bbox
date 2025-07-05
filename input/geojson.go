@@ -59,12 +59,7 @@ func SniffGeojson(data []byte) bool {
 
 func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	decoder := json.NewDecoder(r)
-	bbox := core.Bbox{
-		Left:   math.Inf(1),
-		Bottom: math.Inf(1),
-		Right:  math.Inf(-1),
-		Top:    math.Inf(-1),
-	}
+	bbox := core.EmptyBbox()
 
 	for {
 		var raw json.RawMessage
@@ -76,12 +71,15 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 			return core.Bbox{}, err
 		}
 
-		dbbox, err := GeojsonDocBbox(raw)
+		dbbox, err := geojsonDocBbox(raw)
 		if err != nil {
 			return core.Bbox{}, err
 		}
 		bbox = bbox.Union(dbbox)
 	}
+
+	// per spec GeoJson is WGS84
+	bbox.Srid = core.Wgs84
 
 	if bbox.Validate() != nil {
 		return core.Bbox{}, errors.New("no geojson found")
@@ -100,7 +98,7 @@ func ParseGeojson(r io.Reader) (core.Bbox, error) {
 // - 2D coordinate array (single ring): [[0,0],[0,1],[1,1],[1,0],[0,0]]
 // - Bbox as array [1,2,3,4]
 
-func GeojsonDocBbox(input []byte) (core.Bbox, error) {
+func geojsonDocBbox(input []byte) (core.Bbox, error) {
 	var bbox core.Bbox
 
 	// Try parsing as FeatureCollection
@@ -311,7 +309,7 @@ func calculateBboxFromCoordinates(coords [][][2]float64) (core.Bbox, error) {
 // parseRaw3DCoordinates validates and parses 3D coordinate arrays like [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 func parseRaw3DCoordinates(input []byte) ([][][2]float64, error) {
 	// First unmarshal into a flexible structure to validate dimensions
-	var rawCoords [][][]interface{}
+	var rawCoords [][][]any
 	if err := json.Unmarshal(input, &rawCoords); err != nil {
 		return nil, err
 	}
