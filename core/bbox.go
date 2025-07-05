@@ -22,6 +22,16 @@ func EmptyBbox() Bbox {
 	}
 }
 
+func EmptyBboxWithSrid(srid int) Bbox {
+	return Bbox{
+		Left:   math.Inf(1),
+		Bottom: math.Inf(1),
+		Right:  math.Inf(-1),
+		Top:    math.Inf(-1),
+		Srid:   srid,
+	}
+}
+
 // Validate checks if the Bbox has valid coordinates.
 // A valid bounding box requires Right > Left and Top > Bottom.
 func (b *Bbox) Validate() error {

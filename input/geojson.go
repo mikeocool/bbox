@@ -59,12 +59,7 @@ func SniffGeojson(data []byte) bool {
 
 func ParseGeojson(r io.Reader) (core.Bbox, error) {
 	decoder := json.NewDecoder(r)
-	bbox := core.Bbox{
-		Left:   math.Inf(1),
-		Bottom: math.Inf(1),
-		Right:  math.Inf(-1),
-		Top:    math.Inf(-1),
-	}
+	bbox := core.EmptyBbox()
 
 	for {
 		var raw json.RawMessage
@@ -314,7 +309,7 @@ func calculateBboxFromCoordinates(coords [][][2]float64) (core.Bbox, error) {
 // parseRaw3DCoordinates validates and parses 3D coordinate arrays like [[[0,0],[0,1],[1,1],[1,0],[0,0]]]
 func parseRaw3DCoordinates(input []byte) ([][][2]float64, error) {
 	// First unmarshal into a flexible structure to validate dimensions
-	var rawCoords [][][]interface{}
+	var rawCoords [][][]any
 	if err := json.Unmarshal(input, &rawCoords); err != nil {
 		return nil, err
 	}
