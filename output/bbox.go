@@ -87,6 +87,25 @@ func WktFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
 	return wkt, nil
 }
 
+// EwktFormat formats a Bbox as an EWKT (Extended Well-Known Text) Polygon geometry.
+// If the bbox has a valid SRID, it outputs SRID=value;POLYGON(...)
+// If the SRID is unknown or invalid, it outputs regular WKT format.
+func EwktFormat(settings OutputSettings, bbox core.Bbox) (string, error) {
+	// Get the regular WKT first
+	wkt, err := WktFormat(settings, bbox)
+	if err != nil {
+		return "", err
+	}
+
+	// If SRID is unknown or invalid, just return regular WKT
+	if bbox.Srid == core.UnknownCrs || bbox.Srid == core.InvalidCrs {
+		return wkt, nil
+	}
+
+	// Format as EWKT with SRID prefix
+	return fmt.Sprintf("SRID=%d;%s", bbox.Srid, wkt), nil
+}
+
 // WkbhexFormat formats a Bbox as a WKB (Well-Known Binary) Polygon geometry encoded as hexadecimal.
 // The returned string will be the hexadecimal representation of the WKB binary data.
 func WkbhexFormat(_ OutputSettings, bbox core.Bbox) (string, error) {
@@ -152,6 +171,7 @@ var bboxOutputFormatters = map[string]func(OutputSettings, core.Bbox) (string, e
 	FormatJson:       JsonFormat,
 	FormatJsonl:      JsonFormat,
 	FormatWkt:        WktFormat,
+	FormatEwkt:       EwktFormat,
 	FormatWkbhex:     WkbhexFormat,
 	FormatDublinCore: DublinCoreFormat,
 	FormatUrl:        UrlFormat,

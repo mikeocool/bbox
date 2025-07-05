@@ -65,6 +65,7 @@ const (
 	FormatJson       = "json"
 	FormatJsonl      = "jsonl"
 	FormatWkt        = "wkt"
+	FormatEwkt       = "ewkt"
 	FormatWkbhex     = "wkbhex"
 	FormatDublinCore = "dcsv"
 	FormatUrl        = "url"

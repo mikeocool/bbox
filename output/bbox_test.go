@@ -198,6 +198,67 @@ func TestWktFormat(t *testing.T) {
 	}
 }
 
+func TestEwktFormat(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        core.Bbox
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "Bbox with SRID=4326",
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4, Srid: 4326},
+			expected:    "SRID=4326;POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
+			expectError: false,
+		},
+		{
+			name:        "Bbox with SRID=3857",
+			bbox:        core.Bbox{Left: -10, Bottom: -20, Right: 10, Top: 20, Srid: 3857},
+			expected:    "SRID=3857;POLYGON((-10 -20, 10 -20, 10 20, -10 20, -10 -20))",
+			expectError: false,
+		},
+		{
+			name:        "Bbox with no SRID (unknown)",
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4, Srid: 0},
+			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
+			expectError: false,
+		},
+		{
+			name:        "Bbox with invalid SRID",
+			bbox:        core.Bbox{Left: 1, Bottom: 2, Right: 3, Top: 4, Srid: -1},
+			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
+			expectError: false,
+		},
+		{
+			name:        "Bbox with decimal coordinates and SRID",
+			bbox:        core.Bbox{Left: 10.5, Bottom: 20.25, Right: 30.75, Top: 40.125, Srid: 2154},
+			expected:    "SRID=2154;POLYGON((10.5 20.25, 30.75 20.25, 30.75 40.125, 10.5 40.125, 10.5 20.25))",
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := EwktFormat(OutputSettings{}, tc.bbox)
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Only check result if we don't expect an error
+			if !tc.expectError {
+				if result != tc.expected {
+					t.Errorf("Expected %q but got %q", tc.expected, result)
+				}
+			}
+		})
+	}
+}
+
 func TestUrlFormat(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -414,6 +475,12 @@ func TestFormat(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:        "EWKT format (no SRID)",
+			formatType:  FormatEwkt,
+			expected:    "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
+			expectError: false,
+		},
+		{
 			name:        "WKB-hex format",
 			formatType:  FormatWkbhex,
 			expected:    "01030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
@@ -489,6 +556,11 @@ func TestGetBboxFormatter(t *testing.T) {
 		{
 			name:       "WKT formatter",
 			formatType: FormatWkt,
+			expectNil:  false,
+		},
+		{
+			name:       "EWKT formatter",
+			formatType: FormatEwkt,
 			expectNil:  false,
 		},
 		{

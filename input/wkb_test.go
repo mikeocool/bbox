@@ -237,10 +237,10 @@ func TestParseWKBBoundsWithSRID(t *testing.T) {
 
 func TestParseWKBToBboxWithSRID(t *testing.T) {
 	tests := []struct {
-		name     string
-		wkbHex   string
-		wantBox  core.Bbox
-		wantErr  bool
+		name    string
+		wkbHex  string
+		wantBox core.Bbox
+		wantErr bool
 	}{
 		{
 			name:   "EWKB Point with SRID=4326",

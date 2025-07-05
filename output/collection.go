@@ -93,6 +93,12 @@ func WktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, er
 	return val, nil
 }
 
+// EwktFormatCollection formats a collection of bboxes as EWKT.
+// For collections, it outputs each bbox separately joined by newlines.
+func EwktFormatCollection(settings OutputSettings, boxes []core.Bbox) (string, error) {
+	return JoinedFormatCollection(EwktFormat, boxes, settings)
+}
+
 // WkbhexFormatCollection formats a collection of bboxes as a WKB GEOMETRYCOLLECTION encoded as hexadecimal.
 func WkbhexFormatCollection(_ OutputSettings, boxes []core.Bbox) (string, error) {
 	// Create buffer for WKB data
@@ -116,6 +122,7 @@ var collectionOutputFormatters = map[string]func(OutputSettings, []core.Bbox) (s
 	FormatGeoJson:  GeojsonFormatCollection,
 	FormatGeoJsonl: GeojsonlFormatCollection,
 	FormatWkt:      WktFormatCollection,
+	FormatEwkt:     EwktFormatCollection,
 	FormatWkbhex:   WkbhexFormatCollection,
 	FormatUrl:      UnsupportedFormatCollection,
 	// dublin core
