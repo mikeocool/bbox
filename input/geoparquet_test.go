@@ -90,12 +90,12 @@ func TestLoadGeoparquetFile(t *testing.T) {
 			expected: core.Bbox{Left: -119.37513560589187, Bottom: 26.571757187953462, Right: -80.3729072788281, Top: 45.43181870015789},
 			wantErr:  false,
 		},
-		// {
-		// 	name:     "Valid point file",
-		// 	filename: "../integration_tests/data/point-encoding_native.parquet",
-		// 	expected: core.Bbox{Left: -180, Right: 180, Bottom: -90, Top: 90},
-		// 	wantErr:  false,
-		// },
+		{
+			name:     "Valid point file",
+			filename: "../integration_tests/data/point-encoding_native.parquet",
+			expected: core.Bbox{Left: 30, Bottom: 10, Right: 40, Top: 40},
+			wantErr:  false,
+		},
 		// TODO parquet file with geom col, but no metadata
 		{
 			name:     "file without geocolumn",
