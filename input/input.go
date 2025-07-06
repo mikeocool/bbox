@@ -255,6 +255,7 @@ var PlaceBuilder = BboxBuilder{
 				Bottom: result.LocationY - height/2,
 				Right:  result.LocationX + width/2,
 				Top:    result.LocationY + height/2,
+				Srid:   core.Wgs84, // Geocoding services return WGS84 coordinates
 			}, nil
 		}
 

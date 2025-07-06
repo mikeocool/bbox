@@ -84,7 +84,7 @@ func TestGeocodePlaceWithClient_Success(t *testing.T) {
 	if result.Extent == nil {
 		t.Error("Expected Extent to be set")
 	} else {
-		expected := &core.Bbox{Left: -122.5, Bottom: 37.7, Right: -122.3, Top: 37.8}
+		expected := &core.Bbox{Left: -122.5, Bottom: 37.7, Right: -122.3, Top: 37.8, Srid: core.Wgs84}
 		if *result.Extent != *expected {
 			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
 		}
@@ -412,7 +412,7 @@ func TestGeocodePlaceWithClient_NominatimBbox(t *testing.T) {
 	if result.Extent == nil {
 		t.Error("Expected Extent to be set from bbox field")
 	} else {
-		expected := &core.Bbox{Left: 2.224, Bottom: 48.815, Right: 2.470, Top: 48.902}
+		expected := &core.Bbox{Left: 2.224, Bottom: 48.815, Right: 2.470, Top: 48.902, Srid: core.Wgs84}
 		if *result.Extent != *expected {
 			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
 		}
@@ -452,7 +452,7 @@ func TestGeocodePlaceWithClient_BboxInProperties(t *testing.T) {
 	if result.Extent == nil {
 		t.Error("Expected Extent to be set from bbox in properties")
 	} else {
-		expected := &core.Bbox{Left: 2.200, Bottom: 48.800, Right: 2.500, Top: 48.900}
+		expected := &core.Bbox{Left: 2.200, Bottom: 48.800, Right: 2.500, Top: 48.900, Srid: core.Wgs84}
 		if *result.Extent != *expected {
 			t.Errorf("Expected Extent %+v, got %+v", expected, result.Extent)
 		}

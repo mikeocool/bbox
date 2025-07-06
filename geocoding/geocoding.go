@@ -66,6 +66,7 @@ func parseBboxFromInterface(val interface{}) *core.Bbox {
 				Bottom: bboxFloats[1],
 				Right:  bboxFloats[2],
 				Top:    bboxFloats[3],
+				Srid:   core.Wgs84, // Geocoding services return WGS84 coordinates
 			}
 		}
 	}
@@ -202,6 +203,7 @@ func GeocodePlaceWithClient(geocoderURL, query string, client HTTPClient, header
 			Bottom: feature.Bbox[1],
 			Right:  feature.Bbox[2],
 			Top:    feature.Bbox[3],
+			Srid:   core.Wgs84, // Geocoding services return WGS84 coordinates
 		}
 	}
 
