@@ -83,8 +83,11 @@ func LoadGeoparquetFile(filename string) (core.Bbox, error) {
 		return core.Bbox{}, fmt.Errorf("no geometry column found in parquet file")
 	}
 
+	// Extract SRID from metadata
+	srid := extractSRIDFromGeoParquet(file, geoColumn)
+
 	// Read geometry data and calculate bounds
-	return calculateBoundsFromParquet(file, geoColumn, encoding)
+	return calculateBoundsFromParquet(file, geoColumn, encoding, srid)
 }
 
 // findGeoColumn looks for GeoParquet metadata and returns the primary geometry column
@@ -121,6 +124,107 @@ func findGeoColumn(file *parquet.File) (column string, encoding string) {
 	return "", ""
 }
 
+// extractSRIDFromGeoParquet extracts SRID from GeoParquet metadata
+func extractSRIDFromGeoParquet(file *parquet.File, geoColumn string) int {
+	// Check file metadata for geo metadata
+	metadata := file.Metadata()
+	if metadata == nil || metadata.KeyValueMetadata == nil {
+		return core.UnknownCrs
+	}
+
+	for _, kv := range metadata.KeyValueMetadata {
+		if kv.Key == "" || kv.Value == "" {
+			continue
+		}
+
+		// Look for "geo" key in metadata
+		if kv.Key == "geo" {
+			var geoMeta GeoParquetMetadata
+			if err := json.Unmarshal([]byte(kv.Value), &geoMeta); err == nil {
+				// Look for our specific geometry column
+				if col, exists := geoMeta.Columns[geoColumn]; exists {
+					return extractSRIDFromCRS(col.CRS)
+				}
+			}
+		}
+	}
+
+	return core.UnknownCrs
+}
+
+// extractSRIDFromCRS extracts SRID from various CRS formats
+func extractSRIDFromCRS(crs interface{}) int {
+	if crs == nil {
+		return core.UnknownCrs
+	}
+
+	// Handle different CRS formats
+	switch v := crs.(type) {
+	case map[string]interface{}:
+		// Handle CRS as object (GeoJSON-style or PROJ-style)
+		if srid, exists := v["srid"]; exists {
+			if sridFloat, ok := srid.(float64); ok {
+				return int(sridFloat)
+			}
+		}
+		// Handle EPSG codes
+		if properties, exists := v["properties"]; exists {
+			if propsMap, ok := properties.(map[string]interface{}); ok {
+				if code, exists := propsMap["code"]; exists {
+					if codeFloat, ok := code.(float64); ok {
+						return int(codeFloat)
+					}
+				}
+			}
+		}
+		// Handle authority codes
+		if authority, exists := v["authority"]; exists {
+			if authMap, ok := authority.(map[string]interface{}); ok {
+				if code, exists := authMap["code"]; exists {
+					if codeFloat, ok := code.(float64); ok {
+						return int(codeFloat)
+					}
+				}
+			}
+		}
+		// Handle id field
+		if id, exists := v["id"]; exists {
+			if idMap, ok := id.(map[string]interface{}); ok {
+				if code, exists := idMap["code"]; exists {
+					if codeFloat, ok := code.(float64); ok {
+						return int(codeFloat)
+					}
+				}
+			}
+		}
+	case string:
+		// Handle CRS as string (e.g., "EPSG:4326")
+		if strings.HasPrefix(strings.ToUpper(v), "EPSG:") {
+			epsgCode := strings.TrimPrefix(strings.ToUpper(v), "EPSG:")
+			if code, err := parseIntSafely(epsgCode); err == nil {
+				return code
+			}
+		}
+	case float64:
+		// Handle CRS as direct numeric SRID
+		return int(v)
+	}
+
+	return core.UnknownCrs
+}
+
+// parseIntSafely parses a string to int, returning 0 on error
+func parseIntSafely(s string) (int, error) {
+	var result int
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return 0, fmt.Errorf("invalid character in number: %c", r)
+		}
+		result = result*10 + int(r-'0')
+	}
+	return result, nil
+}
+
 // findCommonGeoColumn searches for columns with common geometry names
 func findCommonGeoColumn(schema *parquet.Schema) string {
 	commonNames := []string{
@@ -142,7 +246,7 @@ func findCommonGeoColumn(schema *parquet.Schema) string {
 }
 
 // calculateBoundsFromParquet reads the geometry column and calculates overall bounds
-func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding string) (core.Bbox, error) {
+func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding string, srid int) (core.Bbox, error) {
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
 
@@ -242,8 +346,8 @@ func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding s
 		return core.Bbox{}, ErrNoFeaturesFound
 	}
 
-	// Create and return the bounding box
-	bbox := core.Bbox{Left: minX, Bottom: minY, Right: maxX, Top: maxY}
+	// Create and return the bounding box with SRID
+	bbox := core.Bbox{Left: minX, Bottom: minY, Right: maxX, Top: maxY, Srid: srid}
 
 	return bbox, nil
 }

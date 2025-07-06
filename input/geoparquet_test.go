@@ -215,3 +215,175 @@ func TestSniffGeoparquet_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractSRIDFromCRS(t *testing.T) {
+	tests := []struct {
+		name     string
+		crs      interface{}
+		expected int
+	}{
+		{
+			name:     "Nil CRS",
+			crs:      nil,
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "EPSG string",
+			crs:      "EPSG:4326",
+			expected: 4326,
+		},
+		{
+			name:     "Case insensitive EPSG",
+			crs:      "epsg:3857",
+			expected: 3857,
+		},
+		{
+			name:     "Direct numeric value",
+			crs:      float64(2154),
+			expected: 2154,
+		},
+		{
+			name: "Object with SRID field",
+			crs: map[string]interface{}{
+				"srid": float64(4269),
+			},
+			expected: 4269,
+		},
+		{
+			name: "Object with authority code",
+			crs: map[string]interface{}{
+				"authority": map[string]interface{}{
+					"code": float64(32633),
+				},
+			},
+			expected: 32633,
+		},
+		{
+			name: "Object with properties code",
+			crs: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"code": float64(25832),
+				},
+			},
+			expected: 25832,
+		},
+		{
+			name: "Object with id code",
+			crs: map[string]interface{}{
+				"id": map[string]interface{}{
+					"code": float64(4326),
+				},
+			},
+			expected: 4326,
+		},
+		{
+			name:     "Invalid EPSG string",
+			crs:      "EPSG:invalid",
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "Non-EPSG string",
+			crs:      "WGS84",
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "Empty string",
+			crs:      "",
+			expected: core.UnknownCrs,
+		},
+		{
+			name: "Object without recognized fields",
+			crs: map[string]interface{}{
+				"type": "CRS",
+				"name": "WGS84",
+			},
+			expected: core.UnknownCrs,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractSRIDFromCRS(tt.crs)
+			if result != tt.expected {
+				t.Errorf("extractSRIDFromCRS() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestParseIntSafely(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		expected  int
+		expectErr bool
+	}{
+		{
+			name:      "Valid positive number",
+			input:     "4326",
+			expected:  4326,
+			expectErr: false,
+		},
+		{
+			name:      "Zero",
+			input:     "0",
+			expected:  0,
+			expectErr: false,
+		},
+		{
+			name:      "Large number",
+			input:     "999999",
+			expected:  999999,
+			expectErr: false,
+		},
+		{
+			name:      "Invalid character",
+			input:     "43a6",
+			expected:  0,
+			expectErr: true,
+		},
+		{
+			name:      "Empty string",
+			input:     "",
+			expected:  0,
+			expectErr: false,
+		},
+		{
+			name:      "With spaces",
+			input:     "43 26",
+			expected:  0,
+			expectErr: true,
+		},
+		{
+			name:      "Negative sign",
+			input:     "-4326",
+			expected:  0,
+			expectErr: true,
+		},
+		{
+			name:      "With decimal",
+			input:     "43.26",
+			expected:  0,
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseIntSafely(tt.input)
+			
+			if tt.expectErr {
+				if err == nil {
+					t.Errorf("parseIntSafely() expected error but got none")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("parseIntSafely() unexpected error: %v", err)
+				}
+				if result != tt.expected {
+					t.Errorf("parseIntSafely() = %v, want %v", result, tt.expected)
+				}
+			}
+		})
+	}
+}
