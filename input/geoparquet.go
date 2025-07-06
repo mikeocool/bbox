@@ -237,6 +237,107 @@ func findCommonGeoColumn(schema *parquet.Schema) string {
 
 // calculateBoundsFromParquet reads the geometry column and calculates overall bounds
 func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding string, srid int) (core.Bbox, error) {
+	// Handle different encodings
+	switch strings.ToLower(encoding) {
+	case "point":
+		return calculateBoundsFromNativePoints(file, geoColumn, srid)
+	case "wkb", "":
+		return calculateBoundsFromWKB(file, geoColumn, srid)
+	default:
+		return calculateBoundsFromWKB(file, geoColumn, srid) // Default to WKB
+	}
+}
+
+// calculateBoundsFromNativePoints handles native point encoding (x, y coordinates as doubles)
+func calculateBoundsFromNativePoints(file *parquet.File, geoColumn string, srid int) (core.Bbox, error) {
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	geometryFound := false
+
+	// Use the parquet reader to read rows
+	reader := parquet.NewReader(file)
+	defer reader.Close()
+
+	// Read all rows
+	for {
+		row := make(map[string]interface{})
+		err := reader.Read(&row)
+		if err != nil {
+			break
+		}
+
+		// Get the geometry from the row
+		geom, exists := row[geoColumn]
+		if !exists || geom == nil {
+			continue
+		}
+
+		// Handle geometry as a map with x, y fields
+		if geomMap, ok := geom.(map[string]interface{}); ok {
+			x, xExists := geomMap["x"]
+			y, yExists := geomMap["y"]
+			
+			if !xExists || !yExists {
+				continue
+			}
+
+			// Convert to float64
+			var xVal, yVal float64
+			var xOk, yOk bool
+			
+			if xFloat, ok := x.(float64); ok {
+				xVal = xFloat
+				xOk = true
+			}
+			if yFloat, ok := y.(float64); ok {
+				yVal = yFloat
+				yOk = true
+			}
+
+			if !xOk || !yOk {
+				continue
+			}
+
+			// Skip NaN values
+			if math.IsNaN(xVal) || math.IsNaN(yVal) {
+				continue
+			}
+
+			// Skip infinite values
+			if math.IsInf(xVal, 0) || math.IsInf(yVal, 0) {
+				continue
+			}
+
+			geometryFound = true
+
+			// Update overall bounds
+			if xVal < minX {
+				minX = xVal
+			}
+			if yVal < minY {
+				minY = yVal
+			}
+			if xVal > maxX {
+				maxX = xVal
+			}
+			if yVal > maxY {
+				maxY = yVal
+			}
+		}
+	}
+
+	if !geometryFound {
+		return core.Bbox{}, ErrNoFeaturesFound
+	}
+
+	// Create and return the bounding box with SRID
+	bbox := core.Bbox{Left: minX, Bottom: minY, Right: maxX, Top: maxY, Srid: srid}
+
+	return bbox, nil
+}
+
+// calculateBoundsFromWKB handles WKB encoding (existing implementation)
+func calculateBoundsFromWKB(file *parquet.File, geoColumn string, srid int) (core.Bbox, error) {
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
 
@@ -287,19 +388,33 @@ func calculateBoundsFromParquet(file *parquet.File, geoColumn string, encoding s
 				var wkbData []byte
 
 				// Handle different data types
-				// parquet.Value stores binary/string data as ByteArray
-				bytes := values[i].ByteArray()
-				if bytes == nil {
-					continue
-				}
-
-				// First try to parse as hex-encoded WKB (common for string columns)
-				parsed, err := ParseHexWKB(string(bytes))
-				if err == nil {
-					wkbData = parsed
-				} else {
-					// If not hex, use as raw WKB bytes
+				// parquet.Value stores binary/string data as ByteArray or FixedLenByteArray
+				// Check the value kind first to avoid panics
+				switch values[i].Kind() {
+				case parquet.ByteArray:
+					bytes := values[i].ByteArray()
+					if bytes == nil {
+						continue
+					}
+					
+					// First try to parse as hex-encoded WKB (common for string columns)
+					parsed, err := ParseHexWKB(string(bytes))
+					if err == nil {
+						wkbData = parsed
+					} else {
+						// If not hex, use as raw WKB bytes
+						wkbData = bytes
+					}
+				case parquet.FixedLenByteArray:
+					bytes := values[i].ByteArray() // FixedLenByteArray also uses ByteArray() method
+					if bytes == nil {
+						continue
+					}
+					// Use as raw WKB bytes (fixed length arrays are typically binary)
 					wkbData = bytes
+				default:
+					// Skip unsupported value types
+					continue
 				}
 
 				if len(wkbData) == 0 {
