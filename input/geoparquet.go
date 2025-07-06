@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mikeocool/bbox/core"
@@ -201,7 +202,7 @@ func extractSRIDFromCRS(crs interface{}) int {
 		// Handle CRS as string (e.g., "EPSG:4326")
 		if strings.HasPrefix(strings.ToUpper(v), "EPSG:") {
 			epsgCode := strings.TrimPrefix(strings.ToUpper(v), "EPSG:")
-			if code, err := parseIntSafely(epsgCode); err == nil {
+			if code, err := strconv.Atoi(epsgCode); err == nil {
 				return code
 			}
 		}
@@ -213,17 +214,6 @@ func extractSRIDFromCRS(crs interface{}) int {
 	return core.UnknownCrs
 }
 
-// parseIntSafely parses a string to int, returning 0 on error
-func parseIntSafely(s string) (int, error) {
-	var result int
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			return 0, fmt.Errorf("invalid character in number: %c", r)
-		}
-		result = result*10 + int(r-'0')
-	}
-	return result, nil
-}
 
 // findCommonGeoColumn searches for columns with common geometry names
 func findCommonGeoColumn(schema *parquet.Schema) string {
