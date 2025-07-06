@@ -253,6 +253,7 @@ func TestLoadOSMFile_ValidXML(t *testing.T) {
 		Bottom: 50.0, // min latitude
 		Right:  10.0, // max longitude
 		Top:    52.0, // max latitude
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := LoadOSMFile(osmFile)
@@ -286,6 +287,7 @@ func TestLoadOSMFile_SingleNode(t *testing.T) {
 		Bottom: 45.5,
 		Right:  -73.5,
 		Top:    45.5,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := LoadOSMFile(osmFile)
@@ -377,6 +379,7 @@ func TestLoadOSMFile_WorldwideCoordinates(t *testing.T) {
 		Bottom: -90.0,
 		Right:  180.0,
 		Top:    90.0,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := LoadOSMFile(osmFile)
@@ -411,6 +414,7 @@ func TestLoadOSMFile_PrecisionTest(t *testing.T) {
 		Bottom: 50.123456789,
 		Right:  8.987654322,
 		Top:    50.123456790,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := LoadOSMFile(osmFile)
@@ -462,6 +466,7 @@ func TestLoadOSMFile_RealPBFFile(t *testing.T) {
 		Bottom: 37.268984,
 		Right:  7.615891100000001,
 		Top:    43.7594835,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	if !box.Equals(expected) {
@@ -503,7 +508,7 @@ func TestLoadOSMFile_RealXMLFile(t *testing.T) {
 		return
 	}
 
-	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262}
+	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262, Srid: core.Wgs84}
 	if !box.Equals(expected) {
 		t.Errorf("Box: %v does not match expected: %v", box, expected)
 	}
@@ -529,6 +534,7 @@ func TestParseOsmXML(t *testing.T) {
 		Bottom: 50.0, // min latitude
 		Right:  10.0, // max longitude
 		Top:    52.0, // max latitude
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := ParseOsmXML(reader)
@@ -579,6 +585,7 @@ func TestParseOsmPbf_RealFile(t *testing.T) {
 		Bottom: 37.268984,
 		Right:  7.615891100000001,
 		Top:    43.7594835,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 	if !box.Equals(expected) {
 		t.Errorf("Box: %v does not match expected: %v", box, expected)
@@ -601,7 +608,7 @@ func TestParseOsmXML_RealFile(t *testing.T) {
 		return
 	}
 
-	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262}
+	expected := core.Bbox{Left: -93.3121726, Bottom: 46.9726411, Right: -92.5814836, Top: 47.263262, Srid: core.Wgs84}
 	if !box.Equals(expected) {
 		t.Errorf("ParseOsmXML() = %v, want %v", box, expected)
 	}

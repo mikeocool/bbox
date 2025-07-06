@@ -116,6 +116,7 @@ func calculateBoundsFromScanner(scanner osm.Scanner) (core.Bbox, error) {
 		Bottom: minLat, // Bottom = minimum latitude
 		Right:  maxLon, // Right = maximum longitude
 		Top:    maxLat, // Top = maximum latitude
+		Srid:   core.Wgs84, // OSM data is always in WGS84 (EPSG:4326)
 	}
 
 	return bbox, nil

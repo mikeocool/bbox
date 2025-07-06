@@ -571,6 +571,7 @@ func TestParseData_OSMXml(t *testing.T) {
 		Bottom: 50.0, // min latitude
 		Right:  10.0, // max longitude
 		Top:    52.0, // max latitude
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	box, err := ParseData(reader)
@@ -613,6 +614,7 @@ func TestParseData_OSMPbf(t *testing.T) {
 		Bottom: 37.268984,
 		Right:  7.615891100000001,
 		Top:    43.7594835,
+		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
 	if !box.Equals(expected) {
