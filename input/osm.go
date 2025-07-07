@@ -112,10 +112,10 @@ func calculateBoundsFromScanner(scanner osm.Scanner) (core.Bbox, error) {
 	// Create and return the bounding box
 	// OSM uses lat/lon (WGS84), core.Bbox uses Left/Bottom/Right/Top
 	bbox := core.Bbox{
-		Left:   minLon, // Left = minimum longitude
-		Bottom: minLat, // Bottom = minimum latitude
-		Right:  maxLon, // Right = maximum longitude
-		Top:    maxLat, // Top = maximum latitude
+		Left:   minLon,     // Left = minimum longitude
+		Bottom: minLat,     // Bottom = minimum latitude
+		Right:  maxLon,     // Right = maximum longitude
+		Top:    maxLat,     // Top = maximum latitude
 		Srid:   core.Wgs84, // OSM data is always in WGS84 (EPSG:4326)
 	}
 

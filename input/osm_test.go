@@ -249,10 +249,10 @@ func TestLoadOSMFile_ValidXML(t *testing.T) {
 	}
 
 	expected := core.Bbox{
-		Left:   8.0,  // min longitude
-		Bottom: 50.0, // min latitude
-		Right:  10.0, // max longitude
-		Top:    52.0, // max latitude
+		Left:   8.0,        // min longitude
+		Bottom: 50.0,       // min latitude
+		Right:  10.0,       // max longitude
+		Top:    52.0,       // max latitude
 		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
@@ -530,10 +530,10 @@ func TestParseOsmXML(t *testing.T) {
 
 	reader := strings.NewReader(osmContent)
 	expected := core.Bbox{
-		Left:   8.0,  // min longitude
-		Bottom: 50.0, // min latitude
-		Right:  10.0, // max longitude
-		Top:    52.0, // max latitude
+		Left:   8.0,        // min longitude
+		Bottom: 50.0,       // min latitude
+		Right:  10.0,       // max longitude
+		Top:    52.0,       // max latitude
 		Srid:   core.Wgs84, // OSM data is always WGS84
 	}
 
