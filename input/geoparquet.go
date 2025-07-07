@@ -214,7 +214,6 @@ func extractSRIDFromCRS(crs interface{}) int {
 	return core.UnknownCrs
 }
 
-
 // findCommonGeoColumn searches for columns with common geometry names
 func findCommonGeoColumn(schema *parquet.Schema) string {
 	commonNames := []string{
@@ -276,7 +275,7 @@ func calculateBoundsFromNativePoints(file *parquet.File, geoColumn string, srid 
 		if geomMap, ok := geom.(map[string]interface{}); ok {
 			x, xExists := geomMap["x"]
 			y, yExists := geomMap["y"]
-			
+
 			if !xExists || !yExists {
 				continue
 			}
@@ -284,7 +283,7 @@ func calculateBoundsFromNativePoints(file *parquet.File, geoColumn string, srid 
 			// Convert to float64
 			var xVal, yVal float64
 			var xOk, yOk bool
-			
+
 			if xFloat, ok := x.(float64); ok {
 				xVal = xFloat
 				xOk = true
@@ -396,7 +395,7 @@ func calculateBoundsFromWKB(file *parquet.File, geoColumn string, srid int) (cor
 					if bytes == nil {
 						continue
 					}
-					
+
 					// First try to parse as hex-encoded WKB (common for string columns)
 					parsed, err := ParseHexWKB(string(bytes))
 					if err == nil {
