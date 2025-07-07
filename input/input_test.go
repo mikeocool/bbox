@@ -941,3 +941,217 @@ func TestRawBuilder_Build(t *testing.T) {
 		})
 	}
 }
+
+func TestInputParams_SridOverride(t *testing.T) {
+	tests := []struct {
+		name        string
+		params      InputParams
+		expectError bool
+		errorMsg    string
+		expectSrid  int
+	}{
+		{
+			name: "No SRID override - default should be preserved",
+			params: InputParams{
+				Left:   floatPtr(1.0),
+				Right:  floatPtr(5.0),
+				Bottom: floatPtr(2.0),
+				Top:    floatPtr(8.0),
+			},
+			expectError: false,
+			expectSrid:  0, // Default unknown
+		},
+		{
+			name: "Valid SRID override - WGS84",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				SridOverride: 4326,
+			},
+			expectError: false,
+			expectSrid:  4326,
+		},
+		{
+			name: "Valid SRID override - Web Mercator",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				SridOverride: 3857,
+			},
+			expectError: false,
+			expectSrid:  3857,
+		},
+		{
+			name: "Valid SRID override - UTM Zone",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				SridOverride: 26915,
+			},
+			expectError: false,
+			expectSrid:  26915,
+		},
+		{
+			name: "Invalid SRID override - negative",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				SridOverride: -1,
+			},
+			expectError: true,
+			errorMsg:    "srid: SRID must be a positive integer",
+		},
+		{
+			name: "Invalid SRID override - too large",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				SridOverride: 200000,
+			},
+			expectError: true,
+			errorMsg:    "srid: SRID appears to be outside valid EPSG range (try values like 4326, 3857, 26915)",
+		},
+		{
+			name: "SRID override with Center builder",
+			params: InputParams{
+				Center:       []float64{10.0, 20.0},
+				Width:        "4",
+				Height:       "6",
+				SridOverride: 4326,
+			},
+			expectError: false,
+			expectSrid:  4326,
+		},
+		{
+			name: "SRID override with buffer",
+			params: InputParams{
+				Left:         floatPtr(1.0),
+				Right:        floatPtr(5.0),
+				Bottom:       floatPtr(2.0),
+				Top:          floatPtr(8.0),
+				Buffer:       2.0,
+				SridOverride: 3857,
+			},
+			expectError: false,
+			expectSrid:  3857,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			bbox, err := tc.params.GetBbox()
+
+			// Check error status
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+				return
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			// If expecting an error, verify the error message
+			if tc.expectError && err != nil {
+				if tc.errorMsg != "" && err.Error() != tc.errorMsg {
+					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
+				}
+				return
+			}
+
+			// If not expecting an error, verify the SRID
+			if !tc.expectError {
+				if bbox.Srid != tc.expectSrid {
+					t.Errorf("Expected SRID %d but got %d", tc.expectSrid, bbox.Srid)
+				}
+			}
+		})
+	}
+}
+
+func TestInputParams_validateSridOverride(t *testing.T) {
+	tests := []struct {
+		name         string
+		sridOverride int
+		expectError  bool
+		errorMsg     string
+	}{
+		{
+			name:         "No override (zero)",
+			sridOverride: 0,
+			expectError:  false,
+		},
+		{
+			name:         "Valid SRID - WGS84",
+			sridOverride: 4326,
+			expectError:  false,
+		},
+		{
+			name:         "Valid SRID - Web Mercator",
+			sridOverride: 3857,
+			expectError:  false,
+		},
+		{
+			name:         "Valid SRID - UTM",
+			sridOverride: 26915,
+			expectError:  false,
+		},
+		{
+			name:         "Valid SRID - edge case small",
+			sridOverride: 1,
+			expectError:  false,
+		},
+		{
+			name:         "Valid SRID - edge case large",
+			sridOverride: 99999,
+			expectError:  false,
+		},
+		{
+			name:         "Invalid SRID - negative",
+			sridOverride: -1,
+			expectError:  true,
+			errorMsg:     "srid: SRID must be a positive integer",
+		},
+		{
+			name:         "Invalid SRID - too large",
+			sridOverride: 100001,
+			expectError:  true,
+			errorMsg:     "srid: SRID appears to be outside valid EPSG range (try values like 4326, 3857, 26915)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			params := InputParams{
+				SridOverride: tc.sridOverride,
+			}
+
+			err := params.validateSridOverride()
+
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+				return
+			}
+			if !tc.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if tc.expectError && err != nil {
+				if tc.errorMsg != "" && err.Error() != tc.errorMsg {
+					t.Errorf("Expected error message %q but got %q", tc.errorMsg, err.Error())
+				}
+			}
+		})
+	}
+}

@@ -34,6 +34,7 @@ type InputParams struct {
 	GeocoderURL     string
 	GeocoderHeaders []string
 	Buffer          float64
+	SridOverride    int
 }
 
 func (params *InputParams) HasWidth() bool  { return params.Width != "" }
@@ -44,6 +45,11 @@ func (params *InputParams) HasAnyCoordinates() bool {
 }
 
 func (params *InputParams) GetBbox() (core.Bbox, error) {
+	// Validate SRID override
+	if err := params.validateSridOverride(); err != nil {
+		return core.Bbox{}, err
+	}
+
 	builders := []BboxBuilder{
 		RawBuilder,
 		PlaceBuilder,
@@ -63,6 +69,24 @@ func (params *InputParams) GetBbox() (core.Bbox, error) {
 	}
 
 	return core.Bbox{}, NoUsableBuilderError{}
+}
+
+func (params *InputParams) validateSridOverride() error {
+	if params.SridOverride == 0 {
+		return nil // 0 means no override
+	}
+	
+	if params.SridOverride < 0 {
+		return InputValidationError{Field: "srid", Message: "SRID must be a positive integer"}
+	}
+	
+	// Basic validation for reasonable EPSG code ranges
+	// Most EPSG codes are between 1000-32767, though some legacy codes exist below 1000
+	if params.SridOverride > 100000 {
+		return InputValidationError{Field: "srid", Message: "SRID appears to be outside valid EPSG range (try values like 4326, 3857, 26915)"}
+	}
+	
+	return nil
 }
 
 func (p *InputParams) getSetFields() []string {
@@ -85,8 +109,8 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 
 	setFields := params.getSetFields()
 	for _, field := range setFields {
-		// buffer is a global used field TODO make this better
-		if !usedFieldsSet[field] && field != "Buffer" {
+		// buffer and srid override are global used fields TODO make this better
+		if !usedFieldsSet[field] && field != "Buffer" && field != "SridOverride" {
 			return core.Bbox{}, fmt.Errorf("unexpected argument: %s with %s", field, builder.Name)
 		}
 	}
@@ -104,6 +128,11 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 		if err != nil {
 			return core.Bbox{}, err
 		}
+	}
+
+	// Apply SRID override if specified
+	if params.SridOverride != 0 {
+		bbox.Srid = params.SridOverride
 	}
 
 	return bbox, nil

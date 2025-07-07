@@ -92,6 +92,7 @@ func init() {
 	//RootCmd.PersistentFlags().StringSliceVarP(&inputParams.File, "file", "f", []string{}, "Path to file to load")
 
 	RootCmd.PersistentFlags().Float64Var(&inputParams.Buffer, "buffer", 0, "Grow the box by the specified amount, or shrink it if the value is negative.")
+	RootCmd.PersistentFlags().IntVar(&inputParams.SridOverride, "srid", 0, "Override the SRID of the input bounding box")
 
 	RootCmd.PersistentFlags().BoolVar(&drawFlag, "draw", false, "Start the drawing interface to create a bounding box")
 	RootCmd.PersistentFlags().StringVar(&addressFlag, "address", "localhost", "IP address to bind the draw server to")
