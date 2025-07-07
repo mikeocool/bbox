@@ -90,12 +90,12 @@ func TestLoadGeoparquetFile(t *testing.T) {
 			expected: core.Bbox{Left: -119.37513560589187, Bottom: 26.571757187953462, Right: -80.3729072788281, Top: 45.43181870015789},
 			wantErr:  false,
 		},
-		// {
-		// 	name:     "Valid point file",
-		// 	filename: "../integration_tests/data/point-encoding_native.parquet",
-		// 	expected: core.Bbox{Left: -180, Right: 180, Bottom: -90, Top: 90},
-		// 	wantErr:  false,
-		// },
+		{
+			name:     "Valid point file",
+			filename: "../integration_tests/data/point-encoding_native.parquet",
+			expected: core.Bbox{Left: 30, Bottom: 10, Right: 40, Top: 40},
+			wantErr:  false,
+		},
 		// TODO parquet file with geom col, but no metadata
 		{
 			name:     "file without geocolumn",
@@ -211,6 +211,101 @@ func TestSniffGeoparquet_EdgeCases(t *testing.T) {
 			got := SniffGeoparquet(tt.data)
 			if got != tt.want {
 				t.Errorf("SniffGeoparquet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractSRIDFromCRS(t *testing.T) {
+	tests := []struct {
+		name     string
+		crs      interface{}
+		expected int
+	}{
+		{
+			name:     "Nil CRS",
+			crs:      nil,
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "EPSG string",
+			crs:      "EPSG:4326",
+			expected: 4326,
+		},
+		{
+			name:     "Case insensitive EPSG",
+			crs:      "epsg:3857",
+			expected: 3857,
+		},
+		{
+			name:     "Direct numeric value",
+			crs:      float64(2154),
+			expected: 2154,
+		},
+		{
+			name: "Object with SRID field",
+			crs: map[string]interface{}{
+				"srid": float64(4269),
+			},
+			expected: 4269,
+		},
+		{
+			name: "Object with authority code",
+			crs: map[string]interface{}{
+				"authority": map[string]interface{}{
+					"code": float64(32633),
+				},
+			},
+			expected: 32633,
+		},
+		{
+			name: "Object with properties code",
+			crs: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"code": float64(25832),
+				},
+			},
+			expected: 25832,
+		},
+		{
+			name: "Object with id code",
+			crs: map[string]interface{}{
+				"id": map[string]interface{}{
+					"code": float64(4326),
+				},
+			},
+			expected: 4326,
+		},
+		{
+			name:     "Invalid EPSG string",
+			crs:      "EPSG:invalid",
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "Non-EPSG string",
+			crs:      "WGS84",
+			expected: core.UnknownCrs,
+		},
+		{
+			name:     "Empty string",
+			crs:      "",
+			expected: core.UnknownCrs,
+		},
+		{
+			name: "Object without recognized fields",
+			crs: map[string]interface{}{
+				"type": "CRS",
+				"name": "WGS84",
+			},
+			expected: core.UnknownCrs,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractSRIDFromCRS(tt.crs)
+			if result != tt.expected {
+				t.Errorf("extractSRIDFromCRS() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
