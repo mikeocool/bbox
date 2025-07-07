@@ -26,6 +26,30 @@ const defaultPort = 5500
 var drawHTML []byte
 
 var ErrNonWGS84Coordinates = fmt.Errorf("coordinates do not appear to be valid WGS84")
+var ErrUnsupportedSRID = fmt.Errorf("unsupported SRID for drawing interface")
+
+// validateDrawCoordinates validates that the bbox has coordinates suitable for the drawing interface.
+// The drawing interface only works with geographic (lat/lon) coordinate systems.
+func validateDrawCoordinates(bbox Bbox) error {
+	if bbox.Srid == UnknownCrs {
+		// If SRID is unknown, check if coordinates appear to be WGS84
+		if !IsValidWgs84(bbox) {
+			return ErrNonWGS84Coordinates
+		}
+		return nil
+	}
+	
+	// If SRID is set, check that it's a geographic coordinate system compatible with drawing
+	switch bbox.Srid {
+	case Wgs84:  // WGS84 - perfect for drawing
+		return nil
+	case Nad83:  // NAD83 - very close to WGS84, acceptable for drawing
+		return nil
+	default:
+		// Any other SRID is not suitable for the drawing interface
+		return fmt.Errorf("%w: SRID %d not supported", ErrUnsupportedSRID, bbox.Srid)
+	}
+}
 
 // DrawServer holds the configuration and state for the bounding box drawing server
 type DrawServer struct {
@@ -40,9 +64,9 @@ type TemplateContext struct {
 // StartDrawServer starts a web server for drawing bounding boxes.
 // It returns the received bounding box data as a Bbox struct.
 func StartDrawServer(bbox Bbox, address string, port int) (Bbox, error) {
-	// Ensure the box appears to be Valid Wgs84 coords
-	if !IsValidWgs84(bbox) {
-		return Bbox{}, ErrNonWGS84Coordinates
+	// Validate coordinates for drawing interface
+	if err := validateDrawCoordinates(bbox); err != nil {
+		return Bbox{}, err
 	}
 
 	if port == 0 {

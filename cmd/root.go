@@ -136,6 +136,9 @@ func getBboxFromInput(args []string) (core.Bbox, error) {
 				// TODO wrap in error so we can provide friendly message
 				return core.Bbox{}, NewUserError(err, "Box coordinates appear to be outside of the range of valid WGS84 coordinates. Cannot show non-WGS84 coordinates in --draw mode")
 			}
+			if errors.Is(err, core.ErrUnsupportedSRID) {
+				return core.Bbox{}, NewUserError(err, "Draw mode does not support the specified SRID. Only geographic coordinate systems (WGS84/4326, NAD83/4269) are supported in --draw mode")
+			}
 			return core.Bbox{}, fmt.Errorf("starting draw server: %w", err)
 		}
 	}
