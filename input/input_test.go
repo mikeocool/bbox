@@ -1033,6 +1033,26 @@ func TestInputParams_SridOverride(t *testing.T) {
 			expectSrid:  4326,
 		},
 		{
+			name: "Center builder auto-detects WGS84 for valid coordinates",
+			params: InputParams{
+				Center: []float64{-90.0, 45.0},
+				Width:  "2",
+				Height: "1",
+			},
+			expectError: false,
+			expectSrid:  4326, // Should auto-detect WGS84
+		},
+		{
+			name: "Center builder keeps unknown SRID for projected coordinates",
+			params: InputParams{
+				Center: []float64{500000.0, 5000000.0},
+				Width:  "1000",
+				Height: "1000",
+			},
+			expectError: false,
+			expectSrid:  0, // Should remain unknown
+		},
+		{
 			name: "SRID override with buffer",
 			params: InputParams{
 				Left:         floatPtr(1.0),

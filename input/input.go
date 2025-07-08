@@ -330,12 +330,20 @@ var CenterBuilder = BboxBuilder{
 			return core.Bbox{}, err
 		}
 
-		return core.Bbox{
+		bbox := core.Bbox{
 			Left:   params.Center[0] - width/2,
 			Bottom: params.Center[1] - height/2,
 			Right:  params.Center[0] + width/2,
 			Top:    params.Center[1] + height/2,
-		}, nil // TODO
+			Srid:   core.UnknownCrs,
+		}
+
+		// If no SRID override is specified, check if coordinates fall within WGS84 range
+		if params.SridOverride == 0 && core.IsValidWgs84(bbox) {
+			bbox.Srid = core.Wgs84
+		}
+
+		return bbox, nil
 	},
 }
 
