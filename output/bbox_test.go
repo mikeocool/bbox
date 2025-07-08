@@ -532,6 +532,97 @@ func TestFormat(t *testing.T) {
 	}
 }
 
+func TestWkbWithSrid(t *testing.T) {
+	tests := []struct {
+		name        string
+		bbox        core.Bbox
+		expected    string
+		description string
+	}{
+		{
+			name:        "WKB with SRID 4326",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: 4326},
+			expected:    "0103000020E61000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+			description: "Should include SRID in WKB when SRID is 4326",
+		},
+		{
+			name:        "WKB without SRID (UnknownCrs)",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: 0},
+			expected:    "01030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+			description: "Should NOT include SRID in WKB when SRID is UnknownCrs (0)",
+		},
+		{
+			name:        "WKB without SRID (InvalidCrs)",
+			bbox:        core.Bbox{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: -1},
+			expected:    "01030000000100000005000000000000000000F03F00000000000000400000000000000840000000000000004000000000000008400000000000001040000000000000F03F0000000000001040000000000000F03F0000000000000040",
+			description: "Should NOT include SRID in WKB when SRID is InvalidCrs (-1)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := OutputSettings{FormatType: FormatWkbhex}
+			result, err := FormatBbox(tc.bbox, settings)
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if result != tc.expected {
+				t.Errorf("%s\nExpected: %q\nGot:      %q", tc.description, tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestWkbFeatureCollectionWithSrid(t *testing.T) {
+	tests := []struct {
+		name        string
+		boxes       []core.Bbox
+		description string
+	}{
+		{
+			name: "Collection with mixed SRIDs",
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: 4326},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0, Srid: 0},
+				{Left: 9.0, Bottom: 10.0, Right: 11.0, Top: 12.0, Srid: 3857},
+			},
+			description: "WkbFeatureCollection should create individual polygons with their own SRIDs",
+		},
+		{
+			name: "Collection with no SRIDs",
+			boxes: []core.Bbox{
+				{Left: 1.0, Bottom: 2.0, Right: 3.0, Top: 4.0, Srid: 0},
+				{Left: 5.0, Bottom: 6.0, Right: 7.0, Top: 8.0, Srid: 0},
+			},
+			description: "WkbFeatureCollection should create individual polygons without SRIDs",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := OutputSettings{FormatType: FormatWkbhex}
+			result, err := WkbhexFormatCollection(settings, tc.boxes)
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			// Just verify we get a valid hex string
+			if len(result) == 0 {
+				t.Errorf("Expected non-empty WKB hex string")
+			}
+
+			// Verify it starts with the correct GeometryCollection header
+			// 01 (little endian) + 07000000 (GeometryCollection type) + count
+			if !strings.HasPrefix(result, "01070000") {
+				t.Errorf("Expected WKB hex to start with GeometryCollection header '01070000', got: %s", result[:8])
+			}
+		})
+	}
+}
+
 func TestGetBboxFormatter(t *testing.T) {
 	tests := []struct {
 		name       string

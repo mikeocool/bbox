@@ -15,7 +15,21 @@ func WkbPolygon(buf *bytes.Buffer, bbox core.Bbox) {
 	binary.Write(buf, binary.LittleEndian, uint8(1))
 
 	// Write geometry type (polygon = 3)
-	binary.Write(buf, binary.LittleEndian, uint32(3))
+	geometryType := uint32(3)
+
+	// Check if SRID should be encoded (not InvalidCrs or UnknownCrs)
+	hasSrid := bbox.Srid != -1 && bbox.Srid != 0
+	if hasSrid {
+		// Set SRID flag in geometry type
+		geometryType |= 0x20000000
+	}
+
+	binary.Write(buf, binary.LittleEndian, geometryType)
+
+	// Write SRID if present
+	if hasSrid {
+		binary.Write(buf, binary.LittleEndian, uint32(bbox.Srid))
+	}
 
 	// Write number of rings (always 1 for a simple polygon)
 	binary.Write(buf, binary.LittleEndian, uint32(1))

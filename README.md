@@ -96,6 +96,7 @@ Output formats:
 ```
 
 # TODO
+* update point based stuff to support srids
 * units on width, height, buffer options
     * --center 4 5 --width 1000m --height 5000m
 * add support wkt/wkb/hexwkb formats to ParseData (and give better name)
