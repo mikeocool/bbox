@@ -621,3 +621,122 @@ func TestParseData_OSMPbf(t *testing.T) {
 		t.Errorf("ParseData() with OSM PBF = %v, want %v", box, expected)
 	}
 }
+
+func TestParseProjectionWKT(t *testing.T) {
+	tests := []struct {
+		name    string
+		wkt     string
+		want    int
+		wantErr bool
+	}{
+		{
+			name: "WKT with AUTHORITY clause",
+			wkt:  `PROJCS["NAD_1983_UTM_Zone_15N",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-93.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0],AUTHORITY["EPSG","26915"]]`,
+			want: 26915,
+		},
+		{
+			name: "WKT without AUTHORITY - exact name match",
+			wkt:  `PROJCS["NAD_1983_UTM_Zone_15N",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-93.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]`,
+			want: 26915,
+		},
+		{
+			name: "WGS84 Geographic",
+			wkt:  `GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]`,
+			want: core.Wgs84,
+		},
+		{
+			name: "NAD83 Geographic",
+			wkt:  `GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]`,
+			want: core.Nad83,
+		},
+		{
+			name: "Web Mercator",
+			wkt:  `PROJCS["WGS_1984_Web_Mercator",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Mercator"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],UNIT["Meter",1.0]]`,
+			want: 3857,
+		},
+		{
+			name: "UTM Zone pattern matching - WGS84",
+			wkt:  `PROJCS["WGS_1984_UTM_Zone_17N",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-81.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]`,
+			want: 32617,
+		},
+		{
+			name: "UTM Zone pattern matching - NAD83",
+			wkt:  `PROJCS["NAD_1983_UTM_Zone_18N",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-75.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]`,
+			want: 26918,
+		},
+		{
+			name: "UTM Zone South",
+			wkt:  `PROJCS["WGS_1984_UTM_Zone_32S",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",10000000.0],PARAMETER["Central_Meridian",9.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]`,
+			want: 32732,
+		},
+		{
+			name: "Empty WKT",
+			wkt:  "",
+			want: core.UnknownCrs,
+		},
+		{
+			name: "Unknown projection",
+			wkt:  `PROJCS["Unknown_Projection",GEOGCS["GCS_Unknown",DATUM["D_Unknown",SPHEROID["Unknown",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],UNIT["Meter",1.0]]`,
+			want: core.UnknownCrs,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseProjectionWKT(tt.wkt)
+			if got != tt.want {
+				t.Errorf("parseProjectionWKT() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLoadShapefileWithProjection(t *testing.T) {
+	// Test that LoadShapefile correctly reads .prj files when they exist
+	shapefilePath := "../integration_tests/data/campsites/Wilderness_Campsites.shp"
+
+	// Check if file exists
+	if _, err := os.Stat(shapefilePath); os.IsNotExist(err) {
+		t.Skip("Test shapefile not found, skipping test")
+		return
+	}
+
+	bbox, err := LoadShapefile(shapefilePath)
+	if err != nil {
+		t.Errorf("LoadShapefile() unexpected error = %v", err)
+		return
+	}
+
+	// The test .prj file contains NAD_1983_UTM_Zone_15N which should map to EPSG:26915
+	expectedSrid := 26915
+	if bbox.Srid != expectedSrid {
+		t.Errorf("LoadShapefile() SRID = %v, want %v", bbox.Srid, expectedSrid)
+	}
+
+	// Verify the coordinates are reasonable (should be in UTM Zone 15N)
+	if bbox.Left < 100000 || bbox.Right > 800000 {
+		t.Errorf("LoadShapefile() coordinates don't look like UTM Zone 15N: %v", bbox)
+	}
+}
+
+func TestLoadShapefileWithKnownProjection(t *testing.T) {
+	// Test that LoadShapefile correctly reads .prj files when they exist
+	shapefilePath := "../integration_tests/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp"
+
+	// Check if file exists
+	if _, err := os.Stat(shapefilePath); os.IsNotExist(err) {
+		t.Skip("Test shapefile not found, skipping test")
+		return
+	}
+
+	bbox, err := LoadShapefile(shapefilePath)
+	if err != nil {
+		t.Errorf("LoadShapefile() unexpected error = %v", err)
+		return
+	}
+
+	// This test shapefile has a .prj file with WGS84, so it should return 4326
+	if bbox.Srid != core.Wgs84 {
+		t.Errorf("LoadShapefile() SRID = %v, want %v", bbox.Srid, core.Wgs84)
+	}
+}
