@@ -44,17 +44,17 @@ func LoadShapefile(filename string) (core.Bbox, error) {
 		return core.Bbox{}, err
 	}
 	defer r.Close()
-	
+
 	bbox, err := ParseShapefile(r)
 	if err != nil {
 		return core.Bbox{}, err
 	}
-	
+
 	// Look for corresponding .prj file and parse projection
 	prjPath := strings.TrimSuffix(filename, filepath.Ext(filename)) + ".prj"
 	srid := parseProjectionFile(prjPath)
 	bbox.Srid = srid
-	
+
 	return bbox, nil
 }
 
@@ -109,18 +109,18 @@ func ParseShapefile(r io.Reader) (core.Bbox, error) {
 // Common projection name to EPSG code mappings
 var projectionLookup = map[string]int{
 	// Geographic coordinate systems
-	"GCS_WGS_1984":           core.Wgs84,
-	"WGS_1984":               core.Wgs84,
-	"WGS84":                  core.Wgs84,
+	"GCS_WGS_1984":            core.Wgs84,
+	"WGS_1984":                core.Wgs84,
+	"WGS84":                   core.Wgs84,
 	"GCS_North_American_1983": core.Nad83,
-	"NAD_1983":               core.Nad83,
-	"NAD83":                  core.Nad83,
-	
+	"NAD_1983":                core.Nad83,
+	"NAD83":                   core.Nad83,
+
 	// Web Mercator variants
-	"WGS_1984_Web_Mercator":           3857,
+	"WGS_1984_Web_Mercator":                  3857,
 	"WGS_1984_Web_Mercator_Auxiliary_Sphere": 3857,
-	"Popular_Visualisation_CRS":       3857,
-	
+	"Popular_Visualisation_CRS":              3857,
+
 	// Common UTM zones for NAD83
 	"NAD_1983_UTM_Zone_10N": 26910,
 	"NAD_1983_UTM_Zone_11N": 26911,
@@ -132,7 +132,7 @@ var projectionLookup = map[string]int{
 	"NAD_1983_UTM_Zone_17N": 26917,
 	"NAD_1983_UTM_Zone_18N": 26918,
 	"NAD_1983_UTM_Zone_19N": 26919,
-	
+
 	// Common UTM zones for WGS84
 	"WGS_1984_UTM_Zone_10N": 32610,
 	"WGS_1984_UTM_Zone_11N": 32611,
@@ -148,6 +148,9 @@ var projectionLookup = map[string]int{
 
 // parseProjectionWKT attempts to extract SRID from projection WKT
 func parseProjectionWKT(prjContent string) int {
+	// TODO implement actual parsing of this, so we can just use the params in it
+	// and not lookup the SRID
+
 	// Clean up the content
 	content := strings.TrimSpace(prjContent)
 	if content == "" {
@@ -181,7 +184,7 @@ func parseProjectionWKT(prjContent string) int {
 		zone, err := strconv.Atoi(utmMatches[1])
 		if err == nil && zone >= 1 && zone <= 60 {
 			hemisphere := utmMatches[2]
-			
+
 			// Determine if it's NAD83 or WGS84 based on content
 			if strings.Contains(content, "NAD_1983") || strings.Contains(content, "North_American_1983") {
 				if hemisphere == "N" {
@@ -208,6 +211,6 @@ func parseProjectionFile(prjPath string) int {
 		// File doesn't exist or can't be read, return unknown
 		return core.UnknownCrs
 	}
-	
+
 	return parseProjectionWKT(string(content))
 }
