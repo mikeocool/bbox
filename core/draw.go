@@ -38,12 +38,12 @@ func validateDrawCoordinates(bbox Bbox) error {
 		}
 		return nil
 	}
-	
+
 	// If SRID is set, check that it's a geographic coordinate system compatible with drawing
 	switch bbox.Srid {
-	case Wgs84:  // WGS84 - perfect for drawing
+	case Wgs84:
 		return nil
-	case Nad83:  // NAD83 - very close to WGS84, acceptable for drawing
+	case Nad83: // NAD83 - close enough
 		return nil
 	default:
 		// Any other SRID is not suitable for the drawing interface
