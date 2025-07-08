@@ -951,7 +951,7 @@ func TestInputParams_SridOverride(t *testing.T) {
 		expectSrid  int
 	}{
 		{
-			name: "No SRID override - default should be preserved",
+			name: "No SRID override - auto-detects WGS84 for valid coordinates",
 			params: InputParams{
 				Left:   floatPtr(1.0),
 				Right:  floatPtr(5.0),
@@ -959,7 +959,7 @@ func TestInputParams_SridOverride(t *testing.T) {
 				Top:    floatPtr(8.0),
 			},
 			expectError: false,
-			expectSrid:  0, // Default unknown
+			expectSrid:  4326, // Should auto-detect WGS84
 		},
 		{
 			name: "Valid SRID override - WGS84",
@@ -1048,6 +1048,28 @@ func TestInputParams_SridOverride(t *testing.T) {
 				Center: []float64{500000.0, 5000000.0},
 				Width:  "1000",
 				Height: "1000",
+			},
+			expectError: false,
+			expectSrid:  0, // Should remain unknown
+		},
+		{
+			name: "Bounds builder auto-detects WGS84 for valid coordinates",
+			params: InputParams{
+				Left:   floatPtr(-90.0),
+				Right:  floatPtr(-89.0),
+				Bottom: floatPtr(44.0),
+				Top:    floatPtr(45.0),
+			},
+			expectError: false,
+			expectSrid:  4326, // Should auto-detect WGS84
+		},
+		{
+			name: "Bounds builder keeps unknown SRID for projected coordinates",
+			params: InputParams{
+				Left:   floatPtr(500000.0),
+				Right:  floatPtr(600000.0),
+				Bottom: floatPtr(4900000.0),
+				Top:    floatPtr(5000000.0),
 			},
 			expectError: false,
 			expectSrid:  0, // Should remain unknown

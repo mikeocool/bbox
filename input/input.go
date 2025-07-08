@@ -366,12 +366,20 @@ var BoundsBuilder = BboxBuilder{
 		left, right := getBoundsPair(params.Left, params.Right, params.Width)
 		bottom, top := getBoundsPair(params.Bottom, params.Top, params.Height)
 
-		return core.Bbox{
+		bbox := core.Bbox{
 			Left:   left,
 			Right:  right,
 			Bottom: bottom,
 			Top:    top,
-		}, nil // TODO
+			Srid:   core.UnknownCrs,
+		}
+
+		// If no SRID override is specified, check if coordinates fall within WGS84 range
+		if params.SridOverride == 0 && core.IsValidWgs84(bbox) {
+			bbox.Srid = core.Wgs84
+		}
+
+		return bbox, nil
 	},
 }
 
