@@ -96,23 +96,17 @@ Output formats:
 ```
 
 # TODO
+* units on width, height, buffer options
+    * --center 4 5 --width 1000m --height 5000m
 * add support wkt/wkb/hexwkb formats to ParseData (and give better name)
 * align input and output options across commands
     * dublinecore output for center/collection
-* Cleanup internal errors vs user errors
 * basic projection handling
-    * read the projection if we can
-    * for projections that are close WGS84, allow --drow but show a warning
-    * for those that aren't show error
-    * read proj from:
-        * WKB
-        * geoparquet
-        * shapefile
+    * transform projection to WGS84 and back for showing in --draw (when we can)
     * output CRS:
-        * EWKT
         * WKB
         * DublinCore
-    * handle case where files have mismatched SRIDs
+    * handle case when reading multiple files and they have mismatched SRIDs
 * cleanup draw UI
     * Important: Show popup success message with button to close window when done - disable/blank out UI
     * touch interactions/small screen UI
@@ -130,7 +124,6 @@ Output formats:
     * call out to proj
     * implement basic projections
     * https://github.com/wroge/wgs84
-* units on width, height, buffer options
 * clean input error messaging
 * add http api
 * Text description of Bbox - get closest major city to all four corners and center, and the dedup to describe
