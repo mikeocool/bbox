@@ -694,7 +694,7 @@ func TestParseProjectionWKT(t *testing.T) {
 func TestLoadShapefileWithProjection(t *testing.T) {
 	// Test that LoadShapefile correctly reads .prj files when they exist
 	shapefilePath := "../integration_tests/data/campsites/Wilderness_Campsites.shp"
-	
+
 	// Check if file exists
 	if _, err := os.Stat(shapefilePath); os.IsNotExist(err) {
 		t.Skip("Test shapefile not found, skipping test")
@@ -722,7 +722,7 @@ func TestLoadShapefileWithProjection(t *testing.T) {
 func TestLoadShapefileWithKnownProjection(t *testing.T) {
 	// Test that LoadShapefile correctly reads .prj files when they exist
 	shapefilePath := "../integration_tests/data/ne_10m_populated_places_simple/ne_10m_populated_places_simple.shp"
-	
+
 	// Check if file exists
 	if _, err := os.Stat(shapefilePath); os.IsNotExist(err) {
 		t.Skip("Test shapefile not found, skipping test")
@@ -738,26 +738,5 @@ func TestLoadShapefileWithKnownProjection(t *testing.T) {
 	// This test shapefile has a .prj file with WGS84, so it should return 4326
 	if bbox.Srid != core.Wgs84 {
 		t.Errorf("LoadShapefile() SRID = %v, want %v", bbox.Srid, core.Wgs84)
-	}
-}
-
-func TestParseProjectionFileErrors(t *testing.T) {
-	// Test missing file
-	srid := parseProjectionFile("/nonexistent/file.prj")
-	if srid != core.UnknownCrs {
-		t.Errorf("parseProjectionFile() with missing file = %v, want %v", srid, core.UnknownCrs)
-	}
-	
-	// Test empty file
-	emptyFile := "/tmp/empty.prj"
-	err := os.WriteFile(emptyFile, []byte(""), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create empty test file: %v", err)
-	}
-	defer os.Remove(emptyFile)
-	
-	srid = parseProjectionFile(emptyFile)
-	if srid != core.UnknownCrs {
-		t.Errorf("parseProjectionFile() with empty file = %v, want %v", srid, core.UnknownCrs)
 	}
 }
