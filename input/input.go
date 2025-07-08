@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -36,6 +37,9 @@ type InputParams struct {
 	Buffer          float64
 	SridOverride    int
 }
+
+// fields on Input params that can be used with any builded
+var globalUsedFields = []string{"Buffer", "SridOverride"}
 
 func (params *InputParams) HasWidth() bool  { return params.Width != "" }
 func (params *InputParams) HasHeight() bool { return params.Height != "" }
@@ -75,17 +79,17 @@ func (params *InputParams) validateSridOverride() error {
 	if params.SridOverride == 0 {
 		return nil // 0 means no override
 	}
-	
+
 	if params.SridOverride < 0 {
 		return InputValidationError{Field: "srid", Message: "SRID must be a positive integer"}
 	}
-	
+
 	// Basic validation for reasonable EPSG code ranges
 	// Most EPSG codes are between 1000-32767, though some legacy codes exist below 1000
 	if params.SridOverride > 100000 {
 		return InputValidationError{Field: "srid", Message: "SRID appears to be outside valid EPSG range (try values like 4326, 3857, 26915)"}
 	}
-	
+
 	return nil
 }
 
@@ -109,8 +113,7 @@ func buildBbox(builder BboxBuilder, params *InputParams) (core.Bbox, error) {
 
 	setFields := params.getSetFields()
 	for _, field := range setFields {
-		// buffer and srid override are global used fields TODO make this better
-		if !usedFieldsSet[field] && field != "Buffer" && field != "SridOverride" {
+		if !usedFieldsSet[field] && !slices.Contains(globalUsedFields, field) {
 			return core.Bbox{}, fmt.Errorf("unexpected argument: %s with %s", field, builder.Name)
 		}
 	}
