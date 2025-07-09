@@ -26,6 +26,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -37,6 +38,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -48,6 +50,7 @@ func TestParseRawArgs(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    5.0,
+				Srid:   core.Wgs84,
 			},
 		},
 
@@ -80,6 +83,17 @@ func TestParseRawArgs(t *testing.T) {
 				Right:  3.0,
 				Top:    4.0,
 				Srid:   core.Wgs84,
+			},
+		},
+		{
+			name:        "Valid input - outside WGS84 bounds",
+			input:       []string{"-200", "-100", "300", "200"},
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   -200.0,
+				Bottom: -100.0,
+				Right:  300.0,
+				Top:    200.0,
 			},
 		},
 
@@ -330,6 +344,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -341,6 +356,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 2.5,
 				Right:  3.5,
 				Top:    4.5,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -352,6 +368,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 20.0,
 				Right:  30.0,
 				Top:    40.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -363,6 +380,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 20.0,
 				Right:  30.0,
 				Top:    40.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -374,6 +392,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -385,6 +404,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -396,6 +416,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: -2.0,
 				Right:  3.0,
 				Top:    4.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -407,6 +428,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 0.0,
 				Right:  0.0,
 				Top:    0.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -421,6 +443,17 @@ func TestParseSimpleRaw(t *testing.T) {
 			},
 		},
 		{
+			name:        "Valid input - outside WGS84 bounds",
+			input:       "-200 -100 300 200",
+			expectError: false,
+			expectBbox: &core.Bbox{
+				Left:   -200.0,
+				Bottom: -100.0,
+				Right:  300.0,
+				Top:    200.0,
+			},
+		},
+		{
 			name:        "Valid input - list of points",
 			input:       "1.0 1.0\n2.0 4.0\n2.0 6.0\n3.0 8.0\n",
 			expectError: false,
@@ -429,6 +462,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 1.0,
 				Right:  3.0,
 				Top:    8.0,
+				Srid:   core.Wgs84,
 			},
 		},
 		{
@@ -440,6 +474,7 @@ func TestParseSimpleRaw(t *testing.T) {
 				Bottom: 1.0,
 				Right:  3.0,
 				Top:    8.0,
+				Srid:   core.Wgs84,
 			},
 		},
 

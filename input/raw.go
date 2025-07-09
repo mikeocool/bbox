@@ -160,6 +160,10 @@ func ParseSimpleRaw(r io.Reader) (core.Bbox, error) {
 		return core.Bbox{}, ErrUnrecognizedDataFormat
 	}
 
+	if core.IsValidWgs84(*rbbox) {
+		rbbox.Srid = core.Wgs84
+	}
+
 	return *rbbox, nil
 }
 
